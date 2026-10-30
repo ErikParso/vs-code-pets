@@ -1,0 +1,73 @@
+{
+  "name": "pixel-cat",
+  "displayName": "Pixel Cat",
+  "description": "A tiny pixel-art cat that roams your whole VS Code window: walks, sleeps, climbs and jumps between panels.",
+  "version": "0.0.32",
+  "publisher": "pixel-cat-dev",
+  "license": "MIT",
+  "engines": {
+    "vscode": "^1.80.0"
+  },
+  "categories": [
+    "Other"
+  ],
+  "activationEvents": [
+    "onStartupFinished"
+  ],
+  "main": "./out/extension.js",
+  "contributes": {
+    "commands": [
+      {
+        "command": "pixelCat.toggle",
+        "title": "Pixel Cat: Hide / Show"
+      },
+      {
+        "command": "pixelCat.toggleJexit",
+        "title": "Pixel Cat: Toggle Jexit"
+      },
+      {
+        "command": "pixelCat.toggleErik",
+        "title": "Pixel Cat: Toggle Erik"
+      },
+      {
+        "command": "pixelCat.toggleBoris",
+        "title": "Pixel Cat: Toggle Boris"
+      },
+      {
+        "command": "pixelCat.debug",
+        "title": "Pixel Cat: Toggle Debug Mode"
+      },
+      {
+        "command": "pixelCat.remove",
+        "title": "Pixel Cat: Remove from VS Code"
+      },
+      {
+        "command": "pixelCat.install",
+        "title": "Pixel Cat: Let the Cat Back In"
+      }
+    ],
+    "configuration": {
+      "title": "Pixel Cat",
+      "properties": {
+        "pixelCat.scale": {
+          "type": "number",
+          "default": 2,
+          "minimum": 1,
+          "maximum": 6,
+          "description": "Size of one cat pixel, in screen pixels."
+        }
+      }
+    }
+  },
+  "scripts": {
+    "compile": "tsc -p ./",
+    "watch": "tsc -watch -p ./",
+    "vscode:prepublish": "npm run compile",
+    "vscode:uninstall": "node ./out/uninstall.js"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "@types/vscode": "^1.80.0",
+    "typescript": "^5.4.0"
+  }
+}

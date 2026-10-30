@@ -1,0 +1,9 @@
+.vscode/**
+src/**
+node_modules/**
+tsconfig.json
+**/*.map
+.claude/**
+installed-app-roots.json
+*.vsix
+*.png

@@ -1,0 +1,4 @@
+node_modules/
+out/
+*.vsix
+installed-app-roots.json
