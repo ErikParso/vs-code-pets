@@ -50,8 +50,10 @@
   let layoutKey = '';
   /** @type {Record<string, Record<string, HTMLCanvasElement>>} */
   let sprites = {};
-  /** @type {{x: number, y: number, t: number}[]} */
+  /** @type {{x: number, y: number, t: number, heart?: boolean}[]} */
   let zs = [];
+  /** @type {any[]} */
+  let fishes = []; // fish thrown to the cats, oldest first
   /** @type {any[]} */
   let cats = [];
   /** @type {any} */
@@ -196,7 +198,14 @@
         continue;
       }
       if (onWall()) cat.x = clamp(cat.wall.x, halfW(), W - halfW());
+      leaveMeal();
       fall();
+    }
+    // Fish on a floor that is gone fade away.
+    for (const g of fishes) {
+      if (!g.floor) continue; // fading away already
+      g.floor = floors.find((f) => Math.abs(f.y - g.floor.y) <= EDGE && touches(f, g.x));
+      if (!g.floor) g.fade ||= 0.001;
     }
   }
 
@@ -241,13 +250,19 @@
     setState('walk');
   }
 
-  // Every move through the air is a fixed arc from where the cat is to (tx, ty), so it
-  // always lands exactly there, on floor `onto`.
+  // A fixed arc from (x0, y0) that lands exactly on (tx, ty), rising `lift` above the higher
+  // of the two.
+  function arc(x0, y0, tx, ty, lift, gravity = GRAVITY) {
+    const apex = Math.min(y0, ty) - lift;
+    const vy = -Math.sqrt(2 * gravity * (y0 - apex));
+    const time = Math.max(0.05, -vy / gravity + Math.sqrt((2 * (ty - apex)) / gravity));
+    return { x0, y0, vx: (tx - x0) / time, vy, time, gravity };
+  }
+  const along = (a, t) => [a.x0 + a.vx * t, a.y0 + a.vy * t + (a.gravity * t * t) / 2];
+
+  // Every move through the air is an arc, landing on floor `onto`.
   function fly(tx, ty, lift, onto) {
-    const apex = Math.min(cat.y, ty) - lift;
-    const vy = -Math.sqrt(2 * GRAVITY * (cat.y - apex));
-    const time = Math.max(0.05, -vy / GRAVITY + Math.sqrt((2 * (ty - apex)) / GRAVITY));
-    cat.flight = { x0: cat.x, y0: cat.y, vx: (tx - cat.x) / time, vy, time, onto };
+    cat.flight = { ...arc(cat.x, cat.y, tx, ty, lift), onto };
     cat.floor = null;
     setState('air');
   }
@@ -285,13 +300,20 @@
     }
     // Walls along this floor, and the floors they lead to (which may start a little past
     // their ends), other than this level.
-    const along = (w, g) => w.y1 - catH() <= g.y && g.y <= w.y2 + catH() && touches(g, w.x);
+    const leadsTo = (w, g) => w.y1 - catH() <= g.y && g.y <= w.y2 + catH() && touches(g, w.x);
     for (const w of walls) {
-      if (!along(w, floor) || w.x < halfW() || w.x > W - halfW() || Math.abs(w.x - x) > MAX_GAP) continue;
-      const dests = floors.filter((g) => Math.abs(g.y - y) > EDGE && along(w, g));
+      if (!leadsTo(w, floor) || w.x < halfW() || w.x > W - halfW() || Math.abs(w.x - x) > MAX_GAP) continue;
+      const dests = floors.filter((g) => Math.abs(g.y - y) > EDGE && leadsTo(w, g));
       if (dests.length) options.push({ tx: clamp(w.x, ...range(floor)), wall: w, dest: any(dests) });
     }
     return options;
+  }
+
+  // Take a move from reachable(): jump to the floor, or walk over to the wall.
+  function go(o) {
+    if (!o.wall) return jumpTo(o);
+    cat.route = o;
+    walkTo(o.tx, WALK_SPEED);
   }
 
   function jumpTo(o) {
@@ -340,6 +362,123 @@
     land(cat.dest);
   }
 
+  // ---- fish ----------------------------------------------------------------
+  //
+  // Clicking the 🐟 next to the cats in the status bar throws a fish from there, landing
+  // near a cat. An awake cat close to a fish (on its floor, or one move away) goes and eats
+  // it. Fish stay until eaten; with more than MAX_FISH out, the oldest fades away.
+
+  const MAX_FISH = 10;
+  const EAT_TIME = 4;
+  const SNIFF = 0.6; // head down at the fish before the first bite
+  const CHEW = 0.5; // one bite: head down, then a tug
+  const BITES = Math.ceil((EAT_TIME - SNIFF) / CHEW);
+  const FADE_TIME = 1.5;
+  const FISH_GRAVITY = 1000; // floatier than the cats
+
+  function throwFish(x, y) {
+    const near = any(cats.filter((c) => c.floor));
+    const f = near ? near.floor : any(floors);
+    const [lo, hi] = range(f);
+    // Off to one side of the cat (the side with room), so it has to go and get it.
+    let tx = rand(lo, hi);
+    if (near) {
+      const d = rand(100, 350);
+      let side = Math.random() < 0.5 ? -1 : 1;
+      if (near.x + side * d < lo || near.x + side * d > hi) side = -side;
+      tx = clamp(near.x + side * d, lo, hi);
+    }
+    // A floaty toss, higher the further it goes (but staying in the window).
+    const lift = Math.max(0, Math.min(50 + 0.2 * Math.abs(tx - x), Math.min(y, f.y) - 10));
+    fishes.push({ ...arc(x, y, tx, f.y, lift, FISH_GRAVITY), x, y, t: 0, floor: f, eater: null, fade: 0 });
+    const live = fishes.filter((g) => !g.fade);
+    if (live.length > MAX_FISH) live[0].fade = 0.001;
+  }
+
+  const landed = (g) => g.t >= g.time;
+
+  function updateFish(dt) {
+    for (const g of fishes) {
+      const wasFlying = !landed(g);
+      g.t += dt;
+      if (g.fade) g.fade += dt;
+      if (g.falling) {
+        g.vy += FISH_GRAVITY * dt;
+        g.x += g.hop * g.hopSpeed * dt;
+        g.y += g.vy * dt;
+      } else if (wasFlying) {
+        [g.x, g.y] = along(g, Math.min(g.t, g.time));
+        if (landed(g)) noticeFish();
+      } else if (!g.eater && !g.fade) {
+        flop(g, dt);
+      }
+    }
+    fishes = fishes.filter((g) => g.fade < FADE_TIME);
+  }
+
+  // Flops come at random: a hop as it lands, then every so often another, each its own
+  // height, length and quickness. Each carries it a little way, mostly the same way as the
+  // last, and lands it the other way round. Flopped off the end of its floor, it drops out
+  // of reach and is gone.
+  function flop(g, dt) {
+    if (g.flips === undefined || g.t >= g.nextFlop) {
+      g.flips = g.flips === undefined ? 0 : g.flips + 1;
+      g.flopFrom = g.t;
+      g.flopTime = rand(0.25, 0.45);
+      g.flopHeight = rand(3, 10);
+      g.hop = g.hop && Math.random() < 0.7 ? g.hop : any([-1, 1]);
+      g.hopSpeed = rand(8, 30); // px a second while in the air
+      g.nextFlop = g.t + g.flopTime + rand(1, 5);
+    }
+    if (g.t >= g.flopFrom + g.flopTime) return;
+    g.x += g.hop * g.hopSpeed * dt;
+    if (g.x < Math.max(g.floor.x1, 0) || g.x > Math.min(g.floor.x2, W)) {
+      g.falling = true;
+      g.vy = -120;
+      g.fade = 0.001;
+    }
+  }
+
+  // A fish just landed: awake cats on a floor that can get to it drop what they are doing
+  // and go for it. (Cats in the air or on a wall go for it once they land.)
+  function noticeFish() {
+    for (const c of cats) {
+      cat = c;
+      if (!['sit', 'walk', 'crouch'].includes(cat.state) || !cat.floor || !fishFor()) continue;
+      cat.route = null;
+      cat.napNext = false;
+      decide();
+    }
+  }
+
+  // The nearest fish the cat can get to: on its floor, or one move away (with that move).
+  // Once it has picked one it sticks with it: standing at one fish of a cluster can make
+  // another the nearest, and it would trot back and forth between them for ever.
+  function fishFor() {
+    const live = fishes.filter((g) => landed(g) && !g.eater && !g.fade);
+    if (live.includes(cat.goingFor) && cat.goingFor.floor === cat.floor) return { fish: cat.goingFor };
+    const here = live.filter((g) => g.floor === cat.floor).sort((a, b) => Math.abs(a.x - cat.x) - Math.abs(b.x - cat.x));
+    if (here.length) return { fish: here[0] };
+    for (const o of reachable()) {
+      const g = live.find((g) => g.floor === (o.wall ? o.dest : o.floor));
+      if (g) return { fish: g, move: o };
+    }
+    return null;
+  }
+
+  function eat(g) {
+    g.eater = cat;
+    cat.meal = g;
+    cat.dir = g.x >= cat.x ? 1 : -1;
+    setState('eat', EAT_TIME);
+  }
+
+  // Interrupted (it fell): the fish is up for grabs again.
+  function leaveMeal() {
+    if (cat.meal) cat.meal.eater = null;
+    cat.meal = null;
+  }
+
   // How much this cat likes another (0 = not at all).
   const feeling = (other) => (cat.likes && cat.likes[other.name]) || 0;
 
@@ -360,6 +499,17 @@
       cat.route = null;
       return climb(o);
     }
+    const food = fishFor();
+    if (food && food.move) return go(food.move);
+    if (food) {
+      // Trot over and stand with its mouth at the fish, then eat.
+      const g = food.fish;
+      cat.goingFor = g;
+      const side = g.x >= cat.x ? 1 : -1;
+      const tx = clamp(g.x - side * halfW() * 0.8, lo, hi);
+      if (Math.abs(tx - cat.x) <= 2) return eat(g);
+      return walkTo(tx, WALK_SPEED * 4); // a sprint
+    }
     const friend = cats.find((c) => c !== cat && c.floor === f && c.state === 'sleep' && feeling(c) > 0);
     const options = reachable();
     const choice = pick([
@@ -378,12 +528,8 @@
         const trot = Math.random() < 0.2 * p.energy;
         return walkTo(clamp(cat.x + rand(-250, 250), lo, hi), WALK_SPEED * (trot ? 3 : 1));
       }
-      case 'jump': {
-        const o = any(options);
-        if (!o.wall) return jumpTo(o);
-        cat.route = o;
-        return walkTo(o.tx, WALK_SPEED);
-      }
+      case 'jump':
+        return go(any(options));
       case 'snuggle':
         cat.napNext = true;
         return walkTo(clamp(friend.x + (cat.x < friend.x ? -1 : 1) * catW() * 0.9, lo, hi), WALK_SPEED);
@@ -395,6 +541,14 @@
     switch (cat.state) {
       case 'sit':
         if (cat.t >= cat.dur) decide();
+        break;
+      case 'eat':
+        if (cat.t >= cat.dur) {
+          fishes = fishes.filter((g) => g !== cat.meal);
+          cat.meal = null;
+          zs.push({ x: cat.x, y: cat.y - catH() - 4, t: 0, heart: true });
+          setState('sit', rand(2, 5));
+        }
         break;
       case 'sleep':
         if (Math.floor((cat.t - dt) / 1.6) !== Math.floor(cat.t / 1.6)) {
@@ -418,9 +572,7 @@
         break;
       case 'air': {
         const fl = cat.flight;
-        const t = Math.min(cat.t, fl.time);
-        cat.x = fl.x0 + fl.vx * t;
-        cat.y = fl.y0 + fl.vy * t + (GRAVITY * t * t) / 2;
+        [cat.x, cat.y] = along(fl, Math.min(cat.t, fl.time));
         if (cat.t >= fl.time) land(fl.onto);
         break;
       }
@@ -482,6 +634,13 @@
         return cycle(['sleep1', 'sleep2'], 1.1);
       case 'crouch':
         return 'crouch';
+      case 'eat': {
+        // A sniff, then bite after bite: munching, a tug; every third bite the tail flicks.
+        if (cat.t < SNIFF) return 'eatDown';
+        const n = (cat.t - SNIFF) / CHEW;
+        if (n % 1 > 0.6) return 'eatTug';
+        return Math.floor(n) % 3 === 1 ? 'eatTail' : 'eatChew';
+      }
       case 'air':
         return cat.flight.vy + GRAVITY * cat.t < 0 ? 'leap' : 'walkA';
       default:
@@ -491,6 +650,37 @@
   }
 
   const Z = ['KKKK', '..K.', '.K..', 'KKKK'];
+  const HEART = ['KK.KK', 'KKKKK', '.KKK.', '..K..'];
+
+  // Fish: tumbling through the air (in quarter turns, which keeps the pixels crisp), then
+  // flopping about (see flop); off the end of the floor it tumbles away. Being eaten, it
+  // loses a chunk with each tug, from the cat's end; pushed out by newer fish, it fades away.
+  function drawFish() {
+    for (const g of fishes) {
+      const since = g.t - g.flopFrom; // into the current flop
+      const flopping = landed(g) && !g.eater && !g.falling && since < g.flopTime;
+      const tumbling = !landed(g) || g.falling;
+      const wiggle = tumbling || flopping ? Math.floor(g.t * 12) % 2 : 0;
+      const img = sprites.orange[wiggle ? 'fishB' : 'fishA'];
+      const bites = g.eater ? clamp(Math.floor((g.eater.t - SNIFF) / CHEW + 0.4), 0, BITES) : 0;
+      const cols = img.width / px;
+      const cut = Math.min(cols - 1, Math.round((cols * bites) / BITES)) * px;
+      const turn = tumbling ? (Math.floor(g.t * 8) % 4) * (g.vx < 0 ? -1 : 1) : 0;
+      const lift = flopping ? Math.sin((Math.PI * since) / g.flopTime) * g.flopHeight : 0;
+      const facing = (g.vx < 0 ? -1 : 1) * (g.flips % 2 ? -1 : 1);
+      ctx.globalAlpha = g.fade ? 1 - g.fade / FADE_TIME : 1;
+      ctx.save();
+      ctx.translate(Math.round(g.x * dpr), Math.round((g.y - lift) * dpr - img.height / 2));
+      ctx.rotate((turn * Math.PI) / 2);
+      if (!tumbling && facing < 0) ctx.scale(-1, 1);
+      // The bitten-off end is the one towards the cat, in the fish's own (maybe flipped) frame.
+      const sx = g.eater && g.eater.dir * (facing < 0 ? -1 : 1) > 0 ? cut : 0;
+      const w = img.width - cut;
+      ctx.drawImage(img, sx, 0, w, img.height, sx - Math.round(img.width / 2), -Math.round(img.height / 2), w, img.height);
+      ctx.restore();
+    }
+    ctx.globalAlpha = 1;
+  }
 
   // Debug overlay: the floors (teal) and walls (orange) the cats get around on.
   function drawDebug() {
@@ -512,6 +702,7 @@
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     if (!shown || !cats.length) return;
     if (debug) drawDebug();
+    drawFish();
     for (const c of cats) {
       cat = c;
       drawCat();
@@ -533,15 +724,15 @@
     ctx.restore();
   }
 
-  // Floating Zs over sleeping cats.
+  // Floating Zs over sleeping cats, and a heart after a meal.
   function drawZs() {
     const zp = Math.max(1, px - Math.round(dpr));
-    ctx.fillStyle = ink;
     for (const z of zs) {
+      ctx.fillStyle = z.heart ? SP.palette.P : ink;
       ctx.globalAlpha = 0.8 * (1 - z.t / 2.4);
       const zx = Math.round((z.x + Math.sin(z.t * 3) * 3) * dpr);
       const zy = Math.round(z.y * dpr);
-      Z.forEach((row, y) => {
+      (z.heart ? HEART : Z).forEach((row, y) => {
         for (let x = 0; x < row.length; x++) {
           if (row[x] === 'K') ctx.fillRect(zx + x * zp, zy + y * zp, zp, zp);
         }
@@ -586,6 +777,7 @@
     if (!shown) return;
     relayout();
     cats = cats.filter((c) => out.has(c.name));
+    for (const g of fishes) if (g.eater && !cats.includes(g.eater)) g.eater = null; // sent away mid-meal
     for (const def of CATS) if (out.has(def.name) && !cats.some((c) => c.name === def.name)) spawn(def);
   }
 
@@ -598,6 +790,7 @@
         cat = c;
         update(dt);
       }
+      updateFish(dt);
     }
     updateZs(dt);
     draw();
@@ -613,6 +806,17 @@
     createOverlay();
     resize();
     window.addEventListener('resize', resize);
+    // The 🐟 the extension shows next to the cats: throw a fish from where it is.
+    document.addEventListener(
+      'click',
+      (e) => {
+        const item = e.target instanceof Element && e.target.closest('.statusbar-item');
+        if (!shown || !item || !(item.textContent || '').includes('🐟')) return;
+        const r = item.getBoundingClientRect();
+        throwFish(r.left + r.width / 2, r.top);
+      },
+      true
+    );
     setInterval(poll, 700);
     requestAnimationFrame(frame);
   }

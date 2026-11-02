@@ -82,7 +82,23 @@ export function activate(context: vscode.ExtensionContext): void {
     status.text = hidden ? '$(eye-closed)' : markers + (debug ? '🐞' : '');
     status.tooltip = hidden ? 'Pixel Cat: the cats are hiding. Click to call them back.' : 'Pixel Cat: click to hide the cats.';
     status.accessibilityInformation = { label: hidden ? 'Pixel Cat (hidden)' : 'Pixel Cat' };
+    renderFish();
   };
+  // The fish button, next to the cats. The cats' page catches the click itself (it knows
+  // where the button is), so the command only makes the item clickable.
+  const fish = vscode.window.createStatusBarItem('pixelCat.fish', vscode.StatusBarAlignment.Right, -1001);
+  fish.name = 'Pixel Cat: Fish';
+  fish.text = '🐟';
+  fish.tooltip = 'Throw the cats a fish';
+  fish.accessibilityInformation = { label: 'Throw the cats a fish' };
+  fish.command = 'pixelCat.fish';
+  const renderFish = (): void => {
+    const visible = status.text !== '$(eye-closed)' && !context.globalState.get('removed', false) &&
+      context.globalState.get('consented', false);
+    if (visible) fish.show();
+    else fish.hide();
+  };
+
   render();
   if (!context.globalState.get('removed', false) && context.globalState.get('consented', false)) status.show();
 
@@ -110,10 +126,13 @@ export function activate(context: vscode.ExtensionContext): void {
       await context.globalState.update('removed', true);
       status.hide();
     }
+    render();
   };
 
   context.subscriptions.push(
     status,
+    fish,
+    vscode.commands.registerCommand('pixelCat.fish', () => undefined),
     vscode.commands.registerCommand('pixelCat.toggle', async () => {
       if (!CATS.some((c) => isOut(c.name))) {
         // Both were sent away one by one: calling them back brings both.
@@ -137,6 +156,7 @@ export function activate(context: vscode.ExtensionContext): void {
     vscode.commands.registerCommand('pixelCat.remove', async () => {
       await context.globalState.update('removed', true);
       status.hide();
+      render();
       try {
         uninstall(appRoot);
         promptReload('Pixel Cat has left VS Code. Reload the window to finish.');
@@ -149,6 +169,7 @@ export function activate(context: vscode.ExtensionContext): void {
       await context.globalState.update('removed', false);
       await context.globalState.update('consented', true);
       status.show();
+      render();
       ensureInstalled();
     }),
     vscode.workspace.onDidChangeConfiguration((e) => {

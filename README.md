@@ -10,6 +10,10 @@ slide down their sides, and nap on the status bar.
 
 Friends now and then curl up to sleep next to each other.
 
+**Feeding:** click the 🐟 next to the cats in the status bar to throw them a fish. It lands
+near a cat, and an awake cat close by trots over and eats it. Sleeping cats ignore fish
+until they wake up. Up to 10 fish can lie around at once.
+
 ## ⚠️ This extension modifies VS Code's files
 
 VS Code doesn't let extensions draw outside their own panels. To let the cats roam the

@@ -1,5 +1,6 @@
 // Hand-drawn cat frames, 24x16 pixels, facing right.
-// One character per pixel: '.' transparent, K outline, O fur, D stripe, W cream, P pink.
+// One character per pixel: '.' transparent, K outline, O fur, D stripe, W cream, P pink,
+// B fish, L fish belly.
 (function (root) {
   'use strict';
 
@@ -9,6 +10,8 @@
     D: '#c46a22',
     W: '#fbe3c0',
     P: '#f29bb0',
+    B: '#4f9bd9',
+    L: '#cfe6f5',
   };
 
   // Standing body, shared by every on-four-legs frame (rows 0-12).
@@ -145,6 +148,27 @@
     '................',
   ];
 
+  // Eating: sat back on its haunches, front legs straight, head bent right down to the
+  // fish, tail along the floor behind.
+  const eatDown = [
+    blank,
+    blank,
+    blank,
+    blank,
+    blank,
+    '.........KKKKK..........',
+    '.......KKOOOOOKK........',
+    '......KOODOOODOOK.......',
+    '.....KOODOOODOOOOK....K.',
+    '....KOOODOOODOOOKPK..KPK',
+    '...KOOOODOOODOOOKOOOOOOK',
+    '...KOOOODOOOKOOKKOOOOOOK',
+    '..KOOOOOOOOOKOOKKOKOOKOK',
+    '.KKOOOOOOOOOKOOKKWOPPOWK',
+    'KOOKOOOOOKWWKWWKKWWWWWWK',
+    '.KKKKKKKKKKKKKKK.KKKKKK.',
+  ];
+
   function patch(rows, changes) {
     const out = rows.slice();
     for (const [i, row] of Object.entries(changes)) out[i] = row;
@@ -179,6 +203,29 @@
       17: 'KOK..KOOOOK.....',
     }),
     climbPull,
+    eatDown, // sniffing it, eyes open
+    // Munching, eyes squeezed shut.
+    eatChew: patch(eatDown, { 12: '..KOOOOOOOOOKOOKKKKOOKKK' }),
+    // Tugging a bite off: head up a pixel.
+    eatTug: patch(eatDown, {
+      7: '......KOODOOODOOKK....K.',
+      8: '.....KOODOOODOOOKPK..KPK',
+      9: '....KOOODOOODOOOKOOOOOOK',
+      10: '...KOOOODOOODOOOKOOOOOOK',
+      11: '...KOOOODOOOKOOKKKKOOKKK',
+      12: '..KOOOOOOOOOKOOKKWOPPOWK',
+      13: '.KKOOOOOOOOOKOOKKWWWWWWK',
+      14: 'KOOKOOOOOKWWKWWK.KKKKKK.',
+      15: '.KKKKKKKKKKKKKKK........',
+    }),
+    // Munching, tail tip flicked up off the floor.
+    eatTail: patch(eatDown, {
+      12: 'KKKOOOOOOOOOKOOKKKKOOKKK',
+      13: 'KOKOOOOOOOOOKOOKKWOPPOWK',
+    }),
+    // A fish for the cats, 10x5, head to the right; the second frame flips its tail.
+    fishA: ['....KKKK..', 'K..KBBBBK.', 'KKKBBBBKBK', 'K..KLLLLK.', '....KKKK..'],
+    fishB: ['K...KKKK..', '.K.KBBBBK.', '..KBBBBKBK', '.K.KLLLLK.', 'K...KKKK..'],
     sleep1: sleep,
     sleep2: patch(sleep, {
       6: '........KKKKKKK..K...K..',
