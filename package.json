@@ -2,7 +2,7 @@
   "name": "pixel-cat",
   "displayName": "Pixel Cat",
   "description": "A tiny pixel-art cat that roams your whole VS Code window: walks, sleeps, climbs and jumps between panels.",
-  "version": "0.0.32",
+  "version": "0.0.42",
   "publisher": "pixel-cat-dev",
   "license": "MIT",
   "engines": {

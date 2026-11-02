@@ -17,7 +17,7 @@
     "name": "Boris",
     "marker": "🐱",
     "coat": "brown",
-    "likes": { "Jexit": -1 },
+    "likes": {},
     "personality": { "sleep": 1.3, "nap": 1.2, "energy": 0.3 }
   }
 ]
