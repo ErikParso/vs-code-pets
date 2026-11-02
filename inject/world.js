@@ -312,17 +312,28 @@
   }
 
   // Up the wall: the cat gathers itself (sinking a little), springs up easing out at the
-  // top, then (unless it has arrived) holds on a moment, swishing its tail.
+  // top, then holds on a moment, swishing its tail.
   const WIND_UP = 0.12;
   const HOP_TIME = 0.35;
   function wallStep() {
-    if (cat.y <= cat.dest.y + 1) return arrive();
+    // If another leap would take its front paws past the floor's edge, it jumps up instead.
+    const paws = SP.frames.climbReach.length * (px / dpr);
+    if (cat.y - WALL_LEAP - paws <= cat.dest.y) return jumpOnto(cat.dest);
     cat.hopFrom = cat.y;
-    cat.hopTo = Math.max(cat.dest.y, cat.y - WALL_LEAP);
-    setState('wallhop', WIND_UP + HOP_TIME + (cat.hopTo > cat.dest.y ? rand(0.4, 0.7) : 0));
+    cat.hopTo = cat.y - WALL_LEAP;
+    setState('wallhop', WIND_UP + HOP_TIME + rand(0.4, 0.7));
   }
 
-  // Level with its destination: step off the wall onto it.
+  // Jump up onto floor f, on a side of the wall where it extends.
+  function jumpOnto(f) {
+    const w = cat.wall;
+    const [lo, hi] = range(f);
+    const sides = [-1, 1].filter((s) => (s < 0 ? lo < w.x - halfW() : hi > w.x + halfW()));
+    cat.dir = sides.length ? any(sides) : (lo + hi) / 2 < w.x ? -1 : 1;
+    fly(clamp(w.x + cat.dir * rand(20, 40), lo, hi), f.y, rand(10, 20), f);
+  }
+
+  // Slid down level with its destination: step off the wall onto it.
   function arrive() {
     cat.x = clamp(cat.wall.x, ...range(cat.dest));
     land(cat.dest);

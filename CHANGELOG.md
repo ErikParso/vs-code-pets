@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.1.4
+
+A nicer finish to a climb: once another leap would take its paws past the ledge, the cat
+jumps up onto it instead.
+
 ## 0.1.1
 
 Livelier climbing: the cats gather themselves before each leap up a wall, push off with
