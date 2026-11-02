@@ -1,5 +1,17 @@
 # Changelog
 
+## 0.1.17
+
+A hungry cat asks for food with a little fish floating up over its head and fading away,
+like the Zs and hearts, instead of a speech bubble.
+
+## 0.1.16
+
+Hunger: cats get hungrier over time (full to starving in about 40 minutes) and each fish
+fills a cat halfway. At 0.2 or below a cat ignores fish; above 0.7 it asks for food now and
+then with a fish in a thought bubble. Remembered across reloads. In debug mode a bar under
+each cat shows its hunger, and Alt/Shift+click on the 🐟 makes the cats hungrier/fuller.
+
 ## 0.1.15
 
 Random fish flops: each comes after its own wait (1-5 s) and has its own height, length and

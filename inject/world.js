@@ -50,7 +50,7 @@
   let layoutKey = '';
   /** @type {Record<string, Record<string, HTMLCanvasElement>>} */
   let sprites = {};
-  /** @type {{x: number, y: number, t: number, heart?: boolean}[]} */
+  /** @type {{x: number, y: number, t: number, heart?: boolean, fish?: boolean, dir?: number}[]} */
   let zs = [];
   /** @type {any[]} */
   let fishes = []; // fish thrown to the cats, oldest first
@@ -228,7 +228,10 @@
 
   // A cat comes out: it walks in along the bottom.
   function spawn(def) {
+    const hunger = savedHunger()[def.name];
     cat = { x: 0, y: 0, vy: 0, dir: 1, state: 'walk', t: 0, dur: 0, floor: null, ...def };
+    cat.hunger = typeof hunger === 'number' ? hunger : 0.5;
+    cat.askIn = rand(2, 5); // until it next asks, while hungry
     cats.push(cat);
     walkIn();
   }
@@ -455,6 +458,7 @@
   // Once it has picked one it sticks with it: standing at one fish of a cluster can make
   // another the nearest, and it would trot back and forth between them for ever.
   function fishFor() {
+    if (cat.hunger <= FULL) return null;
     const live = fishes.filter((g) => landed(g) && !g.eater && !g.fade);
     if (live.includes(cat.goingFor) && cat.goingFor.floor === cat.floor) return { fish: cat.goingFor };
     const here = live.filter((g) => g.floor === cat.floor).sort((a, b) => Math.abs(a.x - cat.x) - Math.abs(b.x - cat.x));
@@ -477,6 +481,48 @@
   function leaveMeal() {
     if (cat.meal) cat.meal.eater = null;
     cat.meal = null;
+  }
+
+  // ---- hunger --------------------------------------------------------------
+  //
+  // Each cat gets hungrier as time goes by (0 = full, 1 = starving), and a fish takes off
+  // half. Nearly full, it ignores fish; hungry, it asks for one now and then (a little fish
+  // floats up over its head, like the Zs). Kept in the window's localStorage, so it lasts across reloads. In debug mode,
+  // Alt+click on the 🐟 makes every cat hungrier, Shift+click fuller.
+
+  const HUNGER_RATE = 1 / (40 * 60); // full to starving in 40 minutes
+  const FULL = 0.2; // at or below: ignores fish
+  const ASKING = 0.7; // above: asks for food
+  const MEAL = 0.5; // what one fish takes off
+  const HUNGER_KEY = 'pixelCat.hunger';
+
+  function savedHunger() {
+    try {
+      return JSON.parse(localStorage.getItem(HUNGER_KEY) || '{}');
+    } catch (e) {
+      return {};
+    }
+  }
+
+  function saveHunger() {
+    const all = savedHunger();
+    for (const c of cats) all[c.name] = c.hunger;
+    try {
+      localStorage.setItem(HUNGER_KEY, JSON.stringify(all));
+    } catch (e) {
+      // No storage: it just starts afresh next time.
+    }
+  }
+
+  function updateHunger(dt) {
+    cat.hunger = Math.min(1, cat.hunger + HUNGER_RATE * dt);
+    if (cat.hunger > ASKING && (cat.state === 'sit' || cat.state === 'walk')) {
+      cat.askIn -= dt;
+      if (cat.askIn <= 0) {
+        zs.push({ x: cat.x + cat.dir * 7 * (px / dpr), y: cat.y - catH() - 4, t: 0, fish: true, dir: cat.dir });
+        cat.askIn = rand(6, 12);
+      }
+    }
   }
 
   // How much this cat likes another (0 = not at all).
@@ -538,6 +584,7 @@
 
   function update(dt) {
     cat.t += dt;
+    updateHunger(dt);
     switch (cat.state) {
       case 'sit':
         if (cat.t >= cat.dur) decide();
@@ -546,6 +593,8 @@
         if (cat.t >= cat.dur) {
           fishes = fishes.filter((g) => g !== cat.meal);
           cat.meal = null;
+          cat.hunger = Math.max(0, cat.hunger - MEAL);
+          saveHunger();
           zs.push({ x: cat.x, y: cat.y - catH() - 4, t: 0, heart: true });
           setState('sit', rand(2, 5));
         }
@@ -706,8 +755,24 @@
     for (const c of cats) {
       cat = c;
       drawCat();
+      if (debug) drawHunger();
     }
     drawZs();
+  }
+
+  // Debug: a hunger bar under the cat; teal = full (ignores fish), orange = would eat,
+  // red = asking.
+  function drawHunger() {
+    const t = Math.max(2, Math.round(2 * dpr));
+    const w = Math.round(catW() * 0.6 * dpr);
+    const x = Math.round((onWall() ? cat.wall.x : cat.x) * dpr - w / 2);
+    const y = Math.round((cat.y + 3) * dpr);
+    ctx.fillStyle = ink;
+    ctx.globalAlpha = 0.35;
+    ctx.fillRect(x, y, w, t);
+    ctx.globalAlpha = 1;
+    ctx.fillStyle = cat.hunger > ASKING ? '#e63946' : cat.hunger > FULL ? '#ff9f1c' : '#2ec4b6';
+    ctx.fillRect(x, y, Math.round(w * cat.hunger), t);
   }
 
   function drawCat() {
@@ -724,17 +789,22 @@
     ctx.restore();
   }
 
-  // Floating Zs over sleeping cats, and a heart after a meal.
+  // Floating Zs over sleeping cats, a heart after a meal, and a fish from a hungry cat
+  // (in its own colours, facing the way the cat looks).
   function drawZs() {
     const zp = Math.max(1, px - Math.round(dpr));
     for (const z of zs) {
       ctx.fillStyle = z.heart ? SP.palette.P : ink;
       ctx.globalAlpha = 0.8 * (1 - z.t / 2.4);
-      const zx = Math.round((z.x + Math.sin(z.t * 3) * 3) * dpr);
+      const zx = Math.round((z.x + Math.sin(z.t * 3) * 3) * dpr) - (z.fish ? 5 * zp : 0); // centred
       const zy = Math.round(z.y * dpr);
-      (z.heart ? HEART : Z).forEach((row, y) => {
+      const rows = z.fish ? SP.frames.fishA : z.heart ? HEART : Z;
+      rows.forEach((row, y) => {
         for (let x = 0; x < row.length; x++) {
-          if (row[x] === 'K') ctx.fillRect(zx + x * zp, zy + y * zp, zp, zp);
+          const c = z.dir < 0 ? row[row.length - 1 - x] : row[x];
+          if (c === '.') continue;
+          if (z.fish) ctx.fillStyle = SP.palette[c];
+          ctx.fillRect(zx + x * zp, zy + y * zp, zp, zp);
         }
       });
     }
@@ -779,6 +849,7 @@
     cats = cats.filter((c) => out.has(c.name));
     for (const g of fishes) if (g.eater && !cats.includes(g.eater)) g.eater = null; // sent away mid-meal
     for (const def of CATS) if (out.has(def.name) && !cats.some((c) => c.name === def.name)) spawn(def);
+    saveHunger();
   }
 
   let last = 0;
@@ -806,12 +877,18 @@
     createOverlay();
     resize();
     window.addEventListener('resize', resize);
-    // The 🐟 the extension shows next to the cats: throw a fish from where it is.
+    // The 🐟 the extension shows next to the cats: throw a fish from where it is. (In debug
+    // mode, Alt/Shift+click makes the cats hungrier/fuller instead.)
     document.addEventListener(
       'click',
       (e) => {
         const item = e.target instanceof Element && e.target.closest('.statusbar-item');
         if (!shown || !item || !(item.textContent || '').includes('🐟')) return;
+        if (debug && (e.altKey || e.shiftKey)) {
+          for (const c of cats) c.hunger = clamp(c.hunger + (e.altKey ? 0.1 : -0.1), 0, 1);
+          saveHunger();
+          return;
+        }
         const r = item.getBoundingClientRect();
         throwFish(r.left + r.width / 2, r.top);
       },

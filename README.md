@@ -14,6 +14,11 @@ Friends now and then curl up to sleep next to each other.
 near a cat, and an awake cat close by trots over and eats it. Sleeping cats ignore fish
 until they wake up. Up to 10 fish can lie around at once.
 
+**Hunger:** the cats get hungrier as you work (full to starving in about 40 minutes), and
+each fish fills a cat halfway. A nearly full cat ignores fish; a hungry one asks for food
+now and then: a little fish floats up over its head, like the Zs. Hunger is remembered
+across reloads.
+
 ## ⚠️ This extension modifies VS Code's files
 
 VS Code doesn't let extensions draw outside their own panels. To let the cats roam the
@@ -42,7 +47,7 @@ Good to know:
 |---|---|
 | Pixel Cat: Hide / Show | Hide or show the cats (also: click the cats in the status bar) |
 | Pixel Cat: Toggle Jexit / Erik / Boris | Send one cat away or bring it back |
-| Pixel Cat: Toggle Debug Mode | Show the floors and walls the cats get around on |
+| Pixel Cat: Toggle Debug Mode | Show the floors and walls the cats get around on, and each cat's hunger. Alt+click the 🐟 to make the cats hungrier, Shift+click to make them fuller |
 | Pixel Cat: Remove from VS Code | Take the cats out and restore VS Code's files |
 | Pixel Cat: Let the Cat Back In | Put the cats back after removing them |
 
