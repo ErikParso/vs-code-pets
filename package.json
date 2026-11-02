@@ -1,15 +1,31 @@
 {
-  "name": "pixel-cat",
-  "displayName": "Pixel Cat",
-  "description": "A tiny pixel-art cat that roams your whole VS Code window: walks, sleeps, climbs and jumps between panels.",
-  "version": "0.0.42",
-  "publisher": "pixel-cat-dev",
+  "name": "roaming-pixel-cats",
+  "displayName": "Roaming Pixel Cats",
+  "description": "Tiny pixel-art cats that roam your whole VS Code window: they walk, nap, jump between panels, climb up and slide down.",
+  "version": "0.1.0",
+  "publisher": "codericsro",
   "license": "MIT",
+  "icon": "images/icon.png",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/ErikParso/vs-code-pets.git"
+  },
+  "bugs": {
+    "url": "https://github.com/ErikParso/vs-code-pets/issues"
+  },
+  "homepage": "https://github.com/ErikParso/vs-code-pets#readme",
   "engines": {
     "vscode": "^1.80.0"
   },
   "categories": [
     "Other"
+  ],
+  "keywords": [
+    "cat",
+    "pet",
+    "pixel art",
+    "tamagotchi",
+    "fun"
   ],
   "activationEvents": [
     "onStartupFinished"

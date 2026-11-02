@@ -57,6 +57,7 @@ export function activate(context: vscode.ExtensionContext): void {
 
   const ensureInstalled = (): void => {
     if (context.globalState.get('removed', false)) return;
+    if (!context.globalState.get('consented', false)) return void askConsent();
     try {
       rememberAppRoot(context.extensionPath, appRoot);
       const script = buildScript(context);
@@ -83,7 +84,33 @@ export function activate(context: vscode.ExtensionContext): void {
     status.accessibilityInformation = { label: hidden ? 'Pixel Cat (hidden)' : 'Pixel Cat' };
   };
   render();
-  if (!context.globalState.get('removed', false)) status.show();
+  if (!context.globalState.get('removed', false) && context.globalState.get('consented', false)) status.show();
+
+  // Nothing in VS Code is changed until the user agrees, once. "Not now" counts as
+  // removing the cats; "Pixel Cat: Let the Cat Back In" brings them (and asks no more).
+  const askConsent = async (): Promise<void> => {
+    const choice = await vscode.window.showInformationMessage(
+      'Let the Pixel Cats roam your whole VS Code window?',
+      {
+        modal: true,
+        detail:
+          "Extensions can't draw outside their own panels, so Pixel Cat adds a small script to " +
+          "VS Code's own files. VS Code will then warn that its installation appears to be " +
+          'corrupt; that warning is about this change, and you can dismiss it.\n\n' +
+          'Undo it any time with "Pixel Cat: Remove from VS Code". Uninstalling the extension ' +
+          'also restores the files.',
+      },
+      'Let the Cats In'
+    );
+    if (choice) {
+      await context.globalState.update('consented', true);
+      status.show();
+      ensureInstalled();
+    } else {
+      await context.globalState.update('removed', true);
+      status.hide();
+    }
+  };
 
   context.subscriptions.push(
     status,
@@ -118,7 +145,9 @@ export function activate(context: vscode.ExtensionContext): void {
       }
     }),
     vscode.commands.registerCommand('pixelCat.install', async () => {
+      // Asked for by name: that is consent.
       await context.globalState.update('removed', false);
+      await context.globalState.update('consented', true);
       status.show();
       ensureInstalled();
     }),

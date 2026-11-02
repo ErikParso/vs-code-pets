@@ -1,0 +1,51 @@
+# Roaming Pixel Cats
+
+Three tiny pixel-art cats that live in your whole VS Code window, not in a panel. They
+walk along the edges of the sidebar, editor and panels, jump between them, climb up and
+slide down their sides, and nap on the status bar.
+
+- **Jexit**, orange: sleepy, and fond of Erik.
+- **Erik**, black: the everyday cat, and fond of Jexit.
+- **Boris**, brown: lazy, and not much of a climber.
+
+Friends now and then curl up to sleep next to each other.
+
+## ⚠️ This extension modifies VS Code's files
+
+VS Code doesn't let extensions draw outside their own panels. To let the cats roam the
+whole window, Pixel Cat adds one `<script>` tag to VS Code's `workbench.html` and puts its
+script file next to it. **It asks before it changes anything**, and nothing is changed if
+you say no.
+
+Good to know:
+
+- **VS Code will say its installation "appears to be corrupt".** That warning is about this
+  change. You can dismiss it ("Don't show again"). VS Code may also show `[Unsupported]`
+  in the title bar.
+- **To undo it,** run **Pixel Cat: Remove from VS Code** and reload. Uninstalling the
+  extension also restores the files.
+- **VS Code updates** replace the patched files; Pixel Cat puts the cats back after an
+  update and reloads the window once.
+- **It needs write access to VS Code's install folder.** The default per-user install on
+  Windows works. If VS Code is installed for all users (for example under Program Files),
+  run it once as administrator. Read-only installs (such as some Linux packages) can't be
+  patched.
+- If your company manages VS Code, check with them first.
+
+## Commands
+
+| Command | What it does |
+|---|---|
+| Pixel Cat: Hide / Show | Hide or show the cats (also: click the cats in the status bar) |
+| Pixel Cat: Toggle Jexit / Erik / Boris | Send one cat away or bring it back |
+| Pixel Cat: Toggle Debug Mode | Show the floors and walls the cats get around on |
+| Pixel Cat: Remove from VS Code | Take the cats out and restore VS Code's files |
+| Pixel Cat: Let the Cat Back In | Put the cats back after removing them |
+
+## Settings
+
+- `pixelCat.scale`: size of one cat pixel, in screen pixels (default 2).
+
+## Credits
+
+All art and code are original, drawn from scratch.

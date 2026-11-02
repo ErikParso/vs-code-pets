@@ -7,3 +7,5 @@ tsconfig.json
 installed-app-roots.json
 *.vsix
 *.png
+.gitignore
+!images/icon.png

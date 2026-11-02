@@ -51,7 +51,6 @@ export function install(appRoot: string, script: string): boolean {
     changed = true;
   }
 
-  if (changed) updateChecksum(appRoot, page);
   return changed;
 }
 
@@ -77,7 +76,9 @@ export function uninstall(appRoot: string): boolean {
 }
 
 // VS Code verifies its core files against product.json and shows "installation appears to
-// be corrupt" on a mismatch. Keep the recorded checksum in step with the page.
+// be corrupt" on a mismatch. Installing leaves that check alone, so users are told their
+// VS Code was changed. Older versions of Pixel Cat updated the recorded checksum instead;
+// once the page is restored, put it back in step with it.
 function updateChecksum(appRoot: string, page: Page): void {
   const productFile = path.join(appRoot, 'product.json');
   const raw = fs.readFileSync(productFile, 'utf8');
