@@ -16,8 +16,8 @@
   const EDGE = 3; // tolerance when matching edges, px
   const WALL_LEAP = 80; // one leap up a wall
 
-  // The cats, from inject/cats.json (passed in by the extension). While a cat is out, the
-  // extension shows its marker in the status bar. Personality: sleep = how readily it naps,
+  // The cats, from inject/cats.json (passed in by the extension); which are out is read from
+  // the status bar (see poll). Personality: sleep = how readily it naps,
   // nap = how long, energy = how readily it trots and jumps (below 0.5 it also walks less).
   // Likes: how much it likes other cats (1 = a lot).
   const CATS = (window.PixelCatConfig && window.PixelCatConfig.cats) || [];
@@ -59,7 +59,7 @@
   /** @type {any} */
   let cat = null; // the cat currently being updated or drawn; the behaviour code acts on it
   let shown = false;
-  let debug = false; // 🐞 in the status bar: the floors and walls are drawn
+  let debug = false; // debug mode: the floors, walls and hunger are drawn
   let ink = '#888';
 
   const catW = () => (SP.width * px) / dpr;
@@ -367,7 +367,7 @@
 
   // ---- fish ----------------------------------------------------------------
   //
-  // Clicking the 🐟 next to the cats in the status bar throws a fish from there, landing
+  // Clicking the 🐟 in the status bar throws a fish from there, landing
   // near a cat. An awake cat close to a fish (on its floor, or one move away) goes and eats
   // it. Fish stay until eaten; with more than MAX_FISH out, the oldest fades away.
 
@@ -813,30 +813,21 @@
 
   // ---- wiring ------------------------------------------------------------
 
-  // The extension shows each cat's marker in the status bar while that cat is out (and the
-  // extension is enabled), plus a 🐞 in debug mode. No markers means: no cats.
-  function statusText() {
-    const bar = document.querySelector('.part.statusbar');
-    return (bar && bar.textContent) || '';
-  }
-
-  // Which cats are out. Erik's 🐈‍⬛ contains Jexit's 🐈, so longer markers are matched (and
-  // removed) first.
-  function catsOut(text) {
-    const out = new Set();
-    let rest = text;
-    for (const def of [...CATS].sort((a, b) => b.marker.length - a.marker.length)) {
-      if (rest.includes(def.marker)) out.add(def.name);
-      rest = rest.split(def.marker).join('');
-    }
-    return out;
+  // While any cats are out, the extension shows its 🐟 in the status bar, labelled (for
+  // screen readers, as aria-label) "Pixel Cat: throw a fish to Jexit, Erik", plus
+  // " (debug)" in debug mode. No such item means: no cats.
+  const LABEL = 'Pixel Cat: throw a fish to ';
+  function statusLabel() {
+    const item = document.querySelector(`.part.statusbar .statusbar-item[aria-label^="${LABEL}"]`);
+    return (item && item.getAttribute('aria-label')) || '';
   }
 
   function poll() {
-    const text = statusText();
-    const out = catsOut(text);
+    const label = statusLabel();
+    debug = label.endsWith(' (debug)');
+    const names = label.slice(LABEL.length).replace(/ \(debug\)$/, '').split(', ');
+    const out = new Set(label ? CATS.map((def) => def.name).filter((n) => names.includes(n)) : []);
     const allowed = out.size > 0;
-    debug = text.includes('🐞');
     if (allowed !== shown) console.info(`[pixel-cat] ${allowed ? 'showing' : 'hiding'} the cats`);
     if (allowed && !shown) {
       ink = getComputedStyle(document.querySelector('.monaco-workbench') || document.body)

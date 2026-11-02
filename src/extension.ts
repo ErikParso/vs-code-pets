@@ -6,15 +6,14 @@ import { install, uninstall } from './injector';
 import { rememberAppRoot } from './state';
 
 // The cat itself runs inside VS Code's window (see inject/world.js). This side installs
-// it, and owns the status bar item the cat watches: while the item exists the extension
-// is enabled, and its text says whether the user has hidden the cat.
+// it, and owns the status bar item the cat watches (the 🐟): while the item is shown the
+// cats are out, and its label says which ones.
 
 interface CatDef {
   name: string;
-  marker: string; // shown in the status bar while the cat is out
 }
 
-// The cats (names, markers, coats, personalities, likes) live in inject/cats.json, shared
+// The cats (names, coats, personalities, likes) live in inject/cats.json, shared
 // with the cat script. Each needs a pixelCat.toggle<Name> command in package.json.
 function readCats(extensionPath: string): CatDef[] {
   return JSON.parse(fs.readFileSync(path.join(extensionPath, 'inject', 'cats.json'), 'utf8'));
@@ -70,37 +69,27 @@ export function activate(context: vscode.ExtensionContext): void {
     }
   };
 
-  const status = vscode.window.createStatusBarItem('pixelCat.status', vscode.StatusBarAlignment.Right, -1000);
-  status.name = 'Pixel Cat';
-  status.command = 'pixelCat.toggle';
-  // The page reads the markers to know which cats are out.
-  const isOut = (name: string): boolean => context.globalState.get(`out.${name}`, true);
-  const render = (): void => {
-    const debug = context.globalState.get('debug', false);
-    const markers = CATS.filter((c) => isOut(c.name)).map((c) => c.marker).join('');
-    const hidden = context.globalState.get('hidden', false) || !markers;
-    status.text = hidden ? '$(eye-closed)' : markers + (debug ? '🐞' : '');
-    status.tooltip = hidden ? 'Pixel Cat: the cats are hiding. Click to call them back.' : 'Pixel Cat: click to hide the cats.';
-    status.accessibilityInformation = { label: hidden ? 'Pixel Cat (hidden)' : 'Pixel Cat' };
-    renderFish();
-  };
-  // The fish button, next to the cats. The cats' page catches the click itself (it knows
-  // where the button is), so the command only makes the item clickable.
+  // The fish button: the one status bar item. The cats' page catches the click itself (it
+  // knows where the button is), so the command only makes the item clickable. The page also
+  // reads which cats are out (and debug mode) from its accessibility label, which VS Code
+  // puts on the item as its aria-label; no item means no cats.
   const fish = vscode.window.createStatusBarItem('pixelCat.fish', vscode.StatusBarAlignment.Right, -1001);
-  fish.name = 'Pixel Cat: Fish';
+  fish.name = 'Pixel Cat';
   fish.text = '🐟';
   fish.tooltip = 'Throw the cats a fish';
-  fish.accessibilityInformation = { label: 'Throw the cats a fish' };
   fish.command = 'pixelCat.fish';
-  const renderFish = (): void => {
-    const visible = status.text !== '$(eye-closed)' && !context.globalState.get('removed', false) &&
-      context.globalState.get('consented', false);
+  const isOut = (name: string): boolean => context.globalState.get(`out.${name}`, true);
+  const render = (): void => {
+    const out = CATS.filter((c) => isOut(c.name)).map((c) => c.name);
+    const debug = context.globalState.get('debug', false);
+    fish.accessibilityInformation = { label: `Pixel Cat: throw a fish to ${out.join(', ')}${debug ? ' (debug)' : ''}` };
+    const visible = out.length > 0 && !context.globalState.get('hidden', false) &&
+      !context.globalState.get('removed', false) && context.globalState.get('consented', false);
     if (visible) fish.show();
     else fish.hide();
   };
 
   render();
-  if (!context.globalState.get('removed', false) && context.globalState.get('consented', false)) status.show();
 
   // Nothing in VS Code is changed until the user agrees, once. "Not now" counts as
   // removing the cats; "Pixel Cat: Let the Cat Back In" brings them (and asks no more).
@@ -120,17 +109,14 @@ export function activate(context: vscode.ExtensionContext): void {
     );
     if (choice) {
       await context.globalState.update('consented', true);
-      status.show();
       ensureInstalled();
     } else {
       await context.globalState.update('removed', true);
-      status.hide();
     }
     render();
   };
 
   context.subscriptions.push(
-    status,
     fish,
     vscode.commands.registerCommand('pixelCat.fish', () => undefined),
     vscode.commands.registerCommand('pixelCat.toggle', async () => {
@@ -155,7 +141,6 @@ export function activate(context: vscode.ExtensionContext): void {
     }),
     vscode.commands.registerCommand('pixelCat.remove', async () => {
       await context.globalState.update('removed', true);
-      status.hide();
       render();
       try {
         uninstall(appRoot);
@@ -168,7 +153,6 @@ export function activate(context: vscode.ExtensionContext): void {
       // Asked for by name: that is consent.
       await context.globalState.update('removed', false);
       await context.globalState.update('consented', true);
-      status.show();
       render();
       ensureInstalled();
     }),

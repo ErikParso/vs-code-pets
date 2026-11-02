@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.1.18
+
+The cat icons are gone from the status bar; only the 🐟 is left. Hide and show the cats
+with the Pixel Cat commands.
+
 ## 0.1.17
 
 A hungry cat asks for food with a little fish floating up over its head and fading away,

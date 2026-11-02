@@ -10,7 +10,7 @@ slide down their sides, and nap on the status bar.
 
 Friends now and then curl up to sleep next to each other.
 
-**Feeding:** click the 🐟 next to the cats in the status bar to throw them a fish. It lands
+**Feeding:** click the 🐟 in the status bar to throw the cats a fish. It lands
 near a cat, and an awake cat close by trots over and eats it. Sleeping cats ignore fish
 until they wake up. Up to 10 fish can lie around at once.
 
@@ -45,7 +45,7 @@ Good to know:
 
 | Command | What it does |
 |---|---|
-| Pixel Cat: Hide / Show | Hide or show the cats (also: click the cats in the status bar) |
+| Pixel Cat: Hide / Show | Hide or show the cats |
 | Pixel Cat: Toggle Jexit / Erik / Boris | Send one cat away or bring it back |
 | Pixel Cat: Toggle Debug Mode | Show the floors and walls the cats get around on, and each cat's hunger. Alt+click the 🐟 to make the cats hungrier, Shift+click to make them fuller |
 | Pixel Cat: Remove from VS Code | Take the cats out and restore VS Code's files |
