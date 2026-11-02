@@ -304,6 +304,7 @@
   function climb(o) {
     cat.wall = o.wall;
     cat.dest = o.dest; // the floor it is heading for
+    cat.origin = cat.floor; // the floor it started from
     cat.floor = null;
     cat.x = o.wall.x;
     if (o.dest.y < cat.y) return wallStep();
@@ -427,7 +428,17 @@
         const k = clamp((cat.t - WIND_UP) / HOP_TIME, 0, 1);
         const sink = cat.t < WIND_UP ? px / dpr : 0; // one sprite pixel
         cat.y = cat.hopFrom + (cat.hopTo - cat.hopFrom) * (1 - (1 - k) * (1 - k)) + sink;
-        if (cat.t >= cat.dur) wallStep();
+        if (cat.t >= cat.dur) {
+          // Now and then it thinks better of it and slides back down to where it started.
+          // Lazier cats give up more often.
+          if (Math.random() < 0.05 / cat.personality.energy) {
+            cat.dest = cat.origin;
+            cat.vy = 0;
+            setState('slide');
+          } else {
+            wallStep();
+          }
+        }
         break;
       }
       case 'slide':

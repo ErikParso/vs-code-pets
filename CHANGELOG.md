@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.1.5
+
+Cats sometimes think better of a climb and slide back down to where they started. Lazy
+Boris gives up most often.
+
 ## 0.1.4
 
 A nicer finish to a climb: once another leap would take its paws past the ledge, the cat
