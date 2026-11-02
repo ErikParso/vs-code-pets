@@ -165,6 +165,19 @@
       13: 'KOK.....KOOOODOOOOKWWK..',
     }),
     climbReach,
+    // Springing up: hind legs pushed out straight below.
+    climbPush: patch(climbReach, {
+      20: '...KKKOKKOK.....',
+      21: '.....KOKKOK.....',
+      22: '.....KWKKWK.....',
+      23: '......KKKK......',
+    }),
+    // Holding on, tail swung out.
+    climbTail: patch(climbReach, {
+      15: '.K..KOOOOOOK....',
+      16: 'KOK.KOOOOOOK....',
+      17: 'KOK..KOOOOK.....',
+    }),
     climbPull,
     sleep1: sleep,
     sleep2: patch(sleep, {

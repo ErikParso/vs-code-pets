@@ -2,7 +2,7 @@
   "name": "roaming-pixel-cats",
   "displayName": "Roaming Pixel Cats",
   "description": "Tiny pixel-art cats that roam your whole VS Code window: they walk, nap, jump between panels, climb up and slide down.",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "publisher": "codericsro",
   "license": "MIT",
   "icon": "images/icon.png",

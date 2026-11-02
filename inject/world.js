@@ -311,14 +311,15 @@
     setState('slide');
   }
 
-  // Up the wall: a quick spring that eases out at the top, then (unless it has arrived) a
-  // moment holding still, looking around.
+  // Up the wall: the cat gathers itself (sinking a little), springs up easing out at the
+  // top, then (unless it has arrived) holds on a moment, swishing its tail.
+  const WIND_UP = 0.12;
   const HOP_TIME = 0.35;
   function wallStep() {
     if (cat.y <= cat.dest.y + 1) return arrive();
     cat.hopFrom = cat.y;
     cat.hopTo = Math.max(cat.dest.y, cat.y - WALL_LEAP);
-    setState('wallhop', HOP_TIME + (cat.hopTo > cat.dest.y ? rand(0.4, 0.7) : 0));
+    setState('wallhop', WIND_UP + HOP_TIME + (cat.hopTo > cat.dest.y ? rand(0.4, 0.7) : 0));
   }
 
   // Level with its destination: step off the wall onto it.
@@ -412,8 +413,9 @@
         break;
       }
       case 'wallhop': {
-        const k = Math.min(1, cat.t / HOP_TIME);
-        cat.y = cat.hopFrom + (cat.hopTo - cat.hopFrom) * (1 - (1 - k) * (1 - k));
+        const k = clamp((cat.t - WIND_UP) / HOP_TIME, 0, 1);
+        const sink = cat.t < WIND_UP ? px / dpr : 0; // one sprite pixel
+        cat.y = cat.hopFrom + (cat.hopTo - cat.hopFrom) * (1 - (1 - k) * (1 - k)) + sink;
         if (cat.t >= cat.dur) wallStep();
         break;
       }
@@ -447,8 +449,11 @@
         // Legs move faster when trotting.
         return cycle(['walkA', 'walkB', 'walkA', 'walkD'], (7 * cat.speed) / WALK_SPEED);
       case 'wallhop':
-        // Reaching up, then pulling itself up (if it moves); then holding on.
-        return cat.t > HOP_TIME / 2 && cat.t < HOP_TIME ? 'climbPull' : 'climbReach';
+        // Gathered in, pushing off, reaching to grab; then holding on, tail swishing.
+        if (cat.t < WIND_UP) return 'climbPull';
+        if (cat.t < WIND_UP + HOP_TIME / 2) return 'climbPush';
+        if (cat.t < WIND_UP + HOP_TIME) return 'climbReach';
+        return cycle(['climbReach', 'climbTail'], 3);
       case 'slide':
         return 'climbPull'; // paws gathered in, braking
       case 'sleep':
