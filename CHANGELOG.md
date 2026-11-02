@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.1.19
+
+Trust: each cat has a trust in you from 0 to 1 (starting at 0.1). Every fish it eats adds
+0.01; every 10 minutes it spends starving takes 0.01 off. Only changes while VS Code is
+open, and is remembered across reloads. Nothing depends on it yet. In debug mode a pink bar
+under the hunger bar shows it, and Ctrl+click / Ctrl+Shift+click on the 🐟 adds / takes
+away trust.
+
 ## 0.1.18
 
 The cat icons are gone from the status bar; only the 🐟 is left. Hide and show the cats

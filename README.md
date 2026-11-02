@@ -16,8 +16,11 @@ until they wake up. Up to 10 fish can lie around at once.
 
 **Hunger:** the cats get hungrier as you work (full to starving in about 40 minutes), and
 each fish fills a cat halfway. A nearly full cat ignores fish; a hungry one asks for food
-now and then: a little fish floats up over its head, like the Zs. Hunger is remembered
-across reloads.
+now and then: a little fish floats up over its head, like the Zs.
+
+**Trust:** each cat's trust in you (0 to 1, starting at 0.1) grows by 0.01 with every fish it
+eats, and drops by 0.01 for every 10 minutes it is left starving. It builds over weeks.
+Hunger and trust only change while VS Code is open, and are remembered across reloads.
 
 ## ⚠️ This extension modifies VS Code's files
 
@@ -47,7 +50,7 @@ Good to know:
 |---|---|
 | Pixel Cat: Hide / Show | Hide or show the cats |
 | Pixel Cat: Toggle Jexit / Erik / Boris | Send one cat away or bring it back |
-| Pixel Cat: Toggle Debug Mode | Show the floors and walls the cats get around on, and each cat's hunger. Alt+click the 🐟 to make the cats hungrier, Shift+click to make them fuller |
+| Pixel Cat: Toggle Debug Mode | Show the floors and walls the cats get around on, and each cat's hunger and trust. Alt+click the 🐟 to make the cats hungrier, Shift+click to make them fuller; Ctrl+click adds trust, Ctrl+Shift+click takes it away |
 | Pixel Cat: Remove from VS Code | Take the cats out and restore VS Code's files |
 | Pixel Cat: Let the Cat Back In | Put the cats back after removing them |
 

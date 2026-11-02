@@ -228,9 +228,11 @@
 
   // A cat comes out: it walks in along the bottom.
   function spawn(def) {
-    const hunger = savedHunger()[def.name];
+    const hunger = saved('hunger')[def.name];
+    const trust = saved('trust')[def.name];
     cat = { x: 0, y: 0, vy: 0, dir: 1, state: 'walk', t: 0, dur: 0, floor: null, ...def };
     cat.hunger = typeof hunger === 'number' ? hunger : 0.5;
+    cat.trust = typeof trust === 'number' ? trust : TRUST_START;
     cat.askIn = rand(2, 5); // until it next asks, while hungry
     cats.push(cat);
     walkIn();
@@ -487,35 +489,46 @@
   //
   // Each cat gets hungrier as time goes by (0 = full, 1 = starving), and a fish takes off
   // half. Nearly full, it ignores fish; hungry, it asks for one now and then (a little fish
-  // floats up over its head, like the Zs). Kept in the window's localStorage, so it lasts across reloads. In debug mode,
-  // Alt+click on the 🐟 makes every cat hungrier, Shift+click fuller.
+  // floats up over its head, like the Zs).
+  //
+  // Trust (0 to 1) grows slowly with every fish a cat eats, and drops while it is left
+  // starving. Both only change while VS Code is open, and both are kept in the window's
+  // localStorage, so they last across reloads. In debug mode, Alt+click on the 🐟 makes
+  // every cat hungrier, Shift+click fuller; Ctrl+click adds trust, Ctrl+Shift+click takes
+  // it away.
 
   const HUNGER_RATE = 1 / (40 * 60); // full to starving in 40 minutes
   const FULL = 0.2; // at or below: ignores fish
   const ASKING = 0.7; // above: asks for food
   const MEAL = 0.5; // what one fish takes off
-  const HUNGER_KEY = 'pixelCat.hunger';
+  const TRUST_START = 0.1;
+  const TRUST_PER_FISH = 0.01;
+  const TRUST_LOSS = 0.01 / (10 * 60); // a second, while starving: 0.01 every 10 minutes
+  const SAVED = { hunger: 'pixelCat.hunger', trust: 'pixelCat.trust' }; // {name: value} each
 
-  function savedHunger() {
+  function saved(what) {
     try {
-      return JSON.parse(localStorage.getItem(HUNGER_KEY) || '{}');
+      return JSON.parse(localStorage.getItem(SAVED[what]) || '{}');
     } catch (e) {
       return {};
     }
   }
 
-  function saveHunger() {
-    const all = savedHunger();
-    for (const c of cats) all[c.name] = c.hunger;
-    try {
-      localStorage.setItem(HUNGER_KEY, JSON.stringify(all));
-    } catch (e) {
-      // No storage: it just starts afresh next time.
+  function save() {
+    for (const what of Object.keys(SAVED)) {
+      const all = saved(what);
+      for (const c of cats) all[c.name] = c[what];
+      try {
+        localStorage.setItem(SAVED[what], JSON.stringify(all));
+      } catch (e) {
+        // No storage: it just starts afresh next time.
+      }
     }
   }
 
   function updateHunger(dt) {
     cat.hunger = Math.min(1, cat.hunger + HUNGER_RATE * dt);
+    if (cat.hunger >= 1) cat.trust = Math.max(0, cat.trust - TRUST_LOSS * dt);
     if (cat.hunger > ASKING && (cat.state === 'sit' || cat.state === 'walk')) {
       cat.askIn -= dt;
       if (cat.askIn <= 0) {
@@ -594,7 +607,8 @@
           fishes = fishes.filter((g) => g !== cat.meal);
           cat.meal = null;
           cat.hunger = Math.max(0, cat.hunger - MEAL);
-          saveHunger();
+          cat.trust = Math.min(1, cat.trust + TRUST_PER_FISH);
+          save();
           zs.push({ x: cat.x, y: cat.y - catH() - 4, t: 0, heart: true });
           setState('sit', rand(2, 5));
         }
@@ -755,24 +769,31 @@
     for (const c of cats) {
       cat = c;
       drawCat();
-      if (debug) drawHunger();
+      if (debug) drawMeters();
     }
     drawZs();
   }
 
-  // Debug: a hunger bar under the cat; teal = full (ignores fish), orange = would eat,
-  // red = asking.
-  function drawHunger() {
+  // Debug: bars under the cat. Hunger: teal = full (ignores fish), orange = would eat,
+  // red = asking. Below it, trust in pink.
+  function drawMeters() {
     const t = Math.max(2, Math.round(2 * dpr));
     const w = Math.round(catW() * 0.6 * dpr);
     const x = Math.round((onWall() ? cat.wall.x : cat.x) * dpr - w / 2);
     const y = Math.round((cat.y + 3) * dpr);
-    ctx.fillStyle = ink;
-    ctx.globalAlpha = 0.35;
-    ctx.fillRect(x, y, w, t);
-    ctx.globalAlpha = 1;
-    ctx.fillStyle = cat.hunger > ASKING ? '#e63946' : cat.hunger > FULL ? '#ff9f1c' : '#2ec4b6';
-    ctx.fillRect(x, y, Math.round(w * cat.hunger), t);
+    const bars = [
+      [cat.hunger, cat.hunger > ASKING ? '#e63946' : cat.hunger > FULL ? '#ff9f1c' : '#2ec4b6'],
+      [cat.trust, SP.palette.P],
+    ];
+    bars.forEach(([value, color], i) => {
+      const by = y + i * 2 * t;
+      ctx.fillStyle = ink;
+      ctx.globalAlpha = 0.35;
+      ctx.fillRect(x, by, w, t);
+      ctx.globalAlpha = 1;
+      ctx.fillStyle = color;
+      ctx.fillRect(x, by, Math.round(w * value), t);
+    });
   }
 
   function drawCat() {
@@ -840,7 +861,7 @@
     cats = cats.filter((c) => out.has(c.name));
     for (const g of fishes) if (g.eater && !cats.includes(g.eater)) g.eater = null; // sent away mid-meal
     for (const def of CATS) if (out.has(def.name) && !cats.some((c) => c.name === def.name)) spawn(def);
-    saveHunger();
+    save();
   }
 
   let last = 0;
@@ -868,16 +889,18 @@
     createOverlay();
     resize();
     window.addEventListener('resize', resize);
-    // The 🐟 the extension shows next to the cats: throw a fish from where it is. (In debug
-    // mode, Alt/Shift+click makes the cats hungrier/fuller instead.)
+    // The 🐟 the extension shows in the status bar: throw a fish from where it is. (In debug
+    // mode, modifier+clicks change the cats' hunger and trust instead; see hunger.)
     document.addEventListener(
       'click',
       (e) => {
         const item = e.target instanceof Element && e.target.closest('.statusbar-item');
         if (!shown || !item || !(item.textContent || '').includes('🐟')) return;
-        if (debug && (e.altKey || e.shiftKey)) {
-          for (const c of cats) c.hunger = clamp(c.hunger + (e.altKey ? 0.1 : -0.1), 0, 1);
-          saveHunger();
+        if (debug && (e.ctrlKey || e.altKey || e.shiftKey)) {
+          const what = e.ctrlKey ? 'trust' : 'hunger';
+          const more = e.ctrlKey ? !e.shiftKey : e.altKey;
+          for (const c of cats) c[what] = clamp(c[what] + (more ? 0.1 : -0.1), 0, 1);
+          save();
           return;
         }
         const r = item.getBoundingClientRect();
