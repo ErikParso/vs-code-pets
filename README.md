@@ -11,7 +11,7 @@ slide down their sides, and nap wherever they are.
 Now and then a cat curls up to sleep next to another sleeping cat.
 
 **Feeding:** click the 🐟 in the status bar to throw the cats a fish. It lands
-near a cat, and an awake cat close by trots over and eats it. Sleeping cats ignore fish
+on a cat's floor, and an awake cat on that floor trots over and eats it. Sleeping cats ignore fish
 until they wake up. Up to 10 fish can lie around at once.
 
 **Hunger:** the cats get hungrier as you work (full to starving in about 40 minutes), and

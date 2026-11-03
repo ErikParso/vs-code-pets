@@ -368,9 +368,9 @@
 
   // ---- fish ----------------------------------------------------------------
   //
-  // Clicking the 🐟 in the status bar throws a fish from there, landing
-  // near a cat. An awake cat close to a fish (on its floor, or one move away) goes and eats
-  // it. Fish stay until eaten; with more than MAX_FISH out, the oldest fades away.
+  // Clicking the 🐟 in the status bar throws a fish from there, landing on a cat's floor. An
+  // awake cat on the floor of a fish goes and eats it. Fish stay until eaten; with more
+  // than MAX_FISH out, the oldest fades away.
 
   const MAX_FISH = 10;
   const EAT_TIME = 4;
@@ -443,7 +443,7 @@
     }
   }
 
-  // A fish just landed: awake cats on a floor that can get to it drop what they are doing
+  // A fish just landed: awake cats on its floor drop what they are doing
   // and go for it. (Cats in the air or on a wall go for it once they land.)
   function noticeFish() {
     for (const c of cats) {
@@ -455,20 +455,14 @@
     }
   }
 
-  // The nearest fish the cat can get to: on its floor, or one move away (with that move).
-  // Once it has picked one it sticks with it: standing at one fish of a cluster can make
-  // another the nearest, and it would trot back and forth between them for ever.
+  // The nearest fish on the cat's floor. Once it has picked one it sticks with it: standing
+  // at one fish of a cluster can make another the nearest, and it would trot back and forth
+  // between them for ever.
   function fishFor() {
     if (cat.hunger <= FULL) return null;
-    const live = fishes.filter((g) => landed(g) && !g.eater && !g.fade);
-    if (live.includes(cat.goingFor) && cat.goingFor.floor === cat.floor) return { fish: cat.goingFor };
-    const here = live.filter((g) => g.floor === cat.floor).sort((a, b) => Math.abs(a.x - cat.x) - Math.abs(b.x - cat.x));
-    if (here.length) return { fish: here[0] };
-    for (const o of reachable()) {
-      const g = live.find((g) => g.floor === (o.wall ? o.dest : o.floor));
-      if (g) return { fish: g, move: o };
-    }
-    return null;
+    const here = fishes.filter((g) => landed(g) && !g.eater && !g.fade && g.floor === cat.floor);
+    if (here.includes(cat.goingFor)) return cat.goingFor;
+    return here.sort((a, b) => Math.abs(a.x - cat.x) - Math.abs(b.x - cat.x))[0] || null;
   }
 
   function eat(g) {
@@ -557,11 +551,9 @@
       cat.route = null;
       return climb(o);
     }
-    const food = fishFor();
-    if (food && food.move) return go(food.move);
-    if (food) {
+    const g = fishFor();
+    if (g) {
       // Trot over and stand with its mouth at the fish, then eat.
-      const g = food.fish;
       cat.goingFor = g;
       const side = g.x >= cat.x ? 1 : -1;
       const tx = clamp(g.x - side * halfW() * 0.8, lo, hi);

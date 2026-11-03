@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.1.24
+
+Cats only go for fish on their own floor (no more jumping or climbing to reach one).
+
 ## 0.1.23
 
 One trait per cat: energy. The more a cat has, the more it walks, trots and jumps, and the
