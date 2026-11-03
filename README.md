@@ -4,11 +4,11 @@ Three tiny pixel-art cats that live in your whole VS Code window, not in a panel
 walk along the edges of the sidebar, editor and panels, jump between them, climb up and
 slide down their sides, and nap on the status bar.
 
-- **Jexit**, orange: sleepy, and fond of Erik.
-- **Erik**, black: the everyday cat, and fond of Jexit.
+- **Jexit**, orange: sleepy.
+- **Erik**, black: the everyday cat.
 - **Boris**, brown: lazy, and not much of a climber.
 
-Friends now and then curl up to sleep next to each other.
+Now and then a cat curls up to sleep next to another sleeping cat.
 
 **Feeding:** click the 🐟 in the status bar to throw the cats a fish. It lands
 near a cat, and an awake cat close by trots over and eats it. Sleeping cats ignore fish

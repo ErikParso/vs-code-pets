@@ -1,5 +1,16 @@
 # Changelog
 
+## 0.1.21
+
+Simpler snuggling: a cat may curl up next to any sleeping cat on its floor, with no pairs
+or checks, so now and then a third piles on.
+
+## 0.1.20
+
+Cats no longer have favourites: any cat may curl up next to another sleeping cat, only in
+pairs (a third one never piles on), and never when the spot would be off the end of the
+floor.
+
 ## 0.1.19
 
 Trust: each cat has a trust in you from 0 to 1 (starting at 0.1). Every fish it eats adds

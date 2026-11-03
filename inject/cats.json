@@ -2,19 +2,16 @@
   {
     "name": "Jexit",
     "coat": "orange",
-    "likes": { "Erik": 1 },
     "personality": { "sleep": 2, "nap": 1.3, "energy": 0.7 }
   },
   {
     "name": "Erik",
     "coat": "black",
-    "likes": { "Jexit": 1 },
     "personality": { "sleep": 1, "nap": 1, "energy": 1 }
   },
   {
     "name": "Boris",
     "coat": "brown",
-    "likes": {},
     "personality": { "sleep": 1.3, "nap": 1.2, "energy": 0.3 }
   }
 ]

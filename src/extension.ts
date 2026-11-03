@@ -13,7 +13,7 @@ interface CatDef {
   name: string;
 }
 
-// The cats (names, coats, personalities, likes) live in inject/cats.json, shared
+// The cats (names, coats, personalities) live in inject/cats.json, shared
 // with the cat script. Each needs a pixelCat.toggle<Name> command in package.json.
 function readCats(extensionPath: string): CatDef[] {
   return JSON.parse(fs.readFileSync(path.join(extensionPath, 'inject', 'cats.json'), 'utf8'));

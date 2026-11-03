@@ -19,7 +19,6 @@
   // The cats, from inject/cats.json (passed in by the extension); which are out is read from
   // the status bar (see poll). Personality: sleep = how readily it naps,
   // nap = how long, energy = how readily it trots and jumps (below 0.5 it also walks less).
-  // Likes: how much it likes other cats (1 = a lot).
   const CATS = (window.PixelCatConfig && window.PixelCatConfig.cats) || [];
 
   // Workbench parts whose edges are floors (top edge) and walls (side edges).
@@ -538,17 +537,14 @@
     }
   }
 
-  // How much this cat likes another (0 = not at all).
-  const feeling = (other) => (cat.likes && cat.likes[other.name]) || 0;
-
   // Pick the next thing to do on a floor, in keeping with the cat's personality. Now and
-  // then it curls up next to a friend sleeping on the same floor.
+  // then it curls up next to another cat sleeping on the same floor.
   function decide() {
     const f = cat.floor;
     const p = cat.personality;
     const [lo, hi] = range(f);
     if (cat.napNext) {
-      // Walked over to the sleeping friend (so it faces it): curl up.
+      // Walked over to the sleeping cat (so it faces it): curl up.
       cat.napNext = false;
       return setState('sleep', rand(12, 35) * p.nap);
     }
@@ -569,14 +565,14 @@
       if (Math.abs(tx - cat.x) <= 2) return eat(g);
       return walkTo(tx, WALK_SPEED * 4); // a sprint
     }
-    const friend = cats.find((c) => c !== cat && c.floor === f && c.state === 'sleep' && feeling(c) > 0);
+    const friend = cats.find((c) => c !== cat && c.floor === f && c.state === 'sleep');
     const options = reachable();
     const choice = pick([
       ['sit', 22],
       ['walk', 32 * Math.min(1, p.energy * 2)], // only really lazy cats walk less
       ['sleep', (f.y > H - 60 ? 22 : 5) * p.sleep], // its favourite bed is the status bar
       ['jump', options.length ? 35 * p.energy : 0],
-      ['snuggle', friend ? 15 * feeling(friend) : 0],
+      ['snuggle', friend ? 15 : 0],
     ]);
     switch (choice) {
       case 'sit':
@@ -590,6 +586,7 @@
       case 'jump':
         return go(any(options));
       case 'snuggle':
+        // Next to it on the side it comes from.
         cat.napNext = true;
         return walkTo(clamp(friend.x + (cat.x < friend.x ? -1 : 1) * catW() * 0.9, lo, hi), WALK_SPEED);
     }
