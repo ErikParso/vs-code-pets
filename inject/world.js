@@ -531,6 +531,8 @@
     }
   }
 
+  const SNUGGLE_REACH = 600; // furthest it walks to curl up next to a sleeping cat, px
+
   // A nap: shorter the more energy the cat has.
   const napTime = () => rand(12, 35) / cat.energy;
 
@@ -561,7 +563,10 @@
       if (Math.abs(tx - cat.x) <= 2) return eat(g);
       return walkTo(tx, WALK_SPEED * 4); // a sprint
     }
-    const friend = cats.find((c) => c !== cat && c.floor === f && c.state === 'sleep');
+    // The nearest cat sleeping on this floor, if it is within SNUGGLE_REACH.
+    const friend = cats
+      .filter((c) => c !== cat && c.floor === f && c.state === 'sleep' && Math.abs(c.x - cat.x) <= SNUGGLE_REACH)
+      .sort((a, b) => Math.abs(a.x - cat.x) - Math.abs(b.x - cat.x))[0];
     const options = reachable();
     const choice = pick([
       ['sit', 22],

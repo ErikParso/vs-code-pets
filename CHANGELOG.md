@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.1.26
+
+A cat only curls up next to a sleeping cat on its floor within 600 px, and picks the
+nearest one.
+
 ## 0.1.25
 
 A heart floats up when a cat curls up next to another sleeping cat.
