@@ -1,17 +1,5 @@
 [
-  {
-    "name": "Jexit",
-    "coat": "orange",
-    "personality": { "sleep": 2, "nap": 1.3, "energy": 0.7 }
-  },
-  {
-    "name": "Erik",
-    "coat": "black",
-    "personality": { "sleep": 1, "nap": 1, "energy": 1 }
-  },
-  {
-    "name": "Boris",
-    "coat": "brown",
-    "personality": { "sleep": 1.3, "nap": 1.2, "energy": 0.3 }
-  }
+  { "name": "Jexit", "coat": "orange", "energy": 0.7 },
+  { "name": "Erik", "coat": "black", "energy": 1 },
+  { "name": "Boris", "coat": "brown", "energy": 0.3 }
 ]

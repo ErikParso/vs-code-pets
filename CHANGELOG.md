@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.1.23
+
+One trait per cat: energy. The more a cat has, the more it walks, trots and jumps, and the
+less often and less long it naps (replaces the separate sleep and nap settings).
+
+## 0.1.22
+
+No favourite places: cats are as likely to nap on any floor (the status bar is no longer
+their bed), and nap a little less overall.
+
 ## 0.1.21
 
 Simpler snuggling: a cat may curl up next to any sleeping cat on its floor, with no pairs

@@ -17,8 +17,8 @@
   const WALL_LEAP = 80; // one leap up a wall
 
   // The cats, from inject/cats.json (passed in by the extension); which are out is read from
-  // the status bar (see poll). Personality: sleep = how readily it naps,
-  // nap = how long, energy = how readily it trots and jumps (below 0.5 it also walks less).
+  // the status bar (see poll). Energy (1 = an everyday cat): the more it has, the more it
+  // walks, trots and jumps, and the less often and less long it naps.
   const CATS = (window.PixelCatConfig && window.PixelCatConfig.cats) || [];
 
   // Workbench parts whose edges are floors (top edge) and walls (side edges).
@@ -537,16 +537,19 @@
     }
   }
 
-  // Pick the next thing to do on a floor, in keeping with the cat's personality. Now and
-  // then it curls up next to another cat sleeping on the same floor.
+  // A nap: shorter the more energy the cat has.
+  const napTime = () => rand(12, 35) / cat.energy;
+
+  // Pick the next thing to do on a floor, in keeping with the cat's energy. Now and then it
+  // curls up next to another cat sleeping on the same floor.
   function decide() {
     const f = cat.floor;
-    const p = cat.personality;
+    const e = cat.energy;
     const [lo, hi] = range(f);
     if (cat.napNext) {
       // Walked over to the sleeping cat (so it faces it): curl up.
       cat.napNext = false;
-      return setState('sleep', rand(12, 35) * p.nap);
+      return setState('sleep', napTime());
     }
     if (cat.route) {
       // Walked over to the wall: up or down it goes.
@@ -569,18 +572,18 @@
     const options = reachable();
     const choice = pick([
       ['sit', 22],
-      ['walk', 32 * Math.min(1, p.energy * 2)], // only really lazy cats walk less
-      ['sleep', (f.y > H - 60 ? 22 : 5) * p.sleep], // its favourite bed is the status bar
-      ['jump', options.length ? 35 * p.energy : 0],
+      ['walk', 32 * Math.min(1, e * 2)], // only really lazy cats walk less
+      ['sleep', 8 / e],
+      ['jump', options.length ? 35 * e : 0],
       ['snuggle', friend ? 15 : 0],
     ]);
     switch (choice) {
       case 'sit':
         return setState('sit', rand(2, 7));
       case 'sleep':
-        return setState('sleep', rand(12, 35) * p.nap);
+        return setState('sleep', napTime());
       case 'walk': {
-        const trot = Math.random() < 0.2 * p.energy;
+        const trot = Math.random() < 0.2 * e;
         return walkTo(clamp(cat.x + rand(-250, 250), lo, hi), WALK_SPEED * (trot ? 3 : 1));
       }
       case 'jump':
@@ -643,7 +646,7 @@
         if (cat.t >= cat.dur) {
           // Now and then it thinks better of it and slides back down to where it started.
           // Lazier cats give up more often.
-          if (Math.random() < 0.05 / cat.personality.energy) {
+          if (Math.random() < 0.05 / cat.energy) {
             cat.dest = cat.origin;
             cat.vy = 0;
             setState('slide');

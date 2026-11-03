@@ -2,7 +2,7 @@
 
 Three tiny pixel-art cats that live in your whole VS Code window, not in a panel. They
 walk along the edges of the sidebar, editor and panels, jump between them, climb up and
-slide down their sides, and nap on the status bar.
+slide down their sides, and nap wherever they are.
 
 - **Jexit**, orange: sleepy.
 - **Erik**, black: the everyday cat.
