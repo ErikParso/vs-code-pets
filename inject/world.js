@@ -541,8 +541,9 @@
     const e = cat.energy;
     const [lo, hi] = range(f);
     if (cat.napNext) {
-      // Walked over to the sleeping cat (so it faces it): curl up.
+      // Walked over to the sleeping cat (so it faces it): curl up, with a heart.
       cat.napNext = false;
+      zs.push({ x: cat.x, y: cat.y - catH() - 4, t: 0, heart: true });
       return setState('sleep', napTime());
     }
     if (cat.route) {

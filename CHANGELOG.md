@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.1.25
+
+A heart floats up when a cat curls up next to another sleeping cat.
+
 ## 0.1.24
 
 Cats only go for fish on their own floor (no more jumping or climbing to reach one).

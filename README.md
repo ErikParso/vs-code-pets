@@ -8,7 +8,7 @@ slide down their sides, and nap wherever they are.
 - **Erik**, black: the everyday cat.
 - **Boris**, brown: lazy, and not much of a climber.
 
-Now and then a cat curls up to sleep next to another sleeping cat.
+Now and then a cat curls up to sleep next to another sleeping cat, with a little heart.
 
 **Feeding:** click the 🐟 in the status bar to throw the cats a fish. It lands
 on a cat's floor, and an awake cat on that floor trots over and eats it. Sleeping cats ignore fish
