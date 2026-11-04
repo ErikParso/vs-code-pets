@@ -38,18 +38,6 @@
         "title": "Pixel Cat: Hide / Show"
       },
       {
-        "command": "pixelCat.toggleJexit",
-        "title": "Pixel Cat: Toggle Jexit"
-      },
-      {
-        "command": "pixelCat.toggleErik",
-        "title": "Pixel Cat: Toggle Erik"
-      },
-      {
-        "command": "pixelCat.toggleBoris",
-        "title": "Pixel Cat: Toggle Boris"
-      },
-      {
         "command": "pixelCat.debug",
         "title": "Pixel Cat: Toggle Debug Mode"
       },

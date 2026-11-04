@@ -16,8 +16,8 @@
   const EDGE = 3; // tolerance when matching edges, px
   const WALL_LEAP = 80; // one leap up a wall
 
-  // The cats, from inject/cats.json (passed in by the extension); which are out is read from
-  // the status bar (see poll). Energy (1 = an everyday cat): the more it has, the more it
+  // The cats, from inject/cats.json (passed in by the extension); which window each is in is
+  // settled by Web Locks (see roam). Energy (1 = an everyday cat): the more it has, the more it
   // walks, trots and jumps, and the less often and less long it naps.
   const CATS = (window.PixelCatConfig && window.PixelCatConfig.cats) || [];
 
@@ -189,6 +189,7 @@
     walls = next.walls;
     for (const c of cats) {
       cat = c;
+      if (cat.leaving) continue; // on its way out of the window anyway
       const f = cat.floor && floors.find((g) => Math.abs(g.y - cat.y) <= EDGE && touches(g, cat.x));
       cat.route = null; // the wall it was walking to may have moved
       if (f) {
@@ -225,11 +226,11 @@
     return lo <= hi ? [lo, hi] : [(lo + hi) / 2, (lo + hi) / 2];
   }
 
-  // A cat comes out: it walks in along the bottom.
-  function spawn(def) {
+  // A cat comes out: it walks in along the bottom. `done` lets it go to another window.
+  function spawn(def, done) {
     const hunger = saved('hunger')[def.name];
     const trust = saved('trust')[def.name];
-    cat = { x: 0, y: 0, vy: 0, dir: 1, state: 'walk', t: 0, dur: 0, floor: null, ...def };
+    cat = { x: 0, y: 0, vy: 0, dir: 1, state: 'walk', t: 0, dur: 0, floor: null, ...def, done };
     cat.hunger = typeof hunger === 'number' ? hunger : 0.5;
     cat.trust = typeof trust === 'number' ? trust : TRUST_START;
     cat.askIn = rand(2, 5); // until it next asks, while hungry
@@ -448,7 +449,7 @@
   function noticeFish() {
     for (const c of cats) {
       cat = c;
-      if (!['sit', 'walk', 'crouch'].includes(cat.state) || !cat.floor || !fishFor()) continue;
+      if (cat.leaving || !['sit', 'walk', 'crouch'].includes(cat.state) || !cat.floor || !fishFor()) continue;
       cat.route = null;
       cat.napNext = false;
       decide();
@@ -568,14 +569,19 @@
       .filter((c) => c !== cat && c.floor === f && c.state === 'sleep' && Math.abs(c.x - cat.x) <= SNUGGLE_REACH)
       .sort((a, b) => Math.abs(a.x - cat.x) - Math.abs(b.x - cat.x))[0];
     const options = reachable();
+    const exits = [f.x1 <= EDGE ? -1 : 0, f.x2 >= W - EDGE ? 1 : 0].filter(Boolean);
     const choice = pick([
       ['sit', 22],
       ['walk', 32 * Math.min(1, e * 2)], // only really lazy cats walk less
       ['sleep', 8 / e],
       ['jump', options.length ? 35 * e : 0],
       ['snuggle', friend ? 15 : 0],
+      ['leave', exits.length ? 1.5 : 0],
     ]);
     switch (choice) {
+      case 'leave':
+        cat.leaving = true;
+        return walkTo(any(exits) < 0 ? -catW() : W + catW(), WALK_SPEED * 2);
       case 'sit':
         return setState('sit', rand(2, 7));
       case 'sleep':
@@ -621,7 +627,8 @@
         const step = cat.speed * dt;
         if (Math.abs(cat.tx - cat.x) <= step) {
           cat.x = cat.tx;
-          decide();
+          if (cat.leaving) leave();
+          else decide();
         } else {
           cat.x += cat.dir * step;
         }
@@ -841,12 +848,26 @@
     return (item && item.getAttribute('aria-label')) || '';
   }
 
+  // Each cat is a Web Lock shared by all VS Code windows: the window holding it has the cat,
+  // until it walks out (or the window closes). Then the next window in line gets it.
+  function roam(def) {
+    if (!navigator.locks) return spawn(def, () => {});
+    const visit = () => new Promise((done) => spawn(def, done));
+    navigator.locks.request(`pixelCat.cat.${def.name}`, visit).then(() => roam(def));
+  }
+
+  // Walked out of the window: saved for whichever window gets it next (maybe this one).
+  function leave() {
+    save();
+    cats = cats.filter((c) => c !== cat);
+    cat.done();
+  }
+
+  let roaming = false;
   function poll() {
     const label = statusLabel();
     debug = label.endsWith(' (debug)');
-    const names = label.slice(LABEL.length).replace(/ \(debug\)$/, '').split(', ');
-    const out = new Set(label ? CATS.map((def) => def.name).filter((n) => names.includes(n)) : []);
-    const allowed = out.size > 0;
+    const allowed = !!label;
     if (allowed !== shown) console.info(`[pixel-cat] ${allowed ? 'showing' : 'hiding'} the cats`);
     if (allowed && !shown) {
       ink = getComputedStyle(document.querySelector('.monaco-workbench') || document.body)
@@ -856,9 +877,10 @@
     shown = allowed;
     if (!shown) return;
     relayout();
-    cats = cats.filter((c) => out.has(c.name));
-    for (const g of fishes) if (g.eater && !cats.includes(g.eater)) g.eater = null; // sent away mid-meal
-    for (const def of CATS) if (out.has(def.name) && !cats.some((c) => c.name === def.name)) spawn(def);
+    if (!roaming) {
+      roaming = true;
+      CATS.forEach(roam);
+    }
     save();
   }
 

@@ -10,6 +10,10 @@ slide down their sides, and nap wherever they are.
 
 Now and then a cat curls up to sleep next to another sleeping cat, with a little heart.
 
+**More than one window:** each cat is in only one VS Code window at a time. Now and then a
+cat walks out of its window, and may turn up in another one (or come back). When a window
+closes, its cats move to another open window.
+
 **Feeding:** click the 🐟 in the status bar to throw the cats a fish. It lands
 on a cat's floor, and an awake cat on that floor trots over and eats it. Sleeping cats ignore fish
 until they wake up. Up to 10 fish can lie around at once.
@@ -49,7 +53,6 @@ Good to know:
 | Command | What it does |
 |---|---|
 | Pixel Cat: Hide / Show | Hide or show the cats |
-| Pixel Cat: Toggle Jexit / Erik / Boris | Send one cat away or bring it back |
 | Pixel Cat: Toggle Debug Mode | Show the floors and walls the cats get around on, and each cat's hunger and trust. Alt+click the 🐟 to make the cats hungrier, Shift+click to make them fuller; Ctrl+click adds trust, Ctrl+Shift+click takes it away |
 | Pixel Cat: Remove from VS Code | Take the cats out and restore VS Code's files |
 | Pixel Cat: Let the Cat Back In | Put the cats back after removing them |

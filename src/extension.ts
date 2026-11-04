@@ -14,7 +14,7 @@ interface CatDef {
 }
 
 // The cats (names, coats, personalities) live in inject/cats.json, shared
-// with the cat script. Each needs a pixelCat.toggle<Name> command in package.json.
+// with the cat script.
 function readCats(extensionPath: string): CatDef[] {
   return JSON.parse(fs.readFileSync(path.join(extensionPath, 'inject', 'cats.json'), 'utf8'));
 }
@@ -78,9 +78,8 @@ export function activate(context: vscode.ExtensionContext): void {
   fish.text = '🐟';
   fish.tooltip = 'Throw the cats a fish';
   fish.command = 'pixelCat.fish';
-  const isOut = (name: string): boolean => context.globalState.get(`out.${name}`, true);
   const render = (): void => {
-    const out = CATS.filter((c) => isOut(c.name)).map((c) => c.name);
+    const out = CATS.map((c) => c.name);
     const debug = context.globalState.get('debug', false);
     fish.accessibilityInformation = { label: `Pixel Cat: throw a fish to ${out.join(', ')}${debug ? ' (debug)' : ''}` };
     const visible = out.length > 0 && !context.globalState.get('hidden', false) &&
@@ -120,21 +119,9 @@ export function activate(context: vscode.ExtensionContext): void {
     fish,
     vscode.commands.registerCommand('pixelCat.fish', () => undefined),
     vscode.commands.registerCommand('pixelCat.toggle', async () => {
-      if (!CATS.some((c) => isOut(c.name))) {
-        // Both were sent away one by one: calling them back brings both.
-        for (const c of CATS) await context.globalState.update(`out.${c.name}`, true);
-        await context.globalState.update('hidden', false);
-      } else {
-        await context.globalState.update('hidden', !context.globalState.get('hidden', false));
-      }
+      await context.globalState.update('hidden', !context.globalState.get('hidden', false));
       render();
     }),
-    ...CATS.map((c) =>
-      vscode.commands.registerCommand(`pixelCat.toggle${c.name}`, async () => {
-        await context.globalState.update(`out.${c.name}`, !isOut(c.name));
-        render();
-      })
-    ),
     vscode.commands.registerCommand('pixelCat.debug', async () => {
       await context.globalState.update('debug', !context.globalState.get('debug', false));
       render();
