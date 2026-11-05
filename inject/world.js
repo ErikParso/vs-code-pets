@@ -470,7 +470,7 @@
   // between them for ever.
   function fishFor() {
     if (!canEat(cat)) return null;
-    const here = fishes.filter((g) => landed(g) && !g.eater && !g.fade && g.floor === cat.floor);
+    const here = fishes.filter((g) => landed(g) && !g.eater && !g.fade && g.floor === cat.floor && !cats.some((c) => c !== cat && c.goingFor === g));
     if (here.includes(cat.goingFor)) return cat.goingFor;
     return here.sort((a, b) => Math.abs(a.x - cat.x) - Math.abs(b.x - cat.x))[0] || null;
   }
@@ -487,6 +487,7 @@
   function leaveMeal() {
     if (cat.meal) cat.meal.eater = null;
     cat.meal = null;
+    cat.goingFor = null;
   }
 
   // ---- hunger --------------------------------------------------------------
@@ -680,6 +681,7 @@
         if (cat.t >= cat.dur) {
           fishes = fishes.filter((g) => g !== cat.meal);
           cat.meal = null;
+          cat.goingFor = null;
           cat.trust = clamp(cat.trust + (cat.mealLate ? -TRUST_LATE : TRUST_ON_TIME), 0, 1);
           cat.nextMealAt = Date.now() + NEXT_MEAL_AFTER;
           save();
