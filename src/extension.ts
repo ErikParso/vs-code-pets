@@ -82,8 +82,7 @@ export function activate(context: vscode.ExtensionContext): void {
     const out = CATS.map((c) => c.name);
     const debug = context.globalState.get('debug', false);
     fish.accessibilityInformation = { label: `Pixel Cat: throw a fish to ${out.join(', ')}${debug ? ' (debug)' : ''}` };
-    const visible = out.length > 0 && !context.globalState.get('hidden', false) &&
-      !context.globalState.get('removed', false) && context.globalState.get('consented', false);
+    const visible = !context.globalState.get('removed', false) && context.globalState.get('consented', false);
     if (visible) fish.show();
     else fish.hide();
   };
@@ -118,10 +117,6 @@ export function activate(context: vscode.ExtensionContext): void {
   context.subscriptions.push(
     fish,
     vscode.commands.registerCommand('pixelCat.fish', () => undefined),
-    vscode.commands.registerCommand('pixelCat.toggle', async () => {
-      await context.globalState.update('hidden', !context.globalState.get('hidden', false));
-      render();
-    }),
     vscode.commands.registerCommand('pixelCat.debug', async () => {
       await context.globalState.update('debug', !context.globalState.get('debug', false));
       render();

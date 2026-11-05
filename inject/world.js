@@ -861,7 +861,7 @@
   // Everything is drawn in device pixels so the sprite stays crisp at any zoom level.
   function draw() {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
-    if (!shown || !cats.length) return;
+    if (!shown) return;
     if (debug) drawDebug();
     drawFish();
     for (const c of cats) {

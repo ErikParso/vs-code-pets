@@ -34,10 +34,6 @@
   "contributes": {
     "commands": [
       {
-        "command": "pixelCat.toggle",
-        "title": "Pixel Cat: Hide / Show"
-      },
-      {
         "command": "pixelCat.debug",
         "title": "Pixel Cat: Toggle Debug Mode"
       },
