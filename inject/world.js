@@ -49,7 +49,7 @@
   let layoutKey = '';
   /** @type {Record<string, Record<string, HTMLCanvasElement>>} */
   let sprites = {};
-  /** @type {{x: number, y: number, t: number, heart?: boolean, fish?: boolean, dir?: number}[]} */
+  /** @type {{kind: 'z' | 'heart' | 'fish', x: number, y: number, t: number, dir?: number}[]} */
   let zs = [];
   /** @type {any[]} */
   let fishes = []; // fish thrown to the cats, oldest first
@@ -243,7 +243,6 @@
     cat = { x: 0, y: 0, vy: 0, dir: 1, state: 'walk', t: 0, dur: 0, floor: null, ...def, done };
     cat.nextMealAt = typeof care?.nextMealAt === 'number' ? care.nextMealAt : Date.now() + NEXT_MEAL_AFTER;
     cat.trust = typeof care?.trust === 'number' ? care.trust : TRUST_START;
-    cat.askIn = rand(2, 5); // until it next asks, while hungry
     cats.push(cat);
     walkIn();
   }
@@ -583,20 +582,22 @@
     }
   }
 
-  function askForFood(dt) {
-    if (asking(cat)) {
-      cat.askIn -= dt;
-      if (cat.askIn <= 0) {
-        zs.push({ x: cat.x + cat.dir * 7 * (px / dpr), y: cat.y - catH() - 4, t: 0, fish: true, dir: cat.dir });
-        cat.askIn = rand(6, 12);
-      }
-    }
-  }
-
   const SNUGGLE_REACH = 600; // furthest it walks to curl up next to a sleeping cat, px
 
   // A nap: shorter the more energy the cat has.
   const napTime = () => rand(12, 35) / cat.energy;
+
+  function spawnEmotion(kind, c = cat) {
+    const fish = kind === 'fish';
+    const sleep = kind === 'z';
+    zs.push({
+      kind,
+      x: c.x + (fish ? c.dir * 7 * (px / dpr) : 0),
+      y: c.y - (sleep ? 9 * (px / dpr) : catH() + 4),
+      t: 0,
+      dir: c.dir,
+    });
+  }
 
   // Pick the next thing to do on a floor, in keeping with the cat's energy. Now and then it
   // curls up next to another cat sleeping on the same floor.
@@ -607,7 +608,7 @@
     if (cat.napNext) {
       // Walked over to the sleeping cat (so it faces it): curl up, with a heart.
       cat.napNext = false;
-      zs.push({ x: cat.x, y: cat.y - catH() - 4, t: 0, heart: true });
+      spawnEmotion('heart');
       return setState('sleep', napTime());
     }
     if (cat.route) {
@@ -671,7 +672,6 @@
 
   function update(dt) {
     cat.t += dt;
-    askForFood(dt);
     switch (cat.state) {
       case 'sit':
         if (cat.t >= cat.dur) decide();
@@ -683,14 +683,11 @@
           cat.trust = clamp(cat.trust + (cat.mealLate ? -TRUST_LATE : TRUST_ON_TIME), 0, 1);
           cat.nextMealAt = Date.now() + NEXT_MEAL_AFTER;
           save();
-          zs.push({ x: cat.x, y: cat.y - catH() - 4, t: 0, heart: true });
+          spawnEmotion('heart');
           setState('sit', rand(2, 5));
         }
         break;
       case 'sleep':
-        if (Math.floor((cat.t - dt) / 1.6) !== Math.floor(cat.t / 1.6)) {
-          zs.push({ x: cat.x + cat.dir * 7 * (px / dpr), y: cat.y - 9 * (px / dpr), t: 0 });
-        }
         if (cat.t >= cat.dur) setState('sit', rand(1, 3));
         break;
       case 'walk': {
@@ -749,6 +746,17 @@
       z.y -= 12 * dt;
     }
     zs = zs.filter((z) => z.t < 2.4);
+  }
+
+  function updateEmotions() {
+    if (!shown) return;
+    for (const c of cats) {
+      if (c.state === 'sleep') {
+        if (Math.random() < 0.25) spawnEmotion('z', c);
+      } else if (asking(c)) {
+        if (Math.random() < (starving(c) ? 1 / 6 : 1 / 18)) spawnEmotion('fish', c);
+      }
+    }
   }
 
   // ---- drawing -----------------------------------------------------------
@@ -884,21 +892,20 @@
     ctx.restore();
   }
 
-  // Floating Zs over sleeping cats, a heart after a meal, and a fish from a hungry cat
-  // (in its own colours, facing the way the cat looks).
+  // Cat emotions: sleep, affection, and food requests.
   function drawZs() {
     const zp = Math.max(1, px - Math.round(dpr));
     for (const z of zs) {
-      ctx.fillStyle = z.heart ? SP.palette.P : ink;
+      ctx.fillStyle = z.kind === 'heart' ? SP.palette.P : ink;
       ctx.globalAlpha = 0.8 * (1 - z.t / 2.4);
-      const zx = Math.round((z.x + Math.sin(z.t * 3) * 3) * dpr) - (z.fish ? 5 * zp : 0); // centred
+      const zx = Math.round((z.x + Math.sin(z.t * 3) * 3) * dpr) - (z.kind === 'fish' ? 5 * zp : 0); // centred
       const zy = Math.round(z.y * dpr);
-      const rows = z.fish ? SP.frames.fishA : z.heart ? HEART : Z;
+      const rows = z.kind === 'fish' ? SP.frames.fishA : z.kind === 'heart' ? HEART : Z;
       rows.forEach((row, y) => {
         for (let x = 0; x < row.length; x++) {
           const c = z.dir < 0 ? row[row.length - 1 - x] : row[x];
           if (c === '.') continue;
-          if (z.fish) ctx.fillStyle = SP.palette[c];
+          if (z.kind === 'fish') ctx.fillStyle = SP.palette[c];
           ctx.fillRect(zx + x * zp, zy + y * zp, zp, zp);
         }
       });
@@ -1001,6 +1008,7 @@
       true
     );
     setInterval(poll, 700);
+    setInterval(updateEmotions, 500);
     requestAnimationFrame(frame);
   }
 
