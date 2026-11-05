@@ -8,7 +8,7 @@ slide down their sides, and nap wherever they are.
 - **Erik**, black: the everyday cat.
 - **Boris**, brown: lazy, and not much of a climber.
 
-Now and then a cat curls up to sleep next to another sleeping cat, with a little heart.
+Now and then a cat curls up to sleep next to another sleeping cat. Hearts are shown when a cat gains trust after being fed on time.
 
 **More than one window:** each cat is in only one VS Code window at a time. Now and then a
 cat walks out of its window, and may turn up in another one (or come back). When a window

@@ -469,7 +469,6 @@
   function eat(g) {
     g.eater = cat;
     cat.meal = g;
-    cat.mealLate = Date.now() >= cat.nextMealAt;
     cat.dir = g.x >= cat.x ? 1 : -1;
     setState('eat', EAT_TIME);
   }
@@ -598,9 +597,8 @@
     const e = cat.energy;
     const [lo, hi] = range(f);
     if (cat.napNext) {
-      // Walked over to the sleeping cat (so it faces it): curl up, with a heart.
+      // Walked over to the sleeping cat (so it faces it): curl up.
       cat.napNext = false;
-      spawnEmotion('heart');
       return setState('sleep', napTime());
     }
     if (cat.route) {
@@ -673,10 +671,11 @@
           fishes = fishes.filter((g) => g !== cat.meal);
           cat.meal = null;
           cat.goingFor = null;
-          cat.trust = clamp(cat.trust + (cat.mealLate ? -TRUST_LATE : TRUST_ON_TIME), 0, 1);
+          const wasStarving = starving(cat);
+          cat.trust = clamp(cat.trust + (wasStarving ? -TRUST_LATE : TRUST_ON_TIME), 0, 1);
           cat.nextMealAt = Date.now() + NEXT_MEAL_AFTER;
           save();
-          spawnEmotion('heart');
+          if (!wasStarving) spawnEmotion('heart');
           setState('sit', rand(2, 5));
         }
         break;
