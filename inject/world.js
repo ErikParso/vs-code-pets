@@ -458,7 +458,8 @@
   function noticeFish() {
     for (const c of cats) {
       cat = c;
-      if (cat.leaving || !['sit', 'walk', 'crouch'].includes(cat.state) || !cat.floor || !fishFor()) continue;
+      if (!['sit', 'walk', 'crouch'].includes(cat.state) || !cat.floor || !fishFor()) continue;
+      cat.leaving = false;
       cat.route = null;
       cat.napNext = false;
       decide();
