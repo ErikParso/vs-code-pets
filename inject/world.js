@@ -422,7 +422,6 @@
         g.y += g.vy * dt;
       } else if (wasFlying) {
         [g.x, g.y] = along(g, Math.min(g.t, g.time));
-        if (landed(g)) noticeFish();
       } else if (!g.eater && !g.fade) {
         flop(g, dt);
       }
@@ -450,23 +449,6 @@
       g.falling = true;
       g.vy = -120;
       g.fade = 0.001;
-    }
-  }
-
-  // A fish just landed: awake cats on its floor drop what they are doing
-  // and go for it. (Cats in the air or on a wall go for it once they land.)
-  function canNoticeFish(c) {
-    return ['sit', 'walk', 'crouch'].includes(c.state) && c.floor && fishFor(c);
-  }
-
-  function noticeFish() {
-    for (const c of cats) {
-      if (!canNoticeFish(c)) continue;
-      cat = c;
-      cat.leaving = false;
-      cat.route = null;
-      cat.napNext = false;
-      decide();
     }
   }
 
