@@ -50,7 +50,7 @@
   /** @type {Record<string, Record<string, HTMLCanvasElement>>} */
   let sprites = {};
   /** @type {{kind: 'z' | 'heart' | 'fish', x: number, y: number, t: number, dir?: number}[]} */
-  let zs = [];
+  let emotions = [];
   /** @type {any[]} */
   let fishes = []; // fish thrown to the cats, oldest first
   /** @type {any[]} */
@@ -455,10 +455,14 @@
 
   // A fish just landed: awake cats on its floor drop what they are doing
   // and go for it. (Cats in the air or on a wall go for it once they land.)
+  function canNoticeFish(c) {
+    return ['sit', 'walk', 'crouch'].includes(c.state) && c.floor && fishFor(c);
+  }
+
   function noticeFish() {
     for (const c of cats) {
+      if (!canNoticeFish(c)) continue;
       cat = c;
-      if (!['sit', 'walk', 'crouch'].includes(cat.state) || !cat.floor || !fishFor()) continue;
       cat.leaving = false;
       cat.route = null;
       cat.napNext = false;
@@ -469,11 +473,15 @@
   // The nearest fish on the cat's floor. Once it has picked one it sticks with it: standing
   // at one fish of a cluster can make another the nearest, and it would trot back and forth
   // between them for ever.
-  function fishFor() {
-    if (!canEat(cat)) return null;
-    const here = fishes.filter((g) => landed(g) && !g.eater && !g.fade && g.floor === cat.floor && !cats.some((c) => c !== cat && c.goingFor === g));
-    if (here.includes(cat.goingFor)) return cat.goingFor;
-    return here.sort((a, b) => Math.abs(a.x - cat.x) - Math.abs(b.x - cat.x))[0] || null;
+  function claimedByAnotherCat(g, c = cat) {
+    return cats.some((other) => other !== c && other.goingFor === g);
+  }
+
+  function fishFor(c = cat) {
+    if (!canEat(c)) return null;
+    const here = fishes.filter((g) => landed(g) && !g.eater && !g.fade && g.floor === c.floor && !claimedByAnotherCat(g, c));
+    if (here.includes(c.goingFor)) return c.goingFor;
+    return here.sort((a, b) => Math.abs(a.x - c.x) - Math.abs(b.x - c.x))[0] || null;
   }
 
   function eat(g) {
@@ -592,7 +600,7 @@
   function spawnEmotion(kind, c = cat) {
     const fish = kind === 'fish';
     const sleep = kind === 'z';
-    zs.push({
+    emotions.push({
       kind,
       x: c.x + (fish ? c.dir * 7 * (px / dpr) : 0),
       y: c.y - (sleep ? 9 * (px / dpr) : catH() + 4),
@@ -743,12 +751,12 @@
     }
   }
 
-  function updateZs(dt) {
-    for (const z of zs) {
+  function updateEmotions(dt) {
+    for (const z of emotions) {
       z.t += dt;
       z.y -= 12 * dt;
     }
-    zs = zs.filter((z) => z.t < 2.4);
+    emotions = emotions.filter((z) => z.t < 2.4);
   }
 
   function updateEmotions() {
@@ -857,7 +865,7 @@
       drawCat();
       if (debug) drawMeters();
     }
-    drawZs();
+    drawEmotions();
   }
 
   // Debug: bars under the cat. Hunger: teal = full, orange = would eat, red = asking.
@@ -896,9 +904,9 @@
   }
 
   // Cat emotions: sleep, affection, and food requests.
-  function drawZs() {
+  function drawEmotions() {
     const zp = Math.max(1, px - Math.round(dpr));
-    for (const z of zs) {
+    for (const z of emotions) {
       ctx.fillStyle = z.kind === 'heart' ? SP.palette.P : ink;
       ctx.globalAlpha = 0.8 * (1 - z.t / 2.4);
       const zx = Math.round((z.x + Math.sin(z.t * 3) * 3) * dpr) - (z.kind === 'fish' ? 5 * zp : 0); // centred
@@ -976,7 +984,7 @@
       }
       updateFish(dt);
     }
-    updateZs(dt);
+    updateEmotions(dt);
     draw();
     requestAnimationFrame(frame);
   }
