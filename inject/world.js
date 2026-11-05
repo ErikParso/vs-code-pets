@@ -60,6 +60,8 @@
   let shown = false;
   let debug = false; // debug mode: the floors, walls and hunger are drawn
   let ink = '#888';
+  let carePanel;
+  let carePanelOpen = false;
 
   const catW = () => (SP.width * px) / dpr;
   const catH = () => (SP.height * px) / dpr;
@@ -117,6 +119,15 @@
     });
     document.body.appendChild(canvas);
     ctx = /** @type {CanvasRenderingContext2D} */ (canvas.getContext('2d'));
+
+    carePanel = document.createElement('div');
+    Object.assign(carePanel.style, {
+      position: 'fixed', right: '16px', top: '36px', zIndex: '1000', display: 'none',
+      minWidth: '310px', padding: '10px', border: '1px solid var(--vscode-editorWidget-border, #555)',
+      background: 'var(--vscode-editorWidget-background, #252526)', color: 'var(--vscode-editorWidget-foreground, #ccc)',
+      fontFamily: 'var(--vscode-font-family, sans-serif)', fontSize: '12px', pointerEvents: 'auto',
+    });
+    document.body.appendChild(carePanel);
   }
 
   function resize() {
@@ -514,6 +525,63 @@
   const asking = (c) => Date.now() >= c.nextMealAt - ASK_BEFORE;
   const hunger = (c) => clamp(1 - (c.nextMealAt - Date.now()) / NEXT_MEAL_AFTER, 0, 1);
 
+  function mealLabel(c) {
+    const left = c.nextMealAt - Date.now();
+    if (left <= 0) return 'Starving';
+    const hours = Math.floor(left / HOUR);
+    const minutes = Math.floor((left % HOUR) / (60 * 1000));
+    return `${asking(c) ? 'Hungry' : canEat(c) ? 'Normal' : 'Fed'}: ${hours}h ${minutes}m`;
+  }
+
+  function careButton(label, title, action) {
+    const button = document.createElement('button');
+    button.textContent = label;
+    button.title = title;
+    button.setAttribute('aria-label', title);
+    Object.assign(button.style, {
+      minWidth: '38px', marginLeft: '4px', padding: '2px 4px', border: '1px solid var(--vscode-button-border, transparent)',
+      background: 'var(--vscode-button-secondaryBackground, #3a3d41)', color: 'var(--vscode-button-secondaryForeground, #fff)',
+    });
+    button.addEventListener('click', action);
+    return button;
+  }
+
+  function drawCarePanel() {
+    if (!carePanel) return;
+    carePanel.style.display = carePanelOpen && shown ? 'block' : 'none';
+    if (!carePanelOpen || !shown) return;
+    carePanel.replaceChildren();
+    const title = document.createElement('strong');
+    title.textContent = 'Cat Care';
+    carePanel.appendChild(title);
+    if (!cats.length) {
+      const empty = document.createElement('div');
+      empty.textContent = 'No cats are visiting this window.';
+      empty.style.marginTop = '8px';
+      carePanel.appendChild(empty);
+      return;
+    }
+    for (const c of cats) {
+      const row = document.createElement('div');
+      Object.assign(row.style, { display: 'flex', alignItems: 'center', marginTop: '8px', whiteSpace: 'nowrap' });
+      const details = document.createElement('span');
+      details.textContent = `${c.name}: ${mealLabel(c)}, trust ${c.trust.toFixed(2)}`;
+      details.style.flex = '1';
+      row.appendChild(details);
+      const adjust = (hours, trust) => () => {
+        c.nextMealAt = clamp(c.nextMealAt + hours * HOUR, Date.now(), Date.now() + NEXT_MEAL_AFTER);
+        c.trust = clamp(c.trust + trust, 0, 1);
+        save();
+        drawCarePanel();
+      };
+      row.appendChild(careButton('-6h', 'Make the cat six hours hungrier', adjust(-6, 0)));
+      row.appendChild(careButton('+6h', 'Give the cat six more hours before its meal', adjust(6, 0)));
+      row.appendChild(careButton('-T', 'Subtract 0.1 trust', adjust(0, -0.1)));
+      row.appendChild(careButton('+T', 'Add 0.1 trust', adjust(0, 0.1)));
+      carePanel.appendChild(row);
+    }
+  }
+
   function askForFood(dt) {
     if (asking(cat) && (cat.state === 'sit' || cat.state === 'walk')) {
       cat.askIn -= dt;
@@ -857,7 +925,8 @@
   let roaming = false;
   function poll() {
     const label = statusLabel();
-    debug = label.endsWith(' (debug)');
+    debug = label.includes(' (debug)');
+    carePanelOpen = debug;
     const allowed = !!label;
     if (allowed !== shown) console.info(`[pixel-cat] ${allowed ? 'showing' : 'hiding'} the cats`);
     if (allowed && !shown) {
@@ -866,13 +935,14 @@
         .trim() || '#888';
     }
     shown = allowed;
-    if (!shown) return;
+    if (!shown) return drawCarePanel();
     relayout();
     if (!roaming) {
       roaming = true;
       CATS.forEach(roam);
     }
     save();
+    drawCarePanel();
   }
 
   let last = 0;

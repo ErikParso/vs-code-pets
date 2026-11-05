@@ -53,7 +53,7 @@ Good to know:
 | Command | What it does |
 |---|---|
 | Pixel Cat: Hide / Show | Hide or show the cats |
-| Pixel Cat: Toggle Debug Mode | Show the floors and walls the cats get around on, and each cat's hunger and trust. Alt+click the 🐟 to make the cats hungrier, Shift+click to make them fuller; Ctrl+click adds trust, Ctrl+Shift+click takes it away |
+| Pixel Cat: Toggle Debug Mode | Show the floors and walls the cats get around on, each cat's hunger and trust, and a panel with controls to adjust meal deadlines and trust. Alt+click the 🐟 to make the cats hungrier, Shift+click to make them fuller; Ctrl+click adds trust, Ctrl+Shift+click takes it away |
 | Pixel Cat: Remove from VS Code | Take the cats out and restore VS Code's files |
 | Pixel Cat: Let the Cat Back In | Put the cats back after removing them |
 
