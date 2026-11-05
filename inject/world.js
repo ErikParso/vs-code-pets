@@ -523,6 +523,7 @@
 
   const canEat = (c) => c.nextMealAt <= Date.now() + NEXT_MEAL_AFTER - EAT_AFTER;
   const asking = (c) => Date.now() >= c.nextMealAt - ASK_BEFORE;
+  const starving = (c) => Date.now() >= c.nextMealAt;
   const hunger = (c) => clamp(1 - (c.nextMealAt - Date.now()) / NEXT_MEAL_AFTER, 0, 1);
 
   function mealLabel(c) {
@@ -583,7 +584,7 @@
   }
 
   function askForFood(dt) {
-    if (asking(cat) && (cat.state === 'sit' || cat.state === 'walk')) {
+    if (asking(cat)) {
       cat.askIn -= dt;
       if (cat.askIn <= 0) {
         zs.push({ x: cat.x + cat.dir * 7 * (px / dpr), y: cat.y - catH() - 4, t: 0, fish: true, dir: cat.dir });
@@ -623,6 +624,15 @@
       const tx = clamp(g.x - side * halfW() * 0.8, lo, hi);
       if (Math.abs(tx - cat.x) <= 2) return eat(g);
       return walkTo(tx, WALK_SPEED * 4); // a sprint
+    }
+    if (starving(cat)) {
+      const choice = pick([
+        ['sit', 22],
+        ['walk', 32 * Math.min(1, e * 2)],
+      ]);
+      if (choice === 'sit') return setState('sit', rand(2, 7));
+      const trot = Math.random() < 0.2 * e;
+      return walkTo(clamp(cat.x + rand(-250, 250), lo, hi), WALK_SPEED * (trot ? 3 : 1));
     }
     // The nearest cat sleeping on this floor, if it is within SNUGGLE_REACH.
     const friend = cats

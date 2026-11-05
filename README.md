@@ -20,7 +20,8 @@ until they wake up. Up to 10 fish can lie around at once.
 
 **Hunger:** each fish keeps a cat fed for 24 hours. It ignores fish for the first three
 hours, then will eat again; in its final six hours it asks for food now and then with a
-little fish floating over its head, like the Zs.
+little fish floating over its head, like the Zs. Once starving, it only walks or meows for
+food until it eats.
 
 **Trust:** each cat's trust in you (0 to 1, starting at 0.1) grows by 0.03 when it eats
 before its meal deadline, and drops by 0.05 when fed late. Hunger continues while VS Code
