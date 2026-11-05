@@ -228,11 +228,10 @@
 
   // A cat comes out: it walks in along the bottom. `done` lets it go to another window.
   function spawn(def, done) {
-    const hunger = saved('hunger')[def.name];
-    const trust = saved('trust')[def.name];
+    const care = saved()[def.name];
     cat = { x: 0, y: 0, vy: 0, dir: 1, state: 'walk', t: 0, dur: 0, floor: null, ...def, done };
-    cat.hunger = typeof hunger === 'number' ? hunger : 0.5;
-    cat.trust = typeof trust === 'number' ? trust : TRUST_START;
+    cat.nextMealAt = typeof care?.nextMealAt === 'number' ? care.nextMealAt : Date.now() + NEXT_MEAL_AFTER;
+    cat.trust = typeof care?.trust === 'number' ? care.trust : TRUST_START;
     cat.askIn = rand(2, 5); // until it next asks, while hungry
     cats.push(cat);
     walkIn();
@@ -460,7 +459,7 @@
   // at one fish of a cluster can make another the nearest, and it would trot back and forth
   // between them for ever.
   function fishFor() {
-    if (cat.hunger <= FULL) return null;
+    if (!canEat(cat)) return null;
     const here = fishes.filter((g) => landed(g) && !g.eater && !g.fade && g.floor === cat.floor);
     if (here.includes(cat.goingFor)) return cat.goingFor;
     return here.sort((a, b) => Math.abs(a.x - cat.x) - Math.abs(b.x - cat.x))[0] || null;
@@ -469,6 +468,7 @@
   function eat(g) {
     g.eater = cat;
     cat.meal = g;
+    cat.mealLate = Date.now() >= cat.nextMealAt;
     cat.dir = g.x >= cat.x ? 1 : -1;
     setState('eat', EAT_TIME);
   }
@@ -481,49 +481,41 @@
 
   // ---- hunger --------------------------------------------------------------
   //
-  // Each cat gets hungrier as time goes by (0 = full, 1 = starving), and a fish takes off
-  // half. Nearly full, it ignores fish; hungry, it asks for one now and then (a little fish
-  // floats up over its head, like the Zs).
-  //
-  // Trust (0 to 1) grows slowly with every fish a cat eats, and drops while it is left
-  // starving. Both only change while VS Code is open, and both are kept in the window's
-  // localStorage, so they last across reloads. In debug mode, Alt+click on the 🐟 makes
-  // every cat hungrier, Shift+click fuller; Ctrl+click adds trust, Ctrl+Shift+click takes
-  // it away.
-
-  const HUNGER_RATE = 1 / (40 * 60); // full to starving in 40 minutes
-  const FULL = 0.2; // at or below: ignores fish
-  const ASKING = 0.7; // above: asks for food
-  const MEAL = 0.5; // what one fish takes off
+  // Each fish gives a cat another day before its meal deadline. For the first three hours
+  // it ignores fish; in the final six it asks for one now and then.
+  const HOUR = 60 * 60 * 1000;
+  const NEXT_MEAL_AFTER = 24 * HOUR;
+  const EAT_AFTER = 3 * HOUR;
+  const ASK_BEFORE = 6 * HOUR;
   const TRUST_START = 0.1;
-  const TRUST_PER_FISH = 0.01;
-  const TRUST_LOSS = 0.01 / (10 * 60); // a second, while starving: 0.01 every 10 minutes
-  const SAVED = { hunger: 'pixelCat.hunger', trust: 'pixelCat.trust' }; // {name: value} each
+  const TRUST_ON_TIME = 0.03;
+  const TRUST_LATE = 0.05;
+  const SAVED = 'pixelCat.care'; // {name: {nextMealAt, trust}}
 
-  function saved(what) {
+  function saved() {
     try {
-      return JSON.parse(localStorage.getItem(SAVED[what]) || '{}');
+      return JSON.parse(localStorage.getItem(SAVED) || '{}');
     } catch (e) {
       return {};
     }
   }
 
   function save() {
-    for (const what of Object.keys(SAVED)) {
-      const all = saved(what);
-      for (const c of cats) all[c.name] = c[what];
-      try {
-        localStorage.setItem(SAVED[what], JSON.stringify(all));
-      } catch (e) {
-        // No storage: it just starts afresh next time.
-      }
+    const all = saved();
+    for (const c of cats) all[c.name] = { nextMealAt: c.nextMealAt, trust: c.trust };
+    try {
+      localStorage.setItem(SAVED, JSON.stringify(all));
+    } catch (e) {
+      // No storage: it just starts afresh next time.
     }
   }
 
-  function updateHunger(dt) {
-    cat.hunger = Math.min(1, cat.hunger + HUNGER_RATE * dt);
-    if (cat.hunger >= 1) cat.trust = Math.max(0, cat.trust - TRUST_LOSS * dt);
-    if (cat.hunger > ASKING && (cat.state === 'sit' || cat.state === 'walk')) {
+  const canEat = (c) => c.nextMealAt <= Date.now() + NEXT_MEAL_AFTER - EAT_AFTER;
+  const asking = (c) => Date.now() >= c.nextMealAt - ASK_BEFORE;
+  const hunger = (c) => clamp(1 - (c.nextMealAt - Date.now()) / NEXT_MEAL_AFTER, 0, 1);
+
+  function askForFood(dt) {
+    if (asking(cat) && (cat.state === 'sit' || cat.state === 'walk')) {
       cat.askIn -= dt;
       if (cat.askIn <= 0) {
         zs.push({ x: cat.x + cat.dir * 7 * (px / dpr), y: cat.y - catH() - 4, t: 0, fish: true, dir: cat.dir });
@@ -601,7 +593,7 @@
 
   function update(dt) {
     cat.t += dt;
-    updateHunger(dt);
+    askForFood(dt);
     switch (cat.state) {
       case 'sit':
         if (cat.t >= cat.dur) decide();
@@ -610,8 +602,8 @@
         if (cat.t >= cat.dur) {
           fishes = fishes.filter((g) => g !== cat.meal);
           cat.meal = null;
-          cat.hunger = Math.max(0, cat.hunger - MEAL);
-          cat.trust = Math.min(1, cat.trust + TRUST_PER_FISH);
+          cat.trust = clamp(cat.trust + (cat.mealLate ? -TRUST_LATE : TRUST_ON_TIME), 0, 1);
+          cat.nextMealAt = Date.now() + NEXT_MEAL_AFTER;
           save();
           zs.push({ x: cat.x, y: cat.y - catH() - 4, t: 0, heart: true });
           setState('sit', rand(2, 5));
@@ -779,15 +771,14 @@
     drawZs();
   }
 
-  // Debug: bars under the cat. Hunger: teal = full (ignores fish), orange = would eat,
-  // red = asking. Below it, trust in pink.
+  // Debug: bars under the cat. Hunger: teal = full, orange = would eat, red = asking.
   function drawMeters() {
     const t = Math.max(2, Math.round(2 * dpr));
     const w = Math.round(catW() * 0.6 * dpr);
     const x = Math.round((onWall() ? cat.wall.x : cat.x) * dpr - w / 2);
     const y = Math.round((cat.y + 3) * dpr);
     const bars = [
-      [cat.hunger, cat.hunger > ASKING ? '#e63946' : cat.hunger > FULL ? '#ff9f1c' : '#2ec4b6'],
+      [hunger(cat), asking(cat) ? '#e63946' : canEat(cat) ? '#ff9f1c' : '#2ec4b6'],
       [cat.trust, SP.palette.P],
     ];
     bars.forEach(([value, color], i) => {
@@ -910,16 +901,17 @@
     resize();
     window.addEventListener('resize', resize);
     // The 🐟 the extension shows in the status bar: throw a fish from where it is. (In debug
-    // mode, modifier+clicks change the cats' hunger and trust instead; see hunger.)
+    // mode, modifier+clicks change the cats' meal deadline and trust instead; see hunger.)
     document.addEventListener(
       'click',
       (e) => {
         const item = e.target instanceof Element && e.target.closest('.statusbar-item');
         if (!shown || !item || !(item.textContent || '').includes('🐟')) return;
         if (debug && (e.ctrlKey || e.altKey || e.shiftKey)) {
-          const what = e.ctrlKey ? 'trust' : 'hunger';
-          const more = e.ctrlKey ? !e.shiftKey : e.altKey;
-          for (const c of cats) c[what] = clamp(c[what] + (more ? 0.1 : -0.1), 0, 1);
+          for (const c of cats) {
+            if (e.ctrlKey) c.trust = clamp(c.trust + (e.shiftKey ? -0.1 : 0.1), 0, 1);
+            else c.nextMealAt = clamp(c.nextMealAt + (e.altKey ? -6 : 6) * HOUR, Date.now(), Date.now() + NEXT_MEAL_AFTER);
+          }
           save();
           return;
         }

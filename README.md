@@ -18,13 +18,13 @@ closes, its cats move to another open window.
 on a cat's floor, and an awake cat on that floor trots over and eats it. Sleeping cats ignore fish
 until they wake up. Up to 10 fish can lie around at once.
 
-**Hunger:** the cats get hungrier as you work (full to starving in about 40 minutes), and
-each fish fills a cat halfway. A nearly full cat ignores fish; a hungry one asks for food
-now and then: a little fish floats up over its head, like the Zs.
+**Hunger:** each fish keeps a cat fed for 24 hours. It ignores fish for the first three
+hours, then will eat again; in its final six hours it asks for food now and then with a
+little fish floating over its head, like the Zs.
 
-**Trust:** each cat's trust in you (0 to 1, starting at 0.1) grows by 0.01 with every fish it
-eats, and drops by 0.01 for every 10 minutes it is left starving. It builds over weeks.
-Hunger and trust only change while VS Code is open, and are remembered across reloads.
+**Trust:** each cat's trust in you (0 to 1, starting at 0.1) grows by 0.03 when it eats
+before its meal deadline, and drops by 0.05 when fed late. Hunger continues while VS Code
+is closed; trust changes only when a cat eats. Both are remembered across reloads.
 
 ## ⚠️ This extension modifies VS Code's files
 
