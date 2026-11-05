@@ -10,6 +10,7 @@
   const SCALE = (window.PixelCatConfig && window.PixelCatConfig.scale) || 2;
   const GRAVITY = 1500; // px/s²
   const WALK_SPEED = 40; // px/s; now and then a cat trots at three times this
+  const MAX_WALK_DISTANCE = 250; // furthest one stroll goes either way, and furthest a cat goes for a fish, to a sleeping friend, to a wall, in from the edge or out to it, px
   const MAX_RISE = 170; // highest ledge it will jump up to
   const MAX_GAP = 220; // widest gap it will jump across
   const MAX_DROP = 200; // deepest it will jump down; further down it slides down a wall
@@ -247,14 +248,16 @@
     walkIn();
   }
 
-  // The cat arrives by walking in along the lowest floor (the status bar), from a window edge.
+  // The cat arrives by walking in along the lowest floor (the status bar), from a window edge,
+  // and stops within MAX_WALK_DISTANCE of it.
   function walkIn() {
     const f = floors.reduce((low, g) => (g.y > low.y ? g : low));
     const [lo, hi] = range(f);
     cat.floor = f;
     cat.y = f.y;
-    cat.x = Math.random() < 0.5 ? -halfW() : W + halfW();
-    walkTo(rand(lo, hi), WALK_SPEED);
+    const fromLeft = Math.random() < 0.5;
+    cat.x = fromLeft ? -halfW() : W + halfW();
+    walkTo(fromLeft ? rand(lo, Math.min(hi, lo + MAX_WALK_DISTANCE)) : rand(Math.max(lo, hi - MAX_WALK_DISTANCE), hi), WALK_SPEED);
   }
 
   function walkTo(tx, speed) {
@@ -316,7 +319,7 @@
     // their ends), other than this level.
     const leadsTo = (w, g) => w.y1 - catH() <= g.y && g.y <= w.y2 + catH() && touches(g, w.x);
     for (const w of walls) {
-      if (!leadsTo(w, floor) || w.x < halfW() || w.x > W - halfW() || Math.abs(w.x - x) > MAX_GAP) continue;
+      if (!leadsTo(w, floor) || w.x < halfW() || w.x > W - halfW() || Math.abs(w.x - x) > MAX_WALK_DISTANCE) continue;
       const dests = floors.filter((g) => Math.abs(g.y - y) > EDGE && leadsTo(w, g));
       if (dests.length) options.push({ tx: clamp(w.x, ...range(floor)), wall: w, dest: any(dests) });
     }
@@ -452,7 +455,7 @@
     }
   }
 
-  // The nearest fish on the cat's floor. Once it has picked one it sticks with it: standing
+  // The nearest fish on the cat's floor, within MAX_WALK_DISTANCE. Once it has picked one it sticks with it: standing
   // at one fish of a cluster can make another the nearest, and it would trot back and forth
   // between them for ever.
   function claimedByAnotherCat(g, c = cat) {
@@ -461,7 +464,15 @@
 
   function fishFor(c = cat) {
     if (!canEat(c)) return null;
-    const here = fishes.filter((g) => landed(g) && !g.eater && !g.fade && g.floor === c.floor && !claimedByAnotherCat(g, c));
+    const here = fishes.filter(
+      (g) =>
+        landed(g) &&
+        !g.eater &&
+        !g.fade &&
+        g.floor === c.floor &&
+        Math.abs(g.x - c.x) <= MAX_WALK_DISTANCE &&
+        !claimedByAnotherCat(g, c)
+    );
     if (here.includes(c.goingFor)) return c.goingFor;
     return here.sort((a, b) => Math.abs(a.x - c.x) - Math.abs(b.x - c.x))[0] || null;
   }
@@ -573,8 +584,6 @@
     }
   }
 
-  const SNUGGLE_REACH = 600; // furthest it walks to curl up next to a sleeping cat, px
-
   // A nap: shorter the more energy the cat has.
   const napTime = () => rand(12, 35) / cat.energy;
 
@@ -590,8 +599,8 @@
     });
   }
 
-  // Pick the next thing to do on a floor, in keeping with the cat's energy. Now and then it
-  // curls up next to another cat sleeping on the same floor.
+  // Pick the next thing to do on a floor, in keeping with the cat's energy. A cat going to
+  // sleep curls up next to another cat sleeping on its floor, if one is within reach.
   function decide() {
     const f = cat.floor;
     const e = cat.energy;
@@ -623,20 +632,19 @@
       ]);
       if (choice === 'sit') return setState('sit', rand(2, 7));
       const trot = Math.random() < 0.2 * e;
-      return walkTo(clamp(cat.x + rand(-250, 250), lo, hi), WALK_SPEED * (trot ? 3 : 1));
+      return walkTo(clamp(cat.x + rand(-MAX_WALK_DISTANCE, MAX_WALK_DISTANCE), lo, hi), WALK_SPEED * (trot ? 3 : 1));
     }
-    // The nearest cat sleeping on this floor, if it is within SNUGGLE_REACH.
-    const friend = cats
-      .filter((c) => c !== cat && c.floor === f && c.state === 'sleep' && Math.abs(c.x - cat.x) <= SNUGGLE_REACH)
-      .sort((a, b) => Math.abs(a.x - cat.x) - Math.abs(b.x - cat.x))[0];
     const options = reachable();
-    const exits = [f.x1 <= EDGE ? -1 : 0, f.x2 >= W - EDGE ? 1 : 0].filter(Boolean);
+    // Window edges this floor runs out to, within MAX_WALK_DISTANCE.
+    const exits = [
+      f.x1 <= EDGE && cat.x <= MAX_WALK_DISTANCE ? -1 : 0,
+      f.x2 >= W - EDGE && W - cat.x <= MAX_WALK_DISTANCE ? 1 : 0,
+    ].filter(Boolean);
     const choice = pick([
       ['sit', 22],
       ['walk', 32 * Math.min(1, e * 2)], // only really lazy cats walk less
-      ['sleep', 8 / e],
+      ['sleep', 8 / e + 5],
       ['jump', options.length ? 35 * e : 0],
-      ['snuggle', friend ? 15 : 0],
       ['leave', exits.length ? 1.5 : 0],
     ]);
     switch (choice) {
@@ -645,18 +653,22 @@
         return walkTo(any(exits) < 0 ? -catW() : W + catW(), WALK_SPEED * 2);
       case 'sit':
         return setState('sit', rand(2, 7));
-      case 'sleep':
-        return setState('sleep', napTime());
+      case 'sleep': {
+        // The nearest cat sleeping on this floor within MAX_WALK_DISTANCE: curl up next to it,
+        // on the side it comes from. Otherwise sleep right here.
+        const friend = cats
+          .filter((c) => c !== cat && c.floor === f && c.state === 'sleep' && Math.abs(c.x - cat.x) <= MAX_WALK_DISTANCE)
+          .sort((a, b) => Math.abs(a.x - cat.x) - Math.abs(b.x - cat.x))[0];
+        if (!friend) return setState('sleep', napTime());
+        cat.napNext = true;
+        return walkTo(clamp(friend.x + (cat.x < friend.x ? -1 : 1) * catW() * 0.9, lo, hi), WALK_SPEED);
+      }
       case 'walk': {
         const trot = Math.random() < 0.2 * e;
-        return walkTo(clamp(cat.x + rand(-250, 250), lo, hi), WALK_SPEED * (trot ? 3 : 1));
+        return walkTo(clamp(cat.x + rand(-MAX_WALK_DISTANCE, MAX_WALK_DISTANCE), lo, hi), WALK_SPEED * (trot ? 3 : 1));
       }
       case 'jump':
         return go(any(options));
-      case 'snuggle':
-        // Next to it on the side it comes from.
-        cat.napNext = true;
-        return walkTo(clamp(friend.x + (cat.x < friend.x ? -1 : 1) * catW() * 0.9, lo, hi), WALK_SPEED);
     }
   }
 

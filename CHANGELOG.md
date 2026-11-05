@@ -1,5 +1,33 @@
 # Changelog
 
+## 0.1.32
+
+Sleeping and snuggling share one weight (`8/e + 5`). A cat going to sleep curls up next to a
+cat sleeping on its floor within `MAX_WALK_DISTANCE` (250 px), or else sleeps where it is.
+
+## 0.1.31
+
+A cat only leaves the window when it is within `MAX_WALK_DISTANCE` (250 px) of the edge, so it
+stays in a window longer.
+
+## 0.1.30
+
+An arriving cat walks in at most `MAX_WALK_DISTANCE` (250 px) from the window edge, instead of
+to anywhere on the bottom floor.
+
+## 0.1.29
+
+A cat walks to a wall to climb it from up to `MAX_WALK_DISTANCE` (250 px) away, up from 220 px.
+
+## 0.1.28
+
+A cat only goes for a fish on its floor within `MAX_WALK_DISTANCE` (250 px); further away, it
+ignores it until it wanders closer.
+
+## 0.1.27
+
+The furthest a cat strolls in one walk is now a single setting, `MAX_WALK_DISTANCE` (250 px).
+
 ## 0.1.26
 
 A cat only curls up next to a sleeping cat on its floor within 600 px, and picks the
