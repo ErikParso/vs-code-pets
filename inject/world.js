@@ -759,8 +759,12 @@
     emotions = emotions.filter((z) => z.t < 2.4);
   }
 
-  function updateEmotions() {
+  let emotionTime = 0;
+  function spawnEmotions(dt) {
     if (!shown) return;
+    emotionTime += dt;
+    if (emotionTime < 0.5) return;
+    emotionTime = 0;
     for (const c of cats) {
       if (c.state === 'sleep') {
         if (Math.random() < 0.25) spawnEmotion('z', c);
@@ -983,6 +987,7 @@
         update(dt);
       }
       updateFish(dt);
+      spawnEmotions(dt);
     }
     updateEmotions(dt);
     draw();
@@ -1019,7 +1024,6 @@
       true
     );
     setInterval(poll, 700);
-    setInterval(updateEmotions, 500);
     requestAnimationFrame(frame);
   }
 
