@@ -1,27 +1,23 @@
-// The cat boxes panel, drawn in sprite pixels: an open cardboard box per cat, its name on a
-// sticker slapped on by hand, the cat peeking out over the lip (blinking now and then), and under
-// it its trust in hearts and how full it is in fish. No DOM: it paints through a `Paint`
-// function, so the same art can be drawn on a canvas (cat-boxes.ts) or into an image.
+// The cat boxes panel, drawn in sprite pixels (pixel-art.ts): an open cardboard box per cat, its
+// name on a sticker slapped on by hand, the cat peeking out over the lip (blinking now and then),
+// and under it its trust in hearts and how full it is in fish; the boxes on shelves in a room
+// (room-art.ts).
 import { FISH, HEARTS, type CatBox } from '../world/boxes';
 import { SP } from '../world/sprites';
+import { paintRows, type Paint } from './pixel-art';
 import { eachTextPixel, FONT_5X7, fontText, textWidth } from './pixel-font';
+import { paintFrame, paintShelf, paintSign, paintWall } from './room-art';
 
-/** Fills a w x h rectangle of sprite pixels at (x, y). */
-export type Paint = (x: number, y: number, w: number, h: number, color: string) => void;
+const MAX_NAME = 8; // characters that fit on a sticker
 
-export const MAX_NAME = 8; // characters that fit on a sticker
-
-const COLORS = {
-  panel: '#2b2235',
-  frameDark: '#16111c',
-  frameLight: '#4a3d5a',
-  title: '#f6f0dc',
-  sticker: '#f6f0dc',
-  stickerEdge: '#b9ab8c',
-  ink: '#2b1d14',
-  empty: '#4c405a',
-  alarm: '#e63946',
+/** The panel's own colours, besides the boxes' and the room's. */
+export const PANEL = {
+  slot: '#2e1a0b', // the dark inside, seen through a box's slot
   eyes: '#f2d14b', // a packed cat's, glinting through the slot
+  sticker: '#f6f0dc',
+  ink: '#2b1d14',
+  strip: '#3a221c', // under each cat's hearts and fish
+  empty: '#6a4a40', // a heart or fish not (yet) there
 };
 
 // The open cardboard box, pixel for pixel (and colour for colour) after the reference Erik
@@ -39,7 +35,6 @@ const CARD: Record<string, string> = {
   I: '#945d27',
   M: '#794514',
   N: '#6a401d',
-  S: '#2e1a0b', // the slot: the dark inside, seen through it
 };
 // prettier-ignore
 const BOX_ART = [
@@ -76,7 +71,7 @@ const BOX = BOX_ART.flatMap((r, y) => Array(y === PLAIN_ROW ? TALLER + 1 : 1).fi
 // The closed box, from the same reference: its top shut, the "!" shine on the right. 20x17, as
 // wide as the open one's body, and made bigger the same way. T the top's shadow, L lit edge,
 // F card, B shaded bottom.
-const CLOSED_CARD: Record<string, string> = {
+export const CLOSED_CARD: Record<string, string> = {
   k: '#000000',
   T: '#844e1f',
   L: '#eba14f',
@@ -129,8 +124,9 @@ const PEEK_BLINK = PEEK.map((row, y) => (y === 5 ? '.KOOOOOOOOOOOOK.' : row));
 const PEEK_EYES = [4, 10]; // the columns its eyes start at, each 2 wide
 const PEEK_RIM = 10; // the peek row level with the top of the box's lip
 
-const HEART = ['.KK.KK.', 'KPPKPPK', 'KPPPPPK', '.KPPPK.', '..KPK..', '...K...'];
-const FISH_ICON = SP.frames.fishA; // 10x5
+// Small enough for five of each under a box: a heart, and a fish with a forked tail.
+const HEART = ['PP.PP', 'PPPPP', '.PPP.', '..P..'];
+const FISH_ICON = ['B.BBBB.', '.BBBBKB', 'B.LLLL.'];
 
 const BOX_W = BOX[0].length;
 const BOX_H = BOX.length;
@@ -143,16 +139,19 @@ const SLOT_Y = 11; // its top row, just under the lip's shadow; it is 2 high
 const STICKER_TOP = SLOT_Y + 3; // the sticker goes between here and the front's shaded bottom row
 const STICKER_BOTTOM = BOX_H - 3;
 
-// One cell (sprite px): the cat's ears at the top, then the box, then hearts over fish.
-const ICON_PITCH = 12; // hearts and fish share columns: each heart sits over its fish
-const ICONS_W = (FISH - 1) * ICON_PITCH + FISH_ICON[0].length;
-const CELL_W = Math.max(BOX_W, ICONS_W);
+// One cell (sprite px): the cat's ears at the top, then the box standing on the shelf, then, on a
+// dark strip under the shelf, its hearts and fish (hearts closer together than fish).
+const CELL_W = BOX_W + 8;
 const BOX_TOP = PEEK_RIM - LIP_Y; // the flap tips, from the top of the cell
-const HEARTS_Y = BOX_TOP + BOX_H + 3;
-const FISH_Y = HEARTS_Y + HEART.length + 3;
-const CELL_H = FISH_Y + FISH_ICON.length;
+const SHELF_Y = BOX_TOP + BOX_H; // the shelf the boxes stand on: its top row, 4 rows thick
+const STRIP_Y = SHELF_Y + 5; // the hearts and fish's strip
+const HEART_PITCH = HEART[0].length + 1; // from heart to heart
+const FISH_PITCH = FISH_ICON[0].length + 1; // ... and fish to fish
+const STRIP_W = (FISH - 1) * FISH_PITCH + FISH_ICON[0].length + 4; // a little wider than the box
+const STRIP_H = 1 + HEART.length + 1 + FISH_ICON.length + 1;
+const CELL_H = STRIP_Y + STRIP_H + 2;
 const GAP_X = 8;
-const GAP_Y = 10;
+const GAP_Y = 8;
 const PAD = 8;
 const TITLE = 'YOUR CATS';
 const TOP = PAD + FONT_5X7.h + 8; // where the first row of boxes starts
@@ -193,53 +192,19 @@ function blinking(name: string, t: number): boolean {
   return (t + (h % 997) / 100) % period < 0.15;
 }
 
-// A starving cat's empty fish flashes red, twice a second.
-function alarmOn(t: number): boolean {
-  return Math.floor(t * 2) % 2 === 0;
-}
-
 /** Changes whenever the panel would look different: when this is the same, there's no need to redraw. */
 export function lookKey(boxes: readonly CatBox[], cols: number, t: number): string {
-  return `${cols}|${alarmOn(t)}|` + boxes.map((b) => `${b.name},${b.coat},${b.halfHearts},${b.fish},${b.starving},${b.packed},${blinking(b.name, t)}`).join('|');
+  return `${cols}|` + boxes.map((b) => `${b.name},${b.coat},${b.halfHearts},${b.fish},${b.packed},${blinking(b.name, t)}`).join('|');
 }
 
-// The 🐈‍⬛'s menu buttons, each a tile framed like the panel. The fish button: a metal bucket with
-// a fish lying across the top (H light, G metal, D shade; the fish in the game's colours). The box
-// button: a pile of closed boxes, a cat's eyes and name sticker on two, the third still empty
-// (k outline, L lit card, F card, E shade, S slot, Y eyes, Q sticker).
-const BUCKET_COLORS: Record<string, string> = { ...SP.palette, H: '#c9d1d9', G: '#9aa3ad', D: '#5f6770' };
-const BUCKET = [
-  ...SP.frames.fishA.map((r) => `.....${r}.....`),
-  '.KKKKKKKKKKKKKKKKKK.',
-  '.KHHHHHHHHHHHHHHHHK.',
-  '.KKKKKKKKKKKKKKKKKK.',
-  '..KHHGGGGGGGGGGGDK..',
-  '..KHGGGGGGGGGGGGDK..',
-  '..KHGGGGGGGGGGGGDK..',
-  '..KKKKKKKKKKKKKKKK..',
-  '...KHGGGGGGGGGGDK...',
-  '...KHGGGGGGGGGGDK...',
-  '...KHGGGGGGGGGGDK...',
-  '....KKKKKKKKKKKK....',
-];
-const PILE_COLORS: Record<string, string> = { ...CLOSED_CARD, E: CLOSED_CARD.B, S: CARD.S, Y: COLORS.eyes, Q: COLORS.sticker };
-const CAT_BOX = ['kkkkkkkkkk', 'kLLLLLLLLk', 'kFSYSSYSFk', 'kFFFFFFFFk', 'kFQQQQQFFk', 'kEEEEEEEEk', 'kkkkkkkkkk'];
-const EMPTY_BOX = ['kkkkkkkkkk', 'kLLLLLLLLk', 'kFSSSSSSFk', 'kFFFFFFFFk', 'kFFFFFFLFk', 'kEEEEEEEEk', 'kkkkkkkkkk'];
-const PILE = [...CAT_BOX.map((r) => `.....${r}.....`), ...EMPTY_BOX.map((r, y) => r + CAT_BOX[y])];
-const ICONS = { fish: [BUCKET, BUCKET_COLORS], box: [PILE, PILE_COLORS] } as const;
+// The X that closes the panel, on its own sign at the top right, like the title's.
+const CLOSE = 'X';
+const closeX = (width: number) => width - PAD - textWidth(FONT_5X7, CLOSE);
 
-export const BUTTON_W = BUCKET[0].length + 8;
-export const BUTTON_H = BUCKET.length + 8;
-
-/** Paints one of the 🐈‍⬛'s menu buttons, BUTTON_W x BUTTON_H sprite px. */
-export function paintButton(paint: Paint, button: 'fish' | 'box'): void {
-  paint(0, 0, BUTTON_W, BUTTON_H, COLORS.frameDark);
-  paint(1, 1, BUTTON_W - 2, BUTTON_H - 2, COLORS.frameLight);
-  paint(2, 2, BUTTON_W - 4, BUTTON_H - 4, COLORS.panel);
-  const [art, colors] = ICONS[button];
-  const x = Math.floor((BUTTON_W - art[0].length) / 2);
-  const y = Math.floor((BUTTON_H - art.length) / 2);
-  paintRows(paint, art, x, y, (ch) => colors[ch]);
+/** Whether (x, y) in a panel `width` wide (sprite px) is on its close sign. */
+export function closeAt(x: number, y: number, width: number): boolean {
+  const cx = closeX(width);
+  return x >= cx - 3 && x < cx + textWidth(FONT_5X7, CLOSE) + 3 && y < PAD + FONT_5X7.h + 3;
 }
 
 /** Which box's tile (with its hearts and fish) is at (x, y) in the panel (sprite px), in `cols` columns; -1 for none. */
@@ -250,33 +215,28 @@ export function boxAt(x: number, y: number, cols: number): number {
 }
 
 /**
- * Paints the whole panel: frame, title, and the boxes in `cols` columns, at `t` seconds: the cats'
- * boxes, then `spare` empty ones. `fine`: the size of the stickers' finer pixels, in sprite px
- * (half of one, where the screen allows).
+ * Paints the whole panel at `t` seconds: a brick wall, signs with the title and an X to close it,
+ * and the boxes in `cols` columns on shelves, the cats' boxes first, then `spare` empty ones.
+ * `px`: device pixels per sprite pixel. The stickers are drawn in finer pixels: half a sprite
+ * pixel, in whole device pixels.
  */
-export function paintPanel(paint: Paint, boxes: readonly CatBox[], spare: number, cols: number, t: number, fine: number): void {
+export function paintPanel(paint: Paint, boxes: readonly CatBox[], spare: number, cols: number, t: number, px: number): void {
+  const fine = Math.max(1, Math.floor(px / 2)) / px;
   const count = boxes.length + spare;
   const { width, height } = panelSize(count, cols);
-  paint(0, 0, width, height, COLORS.frameDark);
-  paint(1, 1, width - 2, height - 2, COLORS.frameLight);
-  paint(2, 2, width - 4, height - 4, COLORS.panel);
-  eachTextPixel(FONT_5X7, TITLE, PAD, PAD, (x, y) => paint(x, y, 1, 1, COLORS.title));
+  paintWall(paint, width, height);
+  paintSign(paint, TITLE, PAD, PAD);
+  paintSign(paint, CLOSE, closeX(width), PAD);
+  // A shelf under each row of boxes, a bracket under every other box.
+  const brackets: number[] = [];
+  for (let c = 0; c <= cols; c += 2) brackets.push(Math.min(PAD + c * (CELL_W + GAP_X) + 2, width - 10));
+  for (let r = 0; r < Math.ceil(count / cols); r++) paintShelf(paint, TOP + r * (CELL_H + GAP_Y) + SHELF_Y, width, brackets);
   for (let i = 0; i < count; i++) {
     const x = PAD + (i % cols) * (CELL_W + GAP_X);
     const y = TOP + Math.floor(i / cols) * (CELL_H + GAP_Y);
     paintCell(paint, boxes[i] ?? null, x, y, t, fine);
   }
-}
-
-// Paints pixel art `rows` at (x, y); `color` maps its characters.
-function paintRows(paint: Paint, rows: readonly string[], x: number, y: number, color: (ch: string, col: number) => string | undefined): void {
-  rows.forEach((row, ry) => {
-    for (let rx = 0; rx < row.length; rx++) {
-      if (row[rx] === '.') continue;
-      const c = color(row[rx], rx);
-      if (c) paint(x + rx, y + ry, 1, 1, c);
-    }
-  });
+  paintFrame(paint, width, height);
 }
 
 // A box: with `box`, its cat, sticker, hearts and fish; with null, an empty box, for a cat to come.
@@ -284,7 +244,7 @@ function paintCell(paint: Paint, box: CatBox | null, x: number, y: number, t: nu
   const bx = x + Math.floor((CELL_W - BOX_W) / 2); // the box's left (the left flap's tip)
   const by = y + BOX_TOP; // the box's top (the flap tips)
   const card = (ch: string) => CARD[ch];
-  const slot = () => paint(bx + Math.floor((BOX_W - SLOT_W) / 2), by + SLOT_Y, SLOT_W, 2, CARD.S);
+  const slot = () => paint(bx + Math.floor((BOX_W - SLOT_W) / 2), by + SLOT_Y, SLOT_W, 2, PANEL.slot);
 
   const peekX = bx + Math.floor((BOX_W - PEEK[0].length) / 2);
   if (!box || box.packed) {
@@ -296,7 +256,7 @@ function paintCell(paint: Paint, box: CatBox | null, x: number, y: number, t: nu
     if (!box) return;
     // A packed cat looks out through the slot: its eyes, where they are when it peeks, glinting
     // in the dark (and gone when it blinks).
-    if (!blinking(box.name, t)) for (const ex of PEEK_EYES) paint(peekX + ex, by + SLOT_Y, 2, 2, COLORS.eyes);
+    if (!blinking(box.name, t)) for (const ex of PEEK_EYES) paint(peekX + ex, by + SLOT_Y, 2, 2, PANEL.eyes);
   } else {
     // Behind the cat: the flaps, the back edge and the dark inside.
     paintRows(paint, BOX.slice(0, LIP_Y), bx, by, card);
@@ -318,23 +278,17 @@ function paintCell(paint: Paint, box: CatBox | null, x: number, y: number, t: nu
 
   paintSticker(paint, box.name, bx + FRONT_L, bx + FRONT_R, by + STICKER_TOP, by + STICKER_BOTTOM, fine);
 
-  // Under the box, each heart over its fish. Trust: full hearts, maybe a half one, then empty.
-  const iconsX = x + Math.floor((CELL_W - ICONS_W) / 2);
-  const heartW = HEART[0].length;
-  const heartIn = Math.ceil((FISH_ICON[0].length - heartW) / 2);
+  // Under the shelf, on a dark strip a little wider than the box: its trust in hearts (full ones,
+  // maybe a half, then empty) over its food in fish (one for each fifth of a meal left, then empty).
+  const left = x + Math.floor((CELL_W - STRIP_W) / 2);
+  const top = y + STRIP_Y;
+  paint(left, top, STRIP_W, STRIP_H, PANEL.strip);
+  const heartsX = left + Math.floor((STRIP_W - (HEARTS * HEART_PITCH - 1)) / 2);
   for (let i = 0; i < HEARTS; i++) {
     const filled = box.halfHearts - 2 * i; // >= 2 full, 1 half, <= 0 empty
-    paintRows(paint, HEART, iconsX + i * ICON_PITCH + heartIn, y + HEARTS_Y, (ch, col) => {
-      const lit = filled >= 2 || (filled === 1 && col <= Math.floor(heartW / 2));
-      return lit ? SP.palette[ch] : COLORS.empty;
-    });
+    paintRows(paint, HEART, heartsX + i * HEART_PITCH, top + 1, (ch, col) => (filled >= 2 || (filled === 1 && col <= 2) ? SP.palette[ch] : PANEL.empty));
   }
-
-  // Food: a fish for each fifth of a meal left. Starving, the first empty one flashes red.
-  for (let i = 0; i < FISH; i++) {
-    const empty = box.starving && i === 0 && alarmOn(t) ? COLORS.alarm : COLORS.empty;
-    paintRows(paint, FISH_ICON, iconsX + i * ICON_PITCH, y + FISH_Y, (ch) => (i < box.fish ? SP.palette[ch] : empty));
-  }
+  for (let i = 0; i < FISH; i++) paintRows(paint, FISH_ICON, left + 2 + i * FISH_PITCH, top + 2 + HEART.length, (ch) => (i < box.fish ? SP.palette[ch] : PANEL.empty));
 }
 
 // The name sticker: a slip of paper just big enough for the name, slapped on by hand somewhere in
@@ -355,8 +309,8 @@ function paintSticker(paint: Paint, catName: string, x1: number, x2: number, y1:
   const leftLow = random() < 0.5;
   const dot = (fx: number, fy: number, fw: number, fh: number, color: string) =>
     paint(x1 + (ox + fx) * fine, y1 + (oy + fy) * fine, fw * fine, fh * fine, color);
-  dot(0, leftLow ? 1 : 0, step, h, COLORS.sticker);
-  dot(step, leftLow ? 0 : 1, w - step, h, COLORS.sticker);
+  dot(0, leftLow ? 1 : 0, step, h, PANEL.sticker);
+  dot(step, leftLow ? 0 : 1, w - step, h, PANEL.sticker);
   // The name goes on straight, where both parts have it: a step through it would break it.
-  eachTextPixel(font, name, 2, 2, (fx, fy) => dot(fx, fy, 1, 1, COLORS.ink));
+  eachTextPixel(font, name, 2, 2, (fx, fy) => dot(fx, fy, 1, 1, PANEL.ink));
 }

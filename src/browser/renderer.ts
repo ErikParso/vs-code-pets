@@ -25,7 +25,7 @@ export class Renderer {
   width = 0; // the window's, CSS px
   height = 0;
 
-  /** `scale`: CSS pixels per sprite pixel (the pixelCat.scale setting). */
+  /** `scale`: CSS pixels per sprite pixel. */
   constructor(private readonly scale: number) {
     this.px = scale;
     this.canvas = document.createElement('canvas');

@@ -16,7 +16,6 @@ export interface CatBox {
   coat: string;
   halfHearts: number; // 0..2*HEARTS
   fish: number; // 0..FISH; 0 only when starving
-  starving: boolean;
   packed: boolean; // shut in its box: it does not roam (its hunger and trust go on as ever)
 }
 
@@ -40,7 +39,6 @@ export function catBoxes(cats: readonly CatDef[], store: CareStore, clock: Clock
       halfHearts: clamp(Math.floor(hunger.trust * 2 * HEARTS + 1e-9), 0, 2 * HEARTS),
       // Any food left shows a fish; the last one goes when it starts starving.
       fish: clamp(Math.ceil(full * FISH - 1e-9), 0, FISH),
-      starving: hunger.starving(),
       packed: !!saved[def.name]?.packed,
     };
   });

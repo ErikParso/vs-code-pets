@@ -196,12 +196,18 @@ function createBrowser({ layout, seed, startMs, storage, cats, script }) {
   vm.runInContext('Math.random = __random; Date.now = __now;', context);
 
   // As the extension injects it: the config, then the bundle.
-  context.PixelCatConfig = { scale: 2, cats };
+  context.PixelCatConfig = { cats };
   vm.runInContext(script, context, { filename: 'pixel-cat.js' });
 
   return {
     errors,
     drawn,
+    /** Clicks the X at the cat boxes panel's top right (scale 2: two CSS px per sprite px). */
+    clickBoxesClose() {
+      const panel = document.body.children.find((c) => c.className === 'pixel-cat-boxes');
+      const canvas = panel && panel.children[0];
+      if (canvas) canvas.dispatch('click', { offsetX: parseFloat(canvas.style.width) - 20, offsetY: 20, target: canvas });
+    },
     /** Clicks the cat boxes panel at (x, y), CSS px from its top left. */
     clickBoxesPanel(x, y) {
       const panel = document.body.children.find((c) => c.className === 'pixel-cat-boxes');

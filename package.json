@@ -2,7 +2,7 @@
   "name": "roaming-pixel-cats",
   "displayName": "Roaming Pixel Cats",
   "description": "Tiny pixel-art cats that roam your whole VS Code window: they walk, nap, jump between panels, climb up and slide down.",
-  "version": "0.1.68",
+  "version": "0.1.80",
   "publisher": "codericsro",
   "license": "MIT",
   "icon": "images/icon.png",
@@ -36,27 +36,15 @@
       {
         "command": "pixelCat.debug",
         "title": "Pixel Cat: Toggle Debug Mode"
-      },
-      {
-        "command": "pixelCat.remove",
-        "title": "Pixel Cat: Remove from VS Code"
-      },
-      {
-        "command": "pixelCat.install",
-        "title": "Pixel Cat: Let the Cat Back In"
       }
     ],
-    "configuration": {
-      "title": "Pixel Cat",
-      "properties": {
-        "pixelCat.scale": {
-          "type": "number",
-          "default": 2,
-          "minimum": 1,
-          "maximum": 6,
-          "description": "Size of one cat pixel, in screen pixels."
+    "menus": {
+      "commandPalette": [
+        {
+          "command": "pixelCat.debug",
+          "when": "pixelCat.dev"
         }
-      }
+      ]
     }
   },
   "scripts": {

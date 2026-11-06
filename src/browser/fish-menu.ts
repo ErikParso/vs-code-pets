@@ -1,7 +1,7 @@
 // The 🐈‍⬛'s menu: clicking the 🐈‍⬛ in the status bar opens a little pixel menu just above it, with
 // two buttons, each its own canvas: a bucket of fish (throw the cats one, out of the bucket; the
 // menu stays, for the next) and a pile of boxes (see them all in their boxes; the menu closes).
-import { BUTTON_H, BUTTON_W, paintButton } from './box-art';
+import { BUTTON_H, BUTTON_W, paintButton } from './menu-art';
 import { paintCanvas, Popup } from './popup';
 
 const GAP = 4; // CSS px between the menu and the 🐈‍⬛, and between its buttons

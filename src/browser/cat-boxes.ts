@@ -1,5 +1,5 @@
 // The cat boxes panel: every cat in its box, wherever it is roaming, floating in the middle of
-// the window. The box in the 🐈‍⬛'s menu opens it; Esc or a click outside closes it.
+// the window. The box in the 🐈‍⬛'s menu opens it; its X, Esc or a click outside closes it.
 // Clicking a cat's box shuts it in (packed: it does not roam) or lets it out again. It reads the
 // shared care store (catBoxes), so all windows show the same, and it keeps up with meals eaten
 // and boxes shut in other windows, and with hunger growing by itself.
@@ -7,7 +7,7 @@ import { catBoxes, FISH, HEARTS, SPARE_BOXES, togglePacked, type CatBox } from '
 import type { CatDef } from '../world/cat';
 import type { Clock } from '../world/clock';
 import type { CareStore } from '../world/hunger';
-import { boxAt, columnsFor, lookKey, paintPanel, panelSize } from './box-art';
+import { boxAt, closeAt, columnsFor, lookKey, paintPanel, panelSize } from './box-art';
 import { paintCanvas, Popup } from './popup';
 
 const REREAD_MS = 1000; // how often it reads the care store again while open
@@ -35,10 +35,12 @@ export class CatBoxes {
   ) {
     this.canvas.setAttribute('role', 'img');
     this.popup.el.appendChild(this.canvas);
-    // A click on a cat's box shuts it in or lets it out (roaming.ts does the rest).
+    // A click on the X closes it; on a cat's box, shuts the cat in or lets it out (world.ts does the rest).
     this.canvas.addEventListener('click', (e) => {
       const { px, dpr } = this.pixels();
-      const i = boxAt((e.offsetX * dpr) / px, (e.offsetY * dpr) / px, this.cols);
+      const [x, y] = [(e.offsetX * dpr) / px, (e.offsetY * dpr) / px];
+      if (closeAt(x, y, this.canvas.width / px)) return this.popup.close();
+      const i = boxAt(x, y, this.cols);
       if (!this.boxes[i]) return; // not a cat's box
       togglePacked(this.store, this.boxes[i].name);
       this.readAt = -Infinity; // show it at once
@@ -72,17 +74,11 @@ export class CatBoxes {
 
   private paint(cols: number, t: number, px: number, dpr: number): void {
     const { width, height } = panelSize(this.boxes.length + SPARE_BOXES, cols);
-    paintCanvas(this.canvas, width, height, { px, dpr }, (paint) => paintPanel(paint, this.boxes, SPARE_BOXES, cols, t, fineFor(px)));
+    paintCanvas(this.canvas, width, height, { px, dpr }, (paint) => paintPanel(paint, this.boxes, SPARE_BOXES, cols, t, px));
     this.canvas.setAttribute('aria-label', this.boxes.map(describe).join('; '));
   }
 }
 
-// The stickers' fine pixels: half a sprite pixel, in whole device pixels (so they stay crisp).
-function fineFor(px: number): number {
-  return Math.max(1, Math.floor(px / 2)) / px;
-}
-
 function describe(b: CatBox): string {
-  const food = b.starving ? 'starving' : `${b.fish} of ${FISH} fish`;
-  return `${b.name}${b.packed ? ' (packed)' : ''}: trust ${b.halfHearts / 2} of ${HEARTS} hearts, ${food}`;
+  return `${b.name}${b.packed ? ' (packed)' : ''}: trust ${b.halfHearts / 2} of ${HEARTS} hearts, ${b.fish} of ${FISH} fish`;
 }

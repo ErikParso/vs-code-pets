@@ -1,6 +1,6 @@
 // A popup over VS Code's window (the cat boxes, the 🐈‍⬛'s menu): a fixed element, hidden until
 // shown, that Esc or a click outside it closes. And painting a canvas in sprite pixels.
-import type { Paint } from './box-art';
+import type { Paint } from './pixel-art';
 
 export class Popup {
   readonly el = document.createElement('div');

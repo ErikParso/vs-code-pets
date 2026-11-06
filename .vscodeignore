@@ -11,3 +11,4 @@ installed-app-roots.json
 !images/icon.png
 test/**
 scripts/**
+docs/**

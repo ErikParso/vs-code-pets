@@ -19,18 +19,18 @@ import { World } from '../world/world';
 declare global {
   interface Window {
     __pixelCatRunning?: boolean;
-    PixelCatConfig?: { scale?: number; cats?: CatDef[] };
+    PixelCatConfig?: { cats?: CatDef[] };
   }
 }
 
 const WAIT_MS = 500; // how often it looks for the workbench while VS Code is still building it
+const SCALE = 2; // CSS px per cat pixel
 
 export function startPixelCat(): void {
   if (window.__pixelCatRunning) return;
   window.__pixelCatRunning = true;
 
   const config = window.PixelCatConfig || {};
-  const SCALE = config.scale || 2;
   // The cats, from inject/cats.json (passed in by the extension); which window each is in is
   // settled by Web Locks (see roaming.ts).
   const CATS = config.cats || [];

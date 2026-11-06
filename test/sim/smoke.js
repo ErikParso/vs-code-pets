@@ -54,6 +54,7 @@ async function main() {
   let mostWhilePacked = 0; // the most cats drawn in a frame while the first one was packed
   let mostAfter = 0; // ... and after it was let out
   let menuClosedOnFish = false; // the fish button is for throwing fish after fish: it must stay
+  let closedByX = false; // the cat boxes' X closed them
   for (let f = 1; f <= frames; f++) {
     if (f === Math.floor(frames / 2)) browser.setDebug(true);
     if (f === boxesAt || f === unpackAt) browser.choose('box');
@@ -66,6 +67,10 @@ async function main() {
     if (f === packAt + 10) packedLabel = browser.boxesLabel();
     if (f > packAt + settle && f <= unpackAt + 10) mostWhilePacked = Math.max(mostWhilePacked, browser.drawn.catsInFrame);
     if (f === unpackAt + 10) browser.clickBoxesPanel(FIRST_BOX.x, FIRST_BOX.y);
+    if (f === unpackAt + 20) {
+      browser.clickBoxesClose();
+      closedByX = !browser.boxesOpen();
+    }
     if (f > unpackAt + 10 + settle) mostAfter = Math.max(mostAfter, browser.drawn.catsInFrame);
     if (f % fishEvery === 0) {
       browser.choose('fish');
@@ -82,6 +87,7 @@ async function main() {
   if (menuClosedOnFish) problems.push("The 🐈‍⬛'s menu closed when its fish was clicked.");
   if (!boxesShown) problems.push("The box in the 🐈‍⬛'s menu did not open the cat boxes.");
   for (const c of cats) if (!(boxesLabel || '').includes(`${c.name}:`)) problems.push(`${c.name} was not in the cat boxes (${boxesLabel}).`);
+  if (!closedByX) problems.push("The cat boxes' X did not close them.");
   if (browser.boxesOpen()) problems.push('A click elsewhere did not close the cat boxes.');
   if (!(packedLabel || '').includes(`${first} (packed):`)) problems.push(`Clicking ${first}'s box did not pack it (${packedLabel}).`);
   if (mostWhilePacked !== cats.length - 1) problems.push(`While ${first} was packed, up to ${mostWhilePacked} cats were out (not ${cats.length - 1}).`);
