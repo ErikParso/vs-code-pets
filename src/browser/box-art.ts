@@ -203,23 +203,43 @@ export function lookKey(boxes: readonly CatBox[], cols: number, t: number): stri
   return `${cols}|${alarmOn(t)}|` + boxes.map((b) => `${b.name},${b.coat},${b.halfHearts},${b.fish},${b.starving},${b.packed},${blinking(b.name, t)}`).join('|');
 }
 
-// The 🐈‍⬛'s menu buttons: a fish (feed the cats) and a box (see them all), each a tile framed like
-// the panel. The fish is drawn at twice the size, the box (closed) as it is.
-export const BUTTON_W = CLOSED_ART[0].length + 8;
-export const BUTTON_H = CLOSED_ART.length + 8;
+// The 🐈‍⬛'s menu buttons, each a tile framed like the panel. The fish button: a metal bucket with
+// a fish lying across the top (H light, G metal, D shade; the fish in the game's colours). The box
+// button: a pile of closed boxes, a cat's eyes and name sticker on two, the third still empty
+// (k outline, L lit card, F card, E shade, S slot, Y eyes, Q sticker).
+const BUCKET_COLORS: Record<string, string> = { ...SP.palette, H: '#c9d1d9', G: '#9aa3ad', D: '#5f6770' };
+const BUCKET = [
+  ...SP.frames.fishA.map((r) => `.....${r}.....`),
+  '.KKKKKKKKKKKKKKKKKK.',
+  '.KHHHHHHHHHHHHHHHHK.',
+  '.KKKKKKKKKKKKKKKKKK.',
+  '..KHHGGGGGGGGGGGDK..',
+  '..KHGGGGGGGGGGGGDK..',
+  '..KHGGGGGGGGGGGGDK..',
+  '..KKKKKKKKKKKKKKKK..',
+  '...KHGGGGGGGGGGDK...',
+  '...KHGGGGGGGGGGDK...',
+  '...KHGGGGGGGGGGDK...',
+  '....KKKKKKKKKKKK....',
+];
+const PILE_COLORS: Record<string, string> = { ...CLOSED_CARD, E: CLOSED_CARD.B, S: CARD.S, Y: COLORS.eyes, Q: COLORS.sticker };
+const CAT_BOX = ['kkkkkkkkkk', 'kLLLLLLLLk', 'kFSYSSYSFk', 'kFFFFFFFFk', 'kFQQQQQFFk', 'kEEEEEEEEk', 'kkkkkkkkkk'];
+const EMPTY_BOX = ['kkkkkkkkkk', 'kLLLLLLLLk', 'kFSSSSSSFk', 'kFFFFFFFFk', 'kFFFFFFLFk', 'kEEEEEEEEk', 'kkkkkkkkkk'];
+const PILE = [...CAT_BOX.map((r) => `.....${r}.....`), ...EMPTY_BOX.map((r, y) => r + CAT_BOX[y])];
+const ICONS = { fish: [BUCKET, BUCKET_COLORS], box: [PILE, PILE_COLORS] } as const;
+
+export const BUTTON_W = BUCKET[0].length + 8;
+export const BUTTON_H = BUCKET.length + 8;
 
 /** Paints one of the 🐈‍⬛'s menu buttons, BUTTON_W x BUTTON_H sprite px. */
 export function paintButton(paint: Paint, button: 'fish' | 'box'): void {
   paint(0, 0, BUTTON_W, BUTTON_H, COLORS.frameDark);
   paint(1, 1, BUTTON_W - 2, BUTTON_H - 2, COLORS.frameLight);
   paint(2, 2, BUTTON_W - 4, BUTTON_H - 4, COLORS.panel);
-  if (button === 'box') {
-    const x = (BUTTON_W - CLOSED_ART[0].length) / 2;
-    return paintRows(paint, CLOSED_ART, x, (BUTTON_H - CLOSED_ART.length) / 2, (ch) => CLOSED_CARD[ch]);
-  }
-  const x = Math.floor((BUTTON_W - FISH_ICON[0].length * 2) / 2);
-  const y = Math.floor((BUTTON_H - FISH_ICON.length * 2) / 2);
-  paintRows(paint, FISH_ICON, x, y, (ch) => SP.palette[ch], 2);
+  const [art, colors] = ICONS[button];
+  const x = Math.floor((BUTTON_W - art[0].length) / 2);
+  const y = Math.floor((BUTTON_H - art.length) / 2);
+  paintRows(paint, art, x, y, (ch) => colors[ch]);
 }
 
 /** Which box's tile (with its hearts and fish) is at (x, y) in the panel (sprite px), in `cols` columns; -1 for none. */
@@ -248,13 +268,13 @@ export function paintPanel(paint: Paint, boxes: readonly CatBox[], spare: number
   }
 }
 
-// Paints pixel art `rows` at (x, y), each pixel `scale` sprite px; `color` maps its characters.
-function paintRows(paint: Paint, rows: readonly string[], x: number, y: number, color: (ch: string, col: number) => string | undefined, scale = 1): void {
+// Paints pixel art `rows` at (x, y); `color` maps its characters.
+function paintRows(paint: Paint, rows: readonly string[], x: number, y: number, color: (ch: string, col: number) => string | undefined): void {
   rows.forEach((row, ry) => {
     for (let rx = 0; rx < row.length; rx++) {
       if (row[rx] === '.') continue;
       const c = color(row[rx], rx);
-      if (c) paint(x + rx * scale, y + ry * scale, scale, scale, c);
+      if (c) paint(x + rx, y + ry, 1, 1, c);
     }
   });
 }

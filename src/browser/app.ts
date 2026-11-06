@@ -83,7 +83,7 @@ export function startPixelCat(): void {
     catBoxes = new CatBoxes(CATS, localCareStore, systemClock, () => renderer);
     // The 🐈‍⬛'s menu: a fish to throw from the 🐈‍⬛, a box to open the cat boxes.
     menu = new FishMenu(() => renderer, {
-      fish: (at) => world.throwFish(at.x, at.y),
+      fish: (from) => world.throwFish(from.x, from.y),
       box: () => catBoxes.show(),
     });
     workbench.onOtherClick((target) => {

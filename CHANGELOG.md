@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.1.68
+
+New pictures on the 🐈‍⬛ menu's buttons: a metal bucket with a fish lying across the top (feed),
+and a pile of three closed boxes, a cat's eyes and name sticker on two and the third still empty
+(the cat boxes). Each fish now flies out of the bucket button, not from the status bar.
+
 ## 0.1.67
 
 The status bar icon is a black cat (🐈‍⬛) instead of the 🐟, since it now opens the menu for both
