@@ -28,6 +28,13 @@ food until it eats.
 before its meal deadline, and drops by 0.05 when fed late. Hunger continues while VS Code
 is closed; trust changes only when a cat eats. Both are remembered across reloads.
 
+**Your cats:** click the 📦 in the status bar to see every cat in its own cardboard box, with
+its name on a sticker, wherever it is roaming. Under each box, its trust is shown as 5 hearts
+(each half a heart is 0.1 trust) and how full it is as 5 fish (each about 5 hours of its 26).
+A starving cat's last fish flashes red. After them come 12 closed, empty boxes, for cats still to come.
+Every window shows the same. Esc, a click outside, or
+the 📦 again closes it.
+
 ## ⚠️ This extension modifies VS Code's files
 
 VS Code doesn't let extensions draw outside their own panels. To let the cats roam the
@@ -72,7 +79,7 @@ Good to know:
   does next; `Cat`, `Hunger`, `FishPond` and `Navigator` each own their part. `config.ts` holds
   every tuning number.
 - `src/browser/`: the cat script's browser side: reading VS Code's workbench, drawing, the care
-  panel, Web Locks. Bundled with `src/world` by esbuild into `out/pixel-cat.js`
+  panel, the cat boxes (`cat-boxes.ts`, drawn by `box-art.ts` from `world/boxes.ts`), Web Locks. Bundled with `src/world` by esbuild into `out/pixel-cat.js`
   (`scripts/bundle.js`).
 - `test/sim/`: the simulation tests, below.
 
@@ -84,8 +91,9 @@ in VS Code, without the window (`test/sim/session.js`), in a VS Code layout
 virtual clock. VS Code is open on weekdays and closed in between, while the cats' meal
 deadlines run on. Feeding follows fixed rules, and every run with the same code and seeds does
 exactly the same thing. A smoke test runs the real script, bundled as the extension injects it,
-in a fake VS Code window for half an hour, the second half in debug mode (`test/sim/smoke.js`):
-it must not throw, must draw the cats and must save them.
+in a fake VS Code window for half an hour, the second half in debug mode, with the cat boxes
+opened for a while (`test/sim/smoke.js`): it must not throw, must draw the cats, must save them,
+and the 📦 must open the boxes with every cat in them.
 
 Every run fails if a cat breaks a rule of its world: it walks further than
 `MAX_WALK_DISTANCE`, leaves its floor, ends up outside the window, gets stuck, eats while fed,

@@ -1,0 +1,117 @@
+// The cat boxes panel: every cat in its box, wherever it is roaming, floating in the middle of
+// the window. The 📦 in the status bar opens and closes it; Esc or a click outside closes it.
+// It reads the shared care store (catBoxes), so all windows show the same, and it keeps up with
+// meals eaten in other windows and with hunger growing by itself.
+import { catBoxes, FISH, HEARTS, SPARE_BOXES, type CatBox } from '../world/boxes';
+import type { CatDef } from '../world/cat';
+import type { Clock } from '../world/clock';
+import type { CareStore } from '../world/hunger';
+import { columnsFor, lookKey, paintPanel, panelSize } from './box-art';
+
+const REREAD_MS = 1000; // how often it reads the care store again while open
+const MAX_COLS = 5;
+const MAX_WIDTH = 0.9; // of the window
+const MAX_HEIGHT = 0.85;
+
+export class CatBoxes {
+  private readonly el: HTMLDivElement;
+  private readonly canvas: HTMLCanvasElement;
+  private readonly ctx: CanvasRenderingContext2D;
+  private open = false;
+  private boxes: CatBox[] = [];
+  private readAt = -Infinity;
+  private drawn = '';
+
+  /** `px`: device pixels per sprite pixel; `dpr`: device pixels per CSS pixel (both from the Renderer). */
+  constructor(
+    private readonly cats: readonly CatDef[],
+    private readonly store: CareStore,
+    private readonly clock: Clock,
+    private readonly pixels: () => { px: number; dpr: number }
+  ) {
+    this.el = document.createElement('div');
+    this.el.className = 'pixel-cat-boxes';
+    Object.assign(this.el.style, {
+      position: 'fixed', left: '50%', top: '50%', transform: 'translate(-50%, -50%)', zIndex: '1001',
+      display: 'none', maxWidth: `${MAX_WIDTH * 100}vw`, maxHeight: `${MAX_HEIGHT * 100}vh`, overflow: 'auto',
+      pointerEvents: 'auto', boxShadow: '0 6px 24px rgba(0, 0, 0, 0.5)', lineHeight: '0',
+    });
+    this.canvas = document.createElement('canvas');
+    this.canvas.setAttribute('role', 'img');
+    this.el.appendChild(this.canvas);
+    document.body.appendChild(this.el);
+    this.ctx = this.canvas.getContext('2d') as CanvasRenderingContext2D;
+    document.addEventListener('keydown', (e) => {
+      if (this.open && e.key === 'Escape') this.close();
+    }, true);
+  }
+
+  get isOpen(): boolean {
+    return this.open;
+  }
+
+  toggle(): void {
+    if (this.open) this.close();
+    else this.show();
+  }
+
+  close(): void {
+    this.open = false;
+    this.el.style.display = 'none';
+  }
+
+  /** Closes it if `target` (what was clicked) is outside it. */
+  clickedAt(target: unknown): void {
+    if (this.open && !(target instanceof Element && this.el.contains(target))) this.close();
+  }
+
+  /** Redraws it if it is open and anything shown has changed. Called every animation frame. */
+  frame(now: number): void {
+    if (!this.open) return;
+    if (now - this.readAt >= REREAD_MS) {
+      this.boxes = catBoxes(this.cats, this.store, this.clock);
+      this.readAt = now;
+    }
+    const { px, dpr } = this.pixels();
+    const fit = Math.floor((window.innerWidth * MAX_WIDTH * dpr) / px);
+    const cols = Math.min(MAX_COLS, this.boxes.length + SPARE_BOXES || 1, columnsFor(fit));
+    const t = now / 1000;
+    const key = `${px}|${dpr}|${lookKey(this.boxes, cols, t)}`;
+    if (key === this.drawn) return;
+    this.drawn = key;
+    this.paint(cols, t, px, dpr);
+  }
+
+  private show(): void {
+    this.open = true;
+    this.el.style.display = 'block';
+    this.readAt = -Infinity;
+    this.drawn = '';
+  }
+
+  private paint(cols: number, t: number, px: number, dpr: number): void {
+    const { width, height } = panelSize(this.boxes.length + SPARE_BOXES, cols);
+    const { canvas, ctx } = this;
+    if (canvas.width !== width * px || canvas.height !== height * px) {
+      canvas.width = width * px;
+      canvas.height = height * px;
+      canvas.style.width = `${(width * px) / dpr}px`;
+      canvas.style.height = `${(height * px) / dpr}px`;
+    }
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    paintPanel((x, y, w, h, color) => {
+      ctx.fillStyle = color;
+      ctx.fillRect(x * px, y * px, w * px, h * px);
+    }, this.boxes, SPARE_BOXES, cols, t, fineFor(px));
+    canvas.setAttribute('aria-label', this.boxes.map(describe).join('; '));
+  }
+}
+
+// The stickers' fine pixels: half a sprite pixel, in whole device pixels (so they stay crisp).
+function fineFor(px: number): number {
+  return Math.max(1, Math.floor(px / 2)) / px;
+}
+
+function describe(b: CatBox): string {
+  return `${b.name}: trust ${b.halfHearts / 2} of ${HEARTS} hearts, ${b.starving ? 'starving' : `${b.fish} of ${FISH} fish`}`;
+}

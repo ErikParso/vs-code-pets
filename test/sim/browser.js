@@ -100,6 +100,9 @@ function createBrowser({ layout, seed, startMs, storage, cats, script }) {
     closest(selector) {
       return selector === '.statusbar-item' && this.attributes.class === 'statusbar-item' ? this : null;
     }
+    contains(other) {
+      return other === this || this.children.some((c) => c.contains && c.contains(other));
+    }
   }
 
   const parts = Object.fromEntries(Object.entries(layout.parts).map(([sel, rects]) => [sel, rects.map((r) => new Element('div', r))]));
@@ -109,8 +112,21 @@ function createBrowser({ layout, seed, startMs, storage, cats, script }) {
   fishItem.setAttribute('class', 'statusbar-item');
   fishItem.setAttribute('aria-label', POLL_LABEL + cats.map((c) => c.name).join(', '));
   fishItem.textContent = '🐟';
+  // And the 📦 next to it, for the cat boxes.
+  const boxesItem = new Element('div', layout.fishButton);
+  boxesItem.setAttribute('class', 'statusbar-item');
+  boxesItem.textContent = '📦';
 
   const clickListeners = [];
+  const click = (event) => {
+    for (const fn of clickListeners) {
+      try {
+        fn(event);
+      } catch (e) {
+        onError(e);
+      }
+    }
+  };
   const document = {
     body: new Element('body'),
     createElement: (tag) => new Element(tag),
@@ -189,14 +205,21 @@ function createBrowser({ layout, seed, startMs, storage, cats, script }) {
     },
     /** Clicks the 🐟 in the status bar, holding the modifier keys in `keys` ({ctrlKey, altKey, shiftKey}). */
     clickFish(keys = {}) {
-      const event = { target: fishItem, ctrlKey: !!keys.ctrlKey, altKey: !!keys.altKey, shiftKey: !!keys.shiftKey };
-      for (const fn of clickListeners) {
-        try {
-          fn(event);
-        } catch (e) {
-          onError(e);
-        }
-      }
+      click({ target: fishItem, ctrlKey: !!keys.ctrlKey, altKey: !!keys.altKey, shiftKey: !!keys.shiftKey });
+    },
+    /** Clicks the 📦 in the status bar. */
+    clickBoxes() {
+      click({ target: boxesItem, ctrlKey: false, altKey: false, shiftKey: false });
+    },
+    /** The cat boxes panel's description of the cats (its canvas's aria-label), or null if it never drew. */
+    boxesLabel() {
+      const panel = document.body.children.find((c) => c.className === 'pixel-cat-boxes');
+      return panel ? panel.children[0].getAttribute('aria-label') : null;
+    },
+    /** Whether the cat boxes panel is showing. */
+    boxesOpen() {
+      const panel = document.body.children.find((c) => c.className === 'pixel-cat-boxes');
+      return !!panel && panel.style.display === 'block';
     },
   };
 }

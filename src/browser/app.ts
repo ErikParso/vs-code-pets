@@ -4,6 +4,7 @@
 // wires the browser side together: the World (world.ts), driven by a Driver (driver.ts) on
 // VS Code's timers and animation frames, drawn by the Renderer.
 import { CarePanel } from './care-panel';
+import { CatBoxes } from './cat-boxes';
 import { localCareStore } from './care-store';
 import type { CatDef } from '../world/cat';
 import { systemClock } from '../world/clock';
@@ -36,6 +37,7 @@ export function startPixelCat(): void {
   const world = new World({ random: new Random(), clock: systemClock, careStore: localCareStore });
   let renderer: Renderer;
   let carePanel: CarePanel;
+  let catBoxes: CatBoxes;
   let ink = '#888';
   const driver = new Driver({
     world,
@@ -56,11 +58,13 @@ export function startPixelCat(): void {
     if (driver.shown !== wasShown) console.info(`[pixel-cat] ${driver.shown ? 'showing' : 'hiding'} the cats`);
     if (driver.shown && !wasShown) ink = workbench.ink();
     carePanel.render(world, driver.shown && driver.debug);
+    if (!driver.shown) catBoxes.close();
   }
 
   function frame(now: number) {
     driver.frame(now);
     renderer.draw(world, driver.shown, { debug: driver.debug, ink });
+    catBoxes.frame(now);
     requestAnimationFrame(frame);
   }
 
@@ -72,6 +76,12 @@ export function startPixelCat(): void {
     console.info('[pixel-cat] started');
     renderer = new Renderer(SCALE);
     carePanel = new CarePanel();
+    // The 📦 in the status bar: every cat in its box, wherever it is roaming.
+    catBoxes = new CatBoxes(CATS, localCareStore, systemClock, () => renderer);
+    workbench.onBoxesClick(
+      () => driver.shown && catBoxes.toggle(),
+      (target) => catBoxes.clickedAt(target)
+    );
     resize();
     window.addEventListener('resize', resize);
     // The 🐟 the extension shows in the status bar: throw a fish from where it is. (In debug

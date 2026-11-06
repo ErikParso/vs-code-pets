@@ -1,5 +1,5 @@
 // VS Code's workbench as the cats see it: the parts whose edges are their floors and walls, the
-// 🐟 the extension shows in the status bar while cats are out, and VS Code's text colour.
+// 🐟 and 📦 the extension shows in the status bar while cats are out, and VS Code's text colour.
 import { layoutFromRects, Layout, PARTS, Rect } from '../world/layout';
 
 // While any cats are out, the extension shows its 🐟 in the status bar, labelled (for screen
@@ -52,12 +52,23 @@ export const workbench = {
     document.addEventListener(
       'click',
       (e) => {
-        const item = e.target instanceof Element && e.target.closest('.statusbar-item');
-        if (!item || !(item.textContent || '').includes('🐟')) return;
+        const item = statusItem(e.target, '🐟');
+        if (!item) return;
         const r = item.getBoundingClientRect();
         handler({ x: r.left + r.width / 2, y: r.top, ctrlKey: e.ctrlKey, altKey: e.altKey, shiftKey: e.shiftKey });
       },
       true
     );
   },
+
+  /** Calls `onBoxes` whenever the 📦 in the status bar is clicked, and `elsewhere` with what was clicked for any other click. */
+  onBoxesClick(onBoxes: () => void, elsewhere: (target: EventTarget | null) => void): void {
+    document.addEventListener('click', (e) => (statusItem(e.target, '📦') ? onBoxes() : elsewhere(e.target)), true);
+  },
 };
+
+// The status bar item `target` is in, if it shows `icon`.
+function statusItem(target: EventTarget | null, icon: string): Element | null {
+  const item = target instanceof Element && target.closest('.statusbar-item');
+  return item && (item.textContent || '').includes(icon) ? item : null;
+}

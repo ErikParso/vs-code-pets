@@ -1,5 +1,62 @@
 # Changelog
 
+## 0.1.55
+
+The closed boxes' slot is at the same height as the open boxes' one.
+
+## 0.1.54
+
+The empty boxes are closed: the closed box from Erik's reference, pixel for pixel (20x17, top
+shut, "!" shine), made bigger the same way as the open one, standing on the same line, with the
+slot cut in its front.
+
+## 0.1.53
+
+The cat boxes' slot is lower, on the plain front just under the lip's shadow. After the cats'
+boxes come 12 empty ones (`SPARE_BOXES`), for cats still to come: the box and its slot only, no
+cat, sticker, hearts or fish.
+
+## 0.1.52
+
+The cat box is a bit bigger (42x24: its plain middle column and a plain row of the front
+repeated, so it is still the reference drawing), and the sticker and its name smaller: the name
+is in the 5x7 font drawn at half a box pixel (in whole screen pixels, so it stays crisp), up to 8
+characters, on a slip of paper placed anywhere on the front, a half pixel crooked.
+
+## 0.1.51
+
+The cat box is now Erik's reference drawing, pixel for pixel and colour for colour (28x20: flaps
+folded out, back edge, dark inside, lit lip, the lip's shadow, the crease on the left and the
+"!" shine), widened by 6 repeats of its plain middle column so a name fits on the front. The slot
+is a 12x2 cut in the lip's shadow. The sticker is a plain slip of paper just big enough for the
+name (3x5 font, up to 5 characters), a pixel crooked from a step somewhere along it.
+
+## 0.1.50
+
+The cat boxes are redrawn after a reference open box: a 36x22 body (a cat's size) under a lit
+lip, flaps folded up and out, the dark inside behind the cat, the lip's shadow, a glint and a
+"!" shine. One long slot is cut in the front at the cat's eye height (for a closed box's cat to
+look out of, later). The sticker is just big enough for the name, in a new 3x5 pixel font (up to
+7 characters), still off centre and a pixel crooked, with the name printed straight.
+
+## 0.1.49
+
+The cat boxes look better: the boxes are about square (64x52), with a fold line under the rim, a
+few scuffs and a row of three breathing holes. The name sticker is slapped on by hand: off
+centre and a pixel crooked, each box its own way (always the same for the same cat), its
+letters stepping whole so they stay readable. Each heart now sits over its fish.
+
+## 0.1.48
+
+New: the cat boxes. A 📦 next to the 🐟 in the status bar opens a pixel-art panel in the middle
+of the window: every cat in its own cardboard box, peeking over the rim and blinking now and
+then, its name on a sticker (a 5x7 pixel font, up to 8 characters). Under each box: trust as 5
+hearts, filling in halves (0.1 trust each), and food as 5 fish, a fish for each fifth of the 26
+hours left; a starving cat's last fish flashes red. It shows every cat wherever it is roaming,
+read from the care store all windows share, and keeps up with meals in other windows. Esc, a
+click outside or the 📦 closes it. It lays out any number of cats. No change for the cats: the
+event log is identical.
+
 ## 0.1.47
 
 Cleanup: the sources are in `src/world` (no DOM, enforced by `tsconfig.world.json`), `src/browser`
