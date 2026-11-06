@@ -2,7 +2,7 @@
 // is its localStorage: shared by all its windows and kept between sessions.
 import type { Care, CareStore } from '../world/hunger';
 
-const KEY = 'pixelCat.care'; // {name: {nextMealAt, trust}}
+const KEY = 'pixelCat.care'; // {name: {nextMealAt, trust, packed}}
 
 /** The part of the Web Storage API a CareStore needs. */
 export interface KeyValueStorage {
@@ -20,7 +20,7 @@ export function storageCareStore(storage: () => KeyValueStorage): CareStore {
         return {};
       }
     },
-    save(all: Record<string, Care>) {
+    save(all: Record<string, Partial<Care>>) {
       try {
         storage().setItem(KEY, JSON.stringify(all));
       } catch (e) {

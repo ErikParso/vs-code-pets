@@ -7,7 +7,7 @@ import { Cat, CatDef, Flight } from './cat';
 import type { Clock } from './clock';
 import { EAT_TIME, HOP_TIME, WALK_SPEED, WALL_LEAP, WIND_UP } from './config';
 import { Fish, FishPond } from './fish';
-import { Care, CareStore, Hunger } from './hunger';
+import { CareStore, Hunger } from './hunger';
 import type { Floor, Layout, Wall } from './layout';
 import { clamp } from './math';
 import { ClimbMove, JumpMove, Move, Navigator } from './navigator';
@@ -109,8 +109,9 @@ export class World {
     this.brain = new CatBrain(this);
   }
 
+  /** The cats out in this window (not packed in their boxes). */
   get cats(): readonly Cat[] {
-    return this.catList;
+    return this.catList.filter((c) => !c.packed);
   }
 
   get emotions(): readonly Emotion[] {
@@ -142,7 +143,7 @@ export class World {
     this.layoutKey = key;
     this.floors = next.floors;
     this.walls = next.walls;
-    for (const cat of this.catList) {
+    for (const cat of this.cats) {
       if (cat.leaving) continue; // on its way out of the window anyway
       const f = cat.floor && this.nav.floorAt(cat.x, cat.y);
       cat.route = null; // the wall it was walking to may have moved
@@ -162,14 +163,30 @@ export class World {
 
   // A cat comes out: it walks in along the bottom. `done` lets it go to another window.
   spawn(def: CatDef, done: () => void): void {
-    const cat = new Cat(def, Hunger.restore(this.clock, this.careStore.load()[def.name]), done, ++this.visits);
+    const care = this.careStore.load()[def.name];
+    const cat = new Cat(def, Hunger.restore(this.clock, care), done, ++this.visits);
+    cat.packed = !!care?.packed;
     this.catList.push(cat);
     this.walkIn(cat);
   }
 
+  /**
+   * Cats packed in their boxes (from any window) go in at once; cats let out walk in again. A
+   * packed cat stays this window's (it is not done), so no other window gets it.
+   */
+  checkPacked(): void {
+    const care = this.careStore.load();
+    for (const cat of this.catList) {
+      const packed = !!care[cat.name]?.packed;
+      if (packed && !cat.packed) this.leaveMeal(cat);
+      if (!packed && cat.packed) this.walkIn(cat);
+      cat.packed = packed;
+    }
+  }
+
   /** Moves everything on by dt seconds. */
   step(dt: number): void {
-    for (const cat of this.catList) this.update(cat, dt);
+    for (const cat of this.cats) this.update(cat, dt);
     this.pond.update(dt, this.width);
     this.spawnEmotions(dt);
   }
@@ -185,7 +202,7 @@ export class World {
 
   // The 🐟 was clicked at (x, y): a fish for one of the cats on a floor, or anywhere if none is.
   throwFish(x: number, y: number): void {
-    const near = this.random.oneOf(this.catList.filter((c) => c.floor));
+    const near = this.random.oneOf(this.cats.filter((c) => c.floor));
     const f = near ? (near.floor as Floor) : this.random.oneOf(this.floors);
     const [lo, hi] = this.nav.range(f);
     this.pond.toss(x, y, f, lo, hi, near ? near.x : undefined);
@@ -193,8 +210,8 @@ export class World {
 
   // Every cat in this window, saved along with the ones that are elsewhere.
   save(): void {
-    const all = this.careStore.load() as Record<string, Care>;
-    for (const c of this.catList) all[c.name] = c.hunger.care();
+    const all = this.careStore.load();
+    for (const c of this.catList) all[c.name] = { ...all[c.name], ...c.hunger.care() }; // keeps `packed`
     this.careStore.save(all);
   }
 
@@ -205,7 +222,7 @@ export class World {
       width: this.width,
       floors: this.floors.map((f) => ({ ...f })),
       walls: this.walls.map((w) => ({ ...w })),
-      cats: this.catList.map((c) => {
+      cats: this.cats.map((c) => {
         const a = c.activity;
         return {
           visit: c.visit,
@@ -249,6 +266,8 @@ export class World {
     cat.floor = floor;
     cat.y = floor.y;
     cat.x = x;
+    cat.leaving = false; // (packed on its way out, it is let out to stay)
+    cat.route = null;
     cat.walkTo(tx, WALK_SPEED);
   }
 
@@ -404,7 +423,7 @@ export class World {
     this.emotionTime += dt;
     if (this.emotionTime < 0.5) return;
     this.emotionTime = 0;
-    for (const c of this.catList) {
+    for (const c of this.cats) {
       if (c.activity.kind === 'sleep') {
         if (this.random.chance(0.25)) this.spawnEmotion('z', c);
       } else if (c.hunger.asking()) {

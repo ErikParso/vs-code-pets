@@ -1,7 +1,8 @@
 #!/usr/bin/env node
 // The smoke test: the real cat script, bundled as the extension injects it, in a fake VS Code
 // window (browser.js) for half an hour, with a fish thrown now and then, the second half in debug
-// mode (with the care panel and the 🐟's modifier-clicks), the cat boxes (📦) opened for a while.
+// mode (with the care panel and the 🐟's modifier-clicks), the cat boxes (📦) opened for a while,
+// and a cat packed in its box from them and let out again.
 // The simulations drive
 // the World directly (session.js), so this is what checks the browser side: reading the
 // workbench, drawing, the 🐟, Web Locks and localStorage. It fails if the script throws, never
@@ -39,17 +40,32 @@ async function main() {
   const DEBUG_CLICKS = [{ ctrlKey: true }, { ctrlKey: true, shiftKey: true }, { altKey: true }, { shiftKey: true }];
   // The cat boxes: opened by the 📦 a quarter of the way in; the next click elsewhere (the 🐟)
   // closes them.
+  // While open, a click on the first cat's box packs it (it goes from the window into its box);
+  // the panel is opened again a few minutes later and the same click lets it out.
   const boxesAt = Math.floor(frames / 4);
+  const unpackAt = boxesAt + Math.floor(fishEvery * 0.7); // before the 🐟 closes the panel again
+  const FIRST_BOX = { x: 72, y: 76 }; // the middle of the first box, CSS px on the panel (scale 2)
+  const first = cats[0].name;
+  const packAt = boxesAt + 20;
+  const settle = Math.ceil(1500 / FRAME_MS); // a poll (700 ms) and then some, for a click to show
   let boxesShown = false;
   let boxesLabel = null;
+  let packedLabel = null;
+  let mostWhilePacked = 0; // the most cats drawn in a frame while the first one was packed
+  let mostAfter = 0; // ... and after it was let out
   for (let f = 1; f <= frames; f++) {
     if (f === Math.floor(frames / 2)) browser.setDebug(true);
-    if (f === boxesAt) browser.clickBoxes();
+    if (f === boxesAt || f === unpackAt) browser.clickBoxes();
     await browser.step();
     if (f === boxesAt + 10) {
       boxesShown = browser.boxesOpen();
       boxesLabel = browser.boxesLabel();
     }
+    if (f === packAt) browser.clickBoxesPanel(FIRST_BOX.x, FIRST_BOX.y);
+    if (f === packAt + 10) packedLabel = browser.boxesLabel();
+    if (f > packAt + settle && f <= unpackAt + 10) mostWhilePacked = Math.max(mostWhilePacked, browser.drawn.catsInFrame);
+    if (f === unpackAt + 10) browser.clickBoxesPanel(FIRST_BOX.x, FIRST_BOX.y);
+    if (f > unpackAt + 10 + settle) mostAfter = Math.max(mostAfter, browser.drawn.catsInFrame);
     if (f % fishEvery === 0) browser.clickFish();
     if (f > frames / 2 && f % fishEvery === Math.floor(fishEvery / 2)) for (const keys of DEBUG_CLICKS) browser.clickFish(keys);
   }
@@ -61,6 +77,10 @@ async function main() {
   if (!boxesShown) problems.push('The 📦 did not open the cat boxes.');
   for (const c of cats) if (!(boxesLabel || '').includes(`${c.name}:`)) problems.push(`${c.name} was not in the cat boxes (${boxesLabel}).`);
   if (browser.boxesOpen()) problems.push('A click elsewhere did not close the cat boxes.');
+  if (!(packedLabel || '').includes(`${first} (packed):`)) problems.push(`Clicking ${first}'s box did not pack it (${packedLabel}).`);
+  if (mostWhilePacked !== cats.length - 1) problems.push(`While ${first} was packed, up to ${mostWhilePacked} cats were out (not ${cats.length - 1}).`);
+  if (mostAfter !== cats.length) problems.push(`After ${first} was let out, up to ${mostAfter} cats were out (not ${cats.length}).`);
+  if (Object.values(saved).some((c) => c.packed)) problems.push('A cat is still packed at the end.');
 
   console.log(`Smoke: the cat script in a fake ${layout.width}x${layout.height} window for ${MINUTES} min; ${browser.drawn.images} images and ${browser.drawn.rects} rectangles drawn`);
   if (!problems.length) return console.log('PASS: it runs, draws the cats and saves them.');

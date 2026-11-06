@@ -1,12 +1,13 @@
 // The cat boxes panel: every cat in its box, wherever it is roaming, floating in the middle of
 // the window. The 📦 in the status bar opens and closes it; Esc or a click outside closes it.
-// It reads the shared care store (catBoxes), so all windows show the same, and it keeps up with
-// meals eaten in other windows and with hunger growing by itself.
-import { catBoxes, FISH, HEARTS, SPARE_BOXES, type CatBox } from '../world/boxes';
+// Clicking a cat's box shuts it in (packed: it does not roam) or lets it out again. It reads the
+// shared care store (catBoxes), so all windows show the same, and it keeps up with meals eaten
+// and boxes shut in other windows, and with hunger growing by itself.
+import { catBoxes, FISH, HEARTS, SPARE_BOXES, togglePacked, type CatBox } from '../world/boxes';
 import type { CatDef } from '../world/cat';
 import type { Clock } from '../world/clock';
 import type { CareStore } from '../world/hunger';
-import { columnsFor, lookKey, paintPanel, panelSize } from './box-art';
+import { boxAt, columnsFor, lookKey, paintPanel, panelSize } from './box-art';
 
 const REREAD_MS = 1000; // how often it reads the care store again while open
 const MAX_COLS = 5;
@@ -21,6 +22,7 @@ export class CatBoxes {
   private boxes: CatBox[] = [];
   private readAt = -Infinity;
   private drawn = '';
+  private cols = 1;
 
   /** `px`: device pixels per sprite pixel; `dpr`: device pixels per CSS pixel (both from the Renderer). */
   constructor(
@@ -44,6 +46,14 @@ export class CatBoxes {
     document.addEventListener('keydown', (e) => {
       if (this.open && e.key === 'Escape') this.close();
     }, true);
+    // A click on a cat's box shuts it in or lets it out (roaming.ts does the rest).
+    this.canvas.addEventListener('click', (e) => {
+      const { px, dpr } = this.pixels();
+      const i = boxAt((e.offsetX * dpr) / px, (e.offsetY * dpr) / px, this.cols);
+      if (!this.boxes[i]) return; // not a cat's box
+      togglePacked(this.store, this.boxes[i].name);
+      this.readAt = -Infinity; // show it at once
+    });
   }
 
   get isOpen(): boolean {
@@ -75,6 +85,7 @@ export class CatBoxes {
     const { px, dpr } = this.pixels();
     const fit = Math.floor((window.innerWidth * MAX_WIDTH * dpr) / px);
     const cols = Math.min(MAX_COLS, this.boxes.length + SPARE_BOXES || 1, columnsFor(fit));
+    this.cols = cols;
     const t = now / 1000;
     const key = `${px}|${dpr}|${lookKey(this.boxes, cols, t)}`;
     if (key === this.drawn) return;
@@ -113,5 +124,6 @@ function fineFor(px: number): number {
 }
 
 function describe(b: CatBox): string {
-  return `${b.name}: trust ${b.halfHearts / 2} of ${HEARTS} hearts, ${b.starving ? 'starving' : `${b.fish} of ${FISH} fish`}`;
+  const food = b.starving ? 'starving' : `${b.fish} of ${FISH} fish`;
+  return `${b.name}${b.packed ? ' (packed)' : ''}: trust ${b.halfHearts / 2} of ${HEARTS} hearts, ${food}`;
 }

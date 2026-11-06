@@ -9,12 +9,13 @@ import { clamp } from './math';
 export interface Care {
   nextMealAt: number; // ms, like Date.now
   trust: number; // 0..1
+  packed?: boolean; // shut in its box (see boxes.ts): it does not roam
 }
 
 /** Where every cat's Care is kept, by name. */
 export interface CareStore {
   load(): Record<string, Partial<Care>>;
-  save(all: Record<string, Care>): void;
+  save(all: Record<string, Partial<Care>>): void;
 }
 
 export class Hunger {

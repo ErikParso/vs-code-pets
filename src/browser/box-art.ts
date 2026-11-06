@@ -21,6 +21,7 @@ const COLORS = {
   ink: '#2b1d14',
   empty: '#4c405a',
   alarm: '#e63946',
+  eyes: '#f2d14b', // a packed cat's, glinting through the slot
 };
 
 // The open cardboard box, pixel for pixel (and colour for colour) after the reference Erik
@@ -125,6 +126,7 @@ const PEEK = [
   '.KKK........KKK.',
 ];
 const PEEK_BLINK = PEEK.map((row, y) => (y === 5 ? '.KOOOOOOOOOOOOK.' : row));
+const PEEK_EYES = [4, 10]; // the columns its eyes start at, each 2 wide
 const PEEK_RIM = 10; // the peek row level with the top of the box's lip
 
 const HEART = ['.KK.KK.', 'KPPKPPK', 'KPPPPPK', '.KPPPK.', '..KPK..', '...K...'];
@@ -198,7 +200,14 @@ function alarmOn(t: number): boolean {
 
 /** Changes whenever the panel would look different: when this is the same, there's no need to redraw. */
 export function lookKey(boxes: readonly CatBox[], cols: number, t: number): string {
-  return `${cols}|${alarmOn(t)}|` + boxes.map((b) => `${b.name},${b.coat},${b.halfHearts},${b.fish},${b.starving},${blinking(b.name, t)}`).join('|');
+  return `${cols}|${alarmOn(t)}|` + boxes.map((b) => `${b.name},${b.coat},${b.halfHearts},${b.fish},${b.starving},${b.packed},${blinking(b.name, t)}`).join('|');
+}
+
+/** Which box's tile (with its hearts and fish) is at (x, y) in the panel (sprite px), in `cols` columns; -1 for none. */
+export function boxAt(x: number, y: number, cols: number): number {
+  const col = Math.floor((x - PAD) / (CELL_W + GAP_X));
+  const row = Math.floor((y - TOP) / (CELL_H + GAP_Y));
+  return col >= 0 && col < cols && row >= 0 ? row * cols + col : -1;
 }
 
 /**
@@ -237,32 +246,35 @@ function paintCell(paint: Paint, box: CatBox | null, x: number, y: number, t: nu
   const card = (ch: string) => CARD[ch];
   const slot = () => paint(bx + Math.floor((BOX_W - SLOT_W) / 2), by + SLOT_Y, SLOT_W, 2, CARD.S);
 
-  if (!box) {
+  const peekX = bx + Math.floor((BOX_W - PEEK[0].length) / 2);
+  if (!box || box.packed) {
     // Closed, standing where an open box would: same bottom, centred.
     const cx = bx + Math.floor((BOX_W - CLOSED[0].length) / 2);
     const cy = by + BOX_H - CLOSED.length;
     paintRows(paint, CLOSED, cx, cy, (ch) => CLOSED_CARD[ch]);
     slot(); // where an open box has it, so a cat looking out is at the same height either way
-    return;
+    if (!box) return;
+    // A packed cat looks out through the slot: its eyes, where they are when it peeks, glinting
+    // in the dark (and gone when it blinks).
+    if (!blinking(box.name, t)) for (const ex of PEEK_EYES) paint(peekX + ex, by + SLOT_Y, 2, 2, COLORS.eyes);
+  } else {
+    // Behind the cat: the flaps, the back edge and the dark inside.
+    paintRows(paint, BOX.slice(0, LIP_Y), bx, by, card);
+
+    // The cat, from the chin up (the rest of it is in the box).
+    const palette: Record<string, string> = { ...SP.palette, ...(SP.coats[box.coat] || {}) };
+    const peek = blinking(box.name, t) ? PEEK_BLINK : PEEK;
+    paintRows(paint, peek.slice(0, PEEK_RIM), peekX, by + LIP_Y - PEEK_RIM, (ch) => palette[ch]);
+
+    // In front of it: the lip and the front.
+    paintRows(paint, BOX.slice(LIP_Y), bx, by + LIP_Y, card);
+
+    // The slot, one long cut under the lip.
+    slot();
+
+    // Its paws over the lip.
+    paintRows(paint, peek.slice(PEEK_RIM), peekX, by + LIP_Y, (ch) => palette[ch]);
   }
-
-  // Behind the cat: the flaps, the back edge and the dark inside.
-  paintRows(paint, BOX.slice(0, LIP_Y), bx, by, card);
-
-  // The cat, from the chin up (the rest of it is in the box).
-  const palette: Record<string, string> = { ...SP.palette, ...(SP.coats[box.coat] || {}) };
-  const peekX = bx + Math.floor((BOX_W - PEEK[0].length) / 2);
-  const peek = blinking(box.name, t) ? PEEK_BLINK : PEEK;
-  paintRows(paint, peek.slice(0, PEEK_RIM), peekX, by + LIP_Y - PEEK_RIM, (ch) => palette[ch]);
-
-  // In front of it: the lip and the front.
-  paintRows(paint, BOX.slice(LIP_Y), bx, by + LIP_Y, card);
-
-  // The slot, one long cut under the lip.
-  slot();
-
-  // Its paws over the lip.
-  paintRows(paint, peek.slice(PEEK_RIM), peekX, by + LIP_Y, (ch) => palette[ch]);
 
   paintSticker(paint, box.name, bx + FRONT_L, bx + FRONT_R, by + STICKER_TOP, by + STICKER_BOTTOM, fine);
 

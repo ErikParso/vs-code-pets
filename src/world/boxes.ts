@@ -1,6 +1,6 @@
-// What the cat boxes panel shows of each cat: its name and coat, its trust in hearts and how
-// full it is in fish. Read from the care store, which every VS Code window shares, so every cat
-// shows the same wherever it is roaming.
+// What the cat boxes panel shows of each cat: its name and coat, its trust in hearts, how full
+// it is in fish, and whether it is packed in its box. Read from the care store, which every
+// VS Code window shares, so every cat shows the same wherever it is roaming.
 import type { CatDef } from './cat';
 import type { Clock } from './clock';
 import { NEXT_MEAL_AFTER } from './config';
@@ -17,6 +17,14 @@ export interface CatBox {
   halfHearts: number; // 0..2*HEARTS
   fish: number; // 0..FISH; 0 only when starving
   starving: boolean;
+  packed: boolean; // shut in its box: it does not roam (its hunger and trust go on as ever)
+}
+
+/** Packs `name` in its box if it is out, lets it out if it is packed. */
+export function togglePacked(store: CareStore, name: string): void {
+  const all = store.load();
+  all[name] = { ...all[name], packed: !all[name]?.packed };
+  store.save(all);
 }
 
 /** One box per cat in `cats`, in that order. */
@@ -33,6 +41,7 @@ export function catBoxes(cats: readonly CatDef[], store: CareStore, clock: Clock
       // Any food left shows a fish; the last one goes when it starts starving.
       fish: clamp(Math.ceil(full * FISH - 1e-9), 0, FISH),
       starving: hunger.starving(),
+      packed: !!saved[def.name]?.packed,
     };
   });
 }

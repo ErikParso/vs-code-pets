@@ -55,6 +55,7 @@ export class Cat implements FishEater {
   napNext = false;
   route: ClimbMove | null = null;
   goingFor: Fish | null = null;
+  packed = false; // shut in its box: not out, though this window still has it
 
   constructor(
     readonly def: CatDef,

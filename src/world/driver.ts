@@ -36,6 +36,7 @@ export class Driver {
       this.roaming = true;
       this.deps.letIn(this.deps.world, this.deps.cats);
     }
+    this.deps.world.checkPacked();
     this.deps.world.save();
   }
 

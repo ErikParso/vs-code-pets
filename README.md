@@ -35,6 +35,10 @@ A starving cat's last fish flashes red. After them come 12 closed, empty boxes, 
 Every window shows the same. Esc, a click outside, or
 the 📦 again closes it.
 
+**Packing:** click a cat's box to shut it in. A packed cat doesn't roam: it goes into its box
+from whatever window it is in, and its eyes look out through the slot. Click the box again to
+let it out. Its hunger and trust carry on while it is packed, so don't forget to feed it.
+
 ## ⚠️ This extension modifies VS Code's files
 
 VS Code doesn't let extensions draw outside their own panels. To let the cats roam the

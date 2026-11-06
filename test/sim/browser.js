@@ -44,9 +44,16 @@ class Clock {
   }
 }
 
-/** A drawing context that accepts every call and draws nothing; it counts images and rectangles in `drawn`. */
+/**
+ * A drawing context that accepts every call and draws nothing; it counts images and rectangles in
+ * `drawn`, and the cats among the images in this frame (a fish's sprite is twice as wide as tall;
+ * a cat's is not).
+ */
 function nullContext(drawn) {
-  const drawImage = () => drawn.images++;
+  const drawImage = (img) => {
+    drawn.images++;
+    if (img && img.height > img.width / 2) drawn.catsInFrame++;
+  };
   const fillRect = () => drawn.rects++;
   return new Proxy(
     {},
@@ -65,7 +72,7 @@ function createBrowser({ layout, seed, startMs, storage, cats, script }) {
   const clock = new Clock(startMs);
   const errors = [];
   const onError = (e) => errors.push(e && e.stack ? e.stack : String(e));
-  const drawn = { images: 0, rects: 0 };
+  const drawn = { images: 0, rects: 0, catsInFrame: 0 };
 
   class Element {
     constructor(tag, rect) {
@@ -74,6 +81,7 @@ function createBrowser({ layout, seed, startMs, storage, cats, script }) {
       this.style = {};
       this.children = [];
       this.attributes = {};
+      this.listeners = {};
       this.textContent = '';
     }
     getBoundingClientRect() {
@@ -96,7 +104,18 @@ function createBrowser({ layout, seed, startMs, storage, cats, script }) {
     getAttribute(name) {
       return name in this.attributes ? this.attributes[name] : null;
     }
-    addEventListener() {}
+    addEventListener(type, fn) {
+      (this.listeners[type] = this.listeners[type] || []).push(fn);
+    }
+    dispatch(type, event) {
+      for (const fn of this.listeners[type] || []) {
+        try {
+          fn(event);
+        } catch (e) {
+          onError(e);
+        }
+      }
+    }
     closest(selector) {
       return selector === '.statusbar-item' && this.attributes.class === 'statusbar-item' ? this : null;
     }
@@ -185,12 +204,18 @@ function createBrowser({ layout, seed, startMs, storage, cats, script }) {
   return {
     errors,
     drawn,
+    /** Clicks the cat boxes panel at (x, y), CSS px from its top left. */
+    clickBoxesPanel(x, y) {
+      const panel = document.body.children.find((c) => c.className === 'pixel-cat-boxes');
+      if (panel) panel.children[0].dispatch('click', { offsetX: x, offsetY: y, target: panel.children[0] });
+    },
     /** One display frame: timers first, then the animation frame, as a browser does. */
     async step() {
       clock.advance(FRAME_MS, onError);
       const fn = frameCallback;
       frameCallback = null;
       if (fn) {
+        drawn.catsInFrame = 0;
         try {
           fn(clock.now);
         } catch (e) {

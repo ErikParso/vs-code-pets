@@ -1,5 +1,43 @@
 # Changelog
 
+## 0.1.60
+
+Cleanup: a click anywhere on a cat's tile in the cat boxes panel (its box, hearts or fish)
+packs it or lets it out, so the hit test is just row and column. The unused `isPacked` is gone.
+
+## 0.1.59
+
+Packing, simplest: no second list of boxed cats. Each cat has a `packed` flag; `world.cats` is the
+cats out (not packed), and `checkPacked` is one loop that sets the flag from the care store,
+dropping a fish a cat was eating when it goes in and walking it in when it is let out. Same
+behaviour; the event log is identical.
+
+## 0.1.58
+
+Packing, simpler still: `roaming.ts` is back as it was. The World handles packing: when the
+Driver polls (every 700 ms), cats packed from any window go into their boxes at once, and cats
+let out walk in again. A packed cat stays with the window that has it (it keeps the cat's Web
+Lock), so no other window gets it. The smoke test counts the cats drawn while one is packed and
+after it is let out. Same behaviour otherwise; the event log is identical.
+
+## 0.1.57
+
+Packing, simpler: whether a cat is packed is part of its care record (`pixelCat.care`, next to
+its hunger and trust) instead of a key of its own, and roaming alone handles it: the window
+holding a cat checks every second whether it was packed and puts it in its box, and waits while
+it is. A click takes up to a second to show in the window. No hand cursor over the boxes. Same
+behaviour otherwise.
+
+## 0.1.56
+
+New: packing cats. Click a cat's box in the cat boxes panel to shut it in: the box closes, its
+eyes glint through the slot (blinking now and then), and the cat does not roam: if it is out in
+a window it goes into its box at once, and whichever window gets it next keeps it in until it is
+let out. Click the box again to let it out. Its hunger and trust go on as ever while it is packed.
+Which cats are packed is kept in VS Code's localStorage (`pixelCat.packed`), shared by every
+window. The smoke test packs a cat from the panel and lets it out again. No change for cats that
+are not packed: the event log is identical.
+
 ## 0.1.55
 
 The closed boxes' slot is at the same height as the open boxes' one.

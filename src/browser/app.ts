@@ -76,7 +76,8 @@ export function startPixelCat(): void {
     console.info('[pixel-cat] started');
     renderer = new Renderer(SCALE);
     carePanel = new CarePanel();
-    // The 📦 in the status bar: every cat in its box, wherever it is roaming.
+    // The 📦 in the status bar: every cat in its box, wherever it is roaming. Clicking a box
+    // shuts its cat in (or lets it out).
     catBoxes = new CatBoxes(CATS, localCareStore, systemClock, () => renderer);
     workbench.onBoxesClick(
       () => driver.shown && catBoxes.toggle(),
