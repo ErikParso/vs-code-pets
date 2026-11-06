@@ -1,5 +1,35 @@
 # Changelog
 
+## 0.1.36
+
+Each fish keeps a cat fed for 26 hours instead of 24, so feeding at about the same time every
+day is never late. Simulated over a work week with an attentive feeder: late meals 48-67% ->
+0%, trust 0.10 -> 0.22 instead of falling. Cats saved before keep their current deadline
+until their next meal.
+
+Simulation tests: a work week by default (VS Code open Mon-Fri 9-17, closed in between), fixed
+feeding rules (`--feeder attentive|daily|forgetful|spammer|none`), hunger and trust statistics
+and invariants, seeds run in parallel.
+
+## 0.1.35
+
+The simulation probe moved out of `world.js` into `test/sim/probe.js`; the tests splice it in.
+No change for the cats.
+
+## 0.1.34
+
+One limit for jumping to another floor, `MAX_JUMP` (230 px), up, down and across, in place of
+`MAX_RISE` (170), `MAX_DROP` (200) and `MAX_GAP` (220). Cats now jump back up onto a terminal
+panel of up to 230 px. The simulation runs in a notebook-sized window (1536x816) where every
+move happens.
+
+## 0.1.33
+
+Simulation tests: `npm test` runs the cats for 4 simulated hours (3 seeds) in a standard
+1920x1080 layout, checks they keep to the rules of their world, prints their statistics and
+saves a snapshot; `npm run sim:compare` shows what changed between two snapshots. `world.js`
+gets a read-only probe for this, switched off in VS Code.
+
 ## 0.1.32
 
 Sleeping and snuggling share one weight (`8/e + 5`). A cat going to sleep curls up next to a

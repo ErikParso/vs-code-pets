@@ -9,3 +9,4 @@ installed-app-roots.json
 *.png
 .gitignore
 !images/icon.png
+test/**

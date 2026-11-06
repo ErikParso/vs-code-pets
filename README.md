@@ -18,7 +18,8 @@ closes, its cats move to another open window.
 on a cat's floor, and an awake cat on that floor trots over and eats it. Sleeping cats ignore fish
 until they wake up. Up to 10 fish can lie around at once.
 
-**Hunger:** each fish keeps a cat fed for 24 hours. It ignores fish for the first three
+**Hunger:** each fish keeps a cat fed for 26 hours, so a fish at about the same time every
+day is always on time. It ignores fish for the first three
 hours, then will eat again; in its final six hours it asks for food now and then with a
 little fish floating over its head, like the Zs. Once starving, it only walks or meows for
 food until it eats.
@@ -61,6 +62,38 @@ Good to know:
 ## Settings
 
 - `pixelCat.scale`: size of one cat pixel, in screen pixels (default 2).
+
+## Development: simulation tests
+
+`npm test` runs the real `inject/world.js` in a fake VS Code window (`test/sim/layouts.js`: a
+notebook, 1536x816, sidebar, one file and the terminal panel) on a virtual clock, for a work
+week: VS Code open Monday to Friday 9:00-17:00 and closed in between, while the cats' meal
+deadlines run on. An attentive person feeds them. 3 seeds run side by side; it takes about 4
+minutes.
+
+It fails if a cat breaks a rule of its world: it walks further than `MAX_WALK_DISTANCE`, leaves
+its floor, ends up outside the window, gets stuck, eats while fed, its hunger or trust changes
+without a meal or is not kept while VS Code is closed, or the script throws. It prints what each
+cat did (time sleeping, walking or climbing, moves per hour, distances, floors, fish), how
+hungry it was (time fed, normal, asking, starving; meals, late meals, hours spent asking) and
+its trust at the end of each day, and saves it all to `test/sim/snapshots/v<version>.json`.
+
+After changing behaviour, run it again and compare against the previous snapshot:
+
+```sh
+npm test
+npm run sim:compare                 # the two latest snapshots
+npm run sim:compare -- v0.1.35 v0.1.36 --all
+```
+
+Feeding follows fixed rules, so runs are comparable: `attentive` (a fish 10 minutes after a cat
+starts asking, and every 10 minutes while one is), `daily` (one fish per cat at 10, 13 and 16
+o'clock), `forgetful` (the same on Monday, Wednesday and Friday only), `spammer` (a fish every 10
+minutes), `none`.
+
+Other options: `node test/sim/run.js --hours 4` (one 4-hour session, about 30 s),
+`--days 10 --open 8-18`, `--feeder daily`, `--seeds 5`, `--serial`, `--name my-try`,
+`--no-snapshot`, `--inject <copy of inject/>` (try a change without touching the real files).
 
 ## Credits
 

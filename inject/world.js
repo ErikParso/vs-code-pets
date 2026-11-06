@@ -491,10 +491,11 @@
 
   // ---- hunger --------------------------------------------------------------
   //
-  // Each fish gives a cat another day before its meal deadline. For the first three hours
-  // it ignores fish; in the final six it asks for one now and then.
+  // Each fish gives a cat 26 hours before its meal deadline: a day plus some slack, so feeding
+  // at about the same time every day is never late. For the first three hours it ignores
+  // fish; in the final six it asks for one now and then.
   const HOUR = 60 * 60 * 1000;
-  const NEXT_MEAL_AFTER = 24 * HOUR;
+  const NEXT_MEAL_AFTER = 26 * HOUR;
   const EAT_AFTER = 3 * HOUR;
   const ASK_BEFORE = 6 * HOUR;
   const TRUST_START = 0.1;
