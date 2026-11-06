@@ -11,9 +11,7 @@
   const GRAVITY = 1500; // px/s²
   const WALK_SPEED = 40; // px/s; now and then a cat trots at three times this
   const MAX_WALK_DISTANCE = 250; // furthest one stroll goes either way, and furthest a cat goes for a fish, to a sleeping friend, to a wall, in from the edge or out to it, px
-  const MAX_RISE = 170; // highest ledge it will jump up to
-  const MAX_GAP = 220; // widest gap it will jump across
-  const MAX_DROP = 200; // deepest it will jump down; further down it slides down a wall
+  const MAX_JUMP = 230; // furthest it jumps to another floor: up, down or across; further it climbs or slides down a wall
   const EDGE = 3; // tolerance when matching edges, px
   const WALL_LEAP = 80; // one leap up a wall
 
@@ -311,9 +309,9 @@
     for (const f of floors) {
       const [lo, hi] = range(f);
       if (f === floor || hi - lo < 4 || Math.abs(f.y - y) <= EDGE) continue;
-      if (y - f.y > MAX_RISE || f.y - y > MAX_DROP) continue;
+      if (Math.abs(f.y - y) > MAX_JUMP) continue;
       const tx = clamp(x + rand(-80, 80), lo, hi);
-      if (Math.abs(tx - x) <= MAX_GAP) options.push({ tx, floor: f });
+      if (Math.abs(tx - x) <= MAX_JUMP) options.push({ tx, floor: f });
     }
     // Walls along this floor, and the floors they lead to (which may start a little past
     // their ends), other than this level.
