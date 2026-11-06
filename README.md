@@ -33,3 +33,5 @@ again the next time VS Code starts).
 Developing Pixel Cat: see [docs/development.md](docs/development.md).
 
 All art and code are original, drawn from scratch.
+
+Like the cats? [Sponsor their keeper](https://github.com/sponsors/ErikParso) 💖

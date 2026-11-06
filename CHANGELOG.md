@@ -1,6 +1,6 @@
 # Changelog
 
-## 0.1.80
+## 0.1.81
 
 - Click the 🐈‍⬛ in the status bar for a little menu: a bucket to throw the cats a fish, and boxes
   to see all your cats.

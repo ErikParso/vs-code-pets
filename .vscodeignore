@@ -12,3 +12,4 @@ installed-app-roots.json
 test/**
 scripts/**
 docs/**
+.github/**
