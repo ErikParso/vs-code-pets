@@ -65,35 +65,40 @@ Good to know:
 
 ## Development: simulation tests
 
-`npm test` runs the real `inject/world.js` in a fake VS Code window (`test/sim/layouts.js`: a
-notebook, 1536x816, sidebar, one file and the terminal panel) on a virtual clock, for a work
-week: VS Code open Monday to Friday 9:00-17:00 and closed in between, while the cats' meal
-deadlines run on. An attentive person feeds them. 3 seeds run side by side; it takes about 4
-minutes.
+The tests run the real `inject/world.js` in a fake VS Code window (`test/sim/layouts.js`: a
+notebook, 1536x816, sidebar, one file and the terminal panel) on a virtual clock. VS Code is
+open on weekdays and closed in between, while the cats' meal deadlines run on. Feeding follows
+fixed rules, and every run with the same code and seeds does exactly the same thing.
 
-It fails if a cat breaks a rule of its world: it walks further than `MAX_WALK_DISTANCE`, leaves
-its floor, ends up outside the window, gets stuck, eats while fed, its hunger or trust changes
-without a meal or is not kept while VS Code is closed, or the script throws. It prints what each
-cat did (time sleeping, walking or climbing, moves per hour, distances, floors, fish), how
-hungry it was (time fed, normal, asking, starving; meals, late meals, hours spent asking) and
-its trust at the end of each day, and saves it all to `test/sim/snapshots/v<version>.json`.
+Every run fails if a cat breaks a rule of its world: it walks further than
+`MAX_WALK_DISTANCE`, leaves its floor, ends up outside the window, gets stuck, eats while fed,
+its hunger or trust changes without a meal or is not kept while VS Code is closed, or the
+script throws.
 
-After changing behaviour, run it again and compare against the previous snapshot:
+**`npm test`: the exact check (about 30 s).** Two short working days (9-13), two seeds. Every
+action a cat starts, every meal and every fish is a line in an event log, compared line by
+line with the reference in `test/sim/traces/`. A change meant to leave behaviour alone (a
+refactor) must keep it identical; otherwise it shows the first line that differs. After a
+behaviour change you meant, record a new reference with `npm run sim:trace:record`.
+
+**`npm run sim`: the statistics (about 5 minutes).** A work week (Mon-Fri 9-17), 10 seeds side
+by side. It prints what each cat did (time sleeping, walking or climbing, moves per hour,
+distances, floors, fish), how hungry it was (time fed, normal, asking, starving; meals, late
+meals, hours spent asking) and its trust at the end of each day, and saves it all to
+`test/sim/snapshots/v<version>.json`. Compare two snapshots to see what a change did:
 
 ```sh
-npm test
 npm run sim:compare                 # the two latest snapshots
-npm run sim:compare -- v0.1.35 v0.1.36 --all
+npm run sim:compare -- v0.1.36 v0.1.37 --all
 ```
 
-Feeding follows fixed rules, so runs are comparable: `attentive` (a fish 10 minutes after a cat
-starts asking, and every 10 minutes while one is), `daily` (one fish per cat at 10, 13 and 16
-o'clock), `forgetful` (the same on Monday, Wednesday and Friday only), `spammer` (a fish every 10
-minutes), `none`.
+Feeders (`--feeder`): `attentive` (a fish 10 minutes after a cat starts asking, and every 10
+minutes while one is), `daily` (one fish per cat at 10, 13 and 16 o'clock), `forgetful` (the
+same on Monday, Wednesday and Friday only), `spammer` (a fish every 10 minutes), `none`.
 
-Other options: `node test/sim/run.js --hours 4` (one 4-hour session, about 30 s),
-`--days 10 --open 8-18`, `--feeder daily`, `--seeds 5`, `--serial`, `--name my-try`,
-`--no-snapshot`, `--inject <copy of inject/>` (try a change without touching the real files).
+Other options of `node test/sim/run.js`: `--hours 4` (one 4-hour session, about 20 s),
+`--days 10 --open 8-18`, `--seeds 3`, `--serial`, `--name my-try`, `--no-snapshot`. Both tools
+take `--inject <copy of inject/>` to try a change without touching the real files.
 
 ## Credits
 

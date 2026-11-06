@@ -50,9 +50,13 @@ function phaseSpans(nextMealAt, fromMs, toMs, k) {
   return out;
 }
 
+const n2 = (v) => (v === undefined || v === null ? '-' : v.toFixed(2));
+
 class Recorder {
-  constructor({ catNames }) {
+  /** `trace`: an array to append the run's event log to (see trace.js), or null. */
+  constructor({ catNames, trace = null }) {
     this.catNames = catNames;
+    this.trace = trace;
     this.T = 0; // seconds since the run started, open or closed
     this.open = 0; // seconds VS Code has been open
     this.sessionStart = 0;
@@ -61,6 +65,11 @@ class Recorder {
     this.fish = new Map(); // id -> {thrownAt, landedAt, eatAt, last}
     this.fishDone = { eaten: 0, fell: 0, pushedOut: 0, waits: [] };
     this.violations = {};
+  }
+
+  // One line of the event log: the time, then what happened.
+  log(text) {
+    if (this.trace) this.trace.push(`${this.T.toFixed(3)} ${text}`);
   }
 
   violate(rule, detail) {
@@ -73,6 +82,7 @@ class Recorder {
   startSession(T, nowMs) {
     this.T = T;
     this.sessionStart = T;
+    this.log('open');
     const last = this.lastSession;
     if (!last) return;
     // While it was closed, each cat's meal deadline ran on.
@@ -87,11 +97,13 @@ class Recorder {
   /** VS Code closes: every cat's visit ends with the window. */
   endSession(T, nowMs, k) {
     this.T = T;
-    for (const st of Object.values(this.cats)) {
+    this.log('close');
+    for (const [name, st] of Object.entries(this.cats)) {
       if (st.prev) {
         st.care = { nextMealAt: st.prev.nextMealAt, trust: st.prev.trust };
         this.endVisit(st);
       }
+      if (st.care) this.log(`${name} care deadline=${st.care.nextMealAt.toFixed(0)} trust=${st.care.trust.toFixed(4)}`);
       if (st.care) st.timeline.push({ day: +(T / DAY_S).toFixed(3), trust: +st.care.trust.toFixed(3), mealInH: +((st.care.nextMealAt - nowMs) / HOUR_MS).toFixed(2) });
     }
     this.lastSession = { T, now: nowMs, k };
@@ -153,6 +165,7 @@ class Recorder {
       this.endAction(st);
       const label = this.startAction(st, c, p, s, k);
       st.action = { label, state: c.state, start: this.T, reported: false };
+      this.log(`${c.name} ${label} state=${c.state} x=${n2(c.x)} y=${n2(c.y)} tx=${n2(c.tx)} dur=${n2(c.dur)}`);
     }
 
     // Where the time goes.
@@ -230,6 +243,7 @@ class Recorder {
     const phase = phaseAt(c.nextMealAt, s.now, k);
     if (phase === 'fed') this.violate('ate while fed', `${c.name} ate ${((c.nextMealAt - s.now) / HOUR_MS).toFixed(1)}h before its deadline`);
     if (phase === 'starving') st.lateMeals++;
+    this.log(`${c.name} meal ${phase} deadline=${c.nextMealAt.toFixed(0)} trust=${c.trust.toFixed(4)}`);
     const askingSince = phaseStarts(c.nextMealAt, k).asking;
     if (s.now >= askingSince) st.askWaits.push((s.now - askingSince) / HOUR_MS);
     else st.mealsBeforeAsking++;
@@ -292,8 +306,14 @@ class Recorder {
     for (const g of s.fishes) {
       seen.add(g.id);
       let f = this.fish.get(g.id);
-      if (!f) this.fish.set(g.id, (f = { thrownAt: T, landedAt: null, eatAt: null, last: g }));
-      if (g.landed && f.landedAt === null) f.landedAt = T;
+      if (!f) {
+        this.fish.set(g.id, (f = { thrownAt: T, landedAt: null, eatAt: null, last: g }));
+        this.log(`fish ${g.id} thrown`);
+      }
+      if (g.landed && f.landedAt === null) {
+        f.landedAt = T;
+        this.log(`fish ${g.id} landed x=${n2(g.x)} y=${n2(g.y)}`);
+      }
       if (g.eater && f.eatAt === null) f.eatAt = T;
       if (!Number.isFinite(g.x) || !Number.isFinite(g.y)) this.violate('not a number', `fish ${g.id} at ${g.x},${g.y}`);
       f.last = g;
@@ -304,9 +324,14 @@ class Recorder {
       if (f.last.eater) {
         this.fishDone.eaten++;
         if (f.landedAt !== null) this.fishDone.waits.push(f.eatAt - f.landedAt);
-      } else if (f.last.falling) this.fishDone.fell++;
-      else if (f.last.fading) this.fishDone.pushedOut++;
-      else this.violate('fish vanished', `fish ${id} disappeared without being eaten or fading`);
+        this.log(`fish ${id} eaten by ${f.last.eater}`);
+      } else if (f.last.falling) {
+        this.fishDone.fell++;
+        this.log(`fish ${id} fell off`);
+      } else if (f.last.fading) {
+        this.fishDone.pushedOut++;
+        this.log(`fish ${id} pushed out`);
+      } else this.violate('fish vanished', `fish ${id} disappeared without being eaten or fading`);
     }
   }
 
@@ -378,7 +403,7 @@ class Recorder {
       'mean s landing to eaten': mean(waits),
       'median s landing to eaten': waits.length ? waits[waits.length >> 1] : null,
     };
-    return { metrics, heatmaps, timelines, violations: this.violations };
+    return { metrics, heatmaps, timelines, violations: this.violations, trace: this.trace };
   }
 }
 

@@ -62,8 +62,10 @@
   "scripts": {
     "compile": "tsc -p ./",
     "watch": "tsc -watch -p ./",
-    "test": "node test/sim/run.js",
+    "test": "node test/sim/trace.js",
+    "sim": "node test/sim/run.js",
     "sim:compare": "node test/sim/compare.js",
+    "sim:trace:record": "node test/sim/trace.js --record",
     "vscode:prepublish": "npm run compile",
     "vscode:uninstall": "node ./out/uninstall.js"
   },

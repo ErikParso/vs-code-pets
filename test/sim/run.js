@@ -1,16 +1,16 @@
 #!/usr/bin/env node
-// Runs the cats in a VS Code window (layouts.js) on a virtual clock, checks they never break
-// the rules of their world, prints what they did, and saves it as a snapshot to compare
-// against after the next change (see compare.js).
+// The statistical baseline: runs the cats in a VS Code window (layouts.js) on a virtual clock,
+// checks they never break the rules of their world, prints what they did, and saves it as a
+// snapshot to compare against after the next change (see compare.js).
 //
 // By default: a work week. VS Code is open Monday to Friday, 9:00-17:00, and closed the rest
 // of the time (the clock runs on, so the cats get hungry overnight). An attentive person
-// feeds them. Every seed runs in its own process, side by side.
+// feeds them. 10 seeds, each in its own process, side by side.
 //
 //   node test/sim/run.js [--days 5] [--open 9-17]   a week of working days (Mon-Fri open)
 //                        [--hours 4]                instead: one session this long, always open
 //                        [--feeder attentive|daily|forgetful|spammer|none]
-//                        [--seeds 3] [--serial] [--name v0.1.36] [--no-snapshot]
+//                        [--seeds 10] [--serial] [--name v0.1.36] [--no-snapshot]
 //                        [--inject <dir>]           a copy of inject/ to run instead, to try out a change
 //
 // Exits 1 if any invariant was broken or world.js threw.
@@ -18,33 +18,16 @@
 
 const fs = require('fs');
 const path = require('path');
-const { execSync, fork } = require('child_process');
-const { createBrowser, FRAME_MS } = require('./browser');
-const { layout } = require('./layouts');
-const { Recorder } = require('./recorder');
-const { createFeeder, FEEDER_NAMES } = require('./feeders');
+const { execSync } = require('child_process');
+const { FEEDER_NAMES } = require('./feeders');
+const sim = require('./simulation');
 
-const ROOT = path.join(__dirname, '..', '..');
 const SNAPSHOTS = path.join(__dirname, 'snapshots');
-const HOUR_MS = 60 * 60 * 1000;
-const DAY_MS = 24 * HOUR_MS;
-const WEEK_START_MS = Date.UTC(2026, 0, 5); // a fixed clock: Monday 5 January 2026, 00:00 UTC
-const WORKDAYS = 5; // Monday to Friday; VS Code stays closed at the weekend
+const DEFAULT_SEEDS = 10;
 
 function parseArgs(argv) {
-  const version = JSON.parse(fs.readFileSync(path.join(ROOT, 'package.json'), 'utf8')).version;
-  const opts = {
-    days: 5,
-    open: [9, 17],
-    hours: null,
-    feeder: 'attentive',
-    seeds: 3,
-    parallel: true,
-    name: `v${version}`,
-    snapshot: true,
-    version,
-    injectDir: path.join(ROOT, 'inject'),
-  };
+  const version = JSON.parse(fs.readFileSync(path.join(sim.ROOT, 'package.json'), 'utf8')).version;
+  const opts = { ...sim.DEFAULTS, seeds: DEFAULT_SEEDS, parallel: true, name: `v${version}`, snapshot: true, version };
   for (let i = 0; i < argv.length; i++) {
     const arg = argv[i];
     const value = () => {
@@ -71,95 +54,10 @@ function parseArgs(argv) {
   return opts;
 }
 
-/** When VS Code is open: [{start, end}] in ms. */
-function sessions(opts) {
-  const [from, to] = opts.open;
-  if (opts.hours !== null) return [{ start: WEEK_START_MS + from * HOUR_MS, end: WEEK_START_MS + from * HOUR_MS + opts.hours * HOUR_MS }];
-  const out = [];
-  for (let d = 0; d < opts.days; d++) {
-    if (d % 7 >= WORKDAYS) continue;
-    const day = WEEK_START_MS + d * DAY_MS;
-    out.push({ start: day + from * HOUR_MS, end: day + to * HOUR_MS });
-  }
-  return out;
-}
-
-const scheduleLabel = (opts) => (opts.hours !== null ? `${opts.hours} h open` : `${opts.days} days, open weekdays ${opts.open.join('-')}`);
-
-/**
- * One run: one seed, every session in turn. Each session is a fresh VS Code window; they share
- * localStorage, where the cats' meal deadlines and trust are kept. The run starts as a fresh
- * install: nothing saved yet.
- */
-async function simulate({ seed, opts }) {
-  const cats = JSON.parse(fs.readFileSync(path.join(opts.injectDir, 'cats.json'), 'utf8'));
-  const storage = new Map();
-  const recorder = new Recorder({ catNames: cats.map((c) => c.name) });
-  const feeder = createFeeder(opts.feeder, cats.length);
-  const errors = [];
-  let fishThrown = 0;
-
-  for (const [i, session] of sessions(opts).entries()) {
-    const browser = createBrowser({ layout, seed: seed * 1000 + i, startMs: session.start, storage, cats, injectDir: opts.injectDir });
-    const T = () => (browser.now - WEEK_START_MS) / 1000;
-    recorder.startSession(T(), session.start);
-    feeder.startSession(session.start, session.end, WEEK_START_MS);
-    const frames = Math.round((session.end - session.start) / FRAME_MS);
-    let k = null;
-    for (let f = 1; f <= frames; f++) {
-      await browser.step();
-      const s = browser.probe();
-      if (!s || !s.shown) continue; // still starting up (it polls the status bar)
-      k = s.constants;
-      for (let n = feeder.fishNow(s); n > 0; n--) {
-        browser.clickFish();
-        fishThrown++;
-      }
-      recorder.sample(s, T(), FRAME_MS / 1000);
-    }
-    if (!k) errors.push(`Session ${i + 1}: the cats never came out (PixelCatProbe never showed them).`);
-    else recorder.endSession(T(), browser.now, k);
-    recorder.dropFish();
-    errors.push(...browser.errors.map((e) => `session ${i + 1}: ${e}`));
-  }
-  return { ...recorder.finish(fishThrown), errors };
-}
-
-/** Runs every seed, each in its own process when parallel. */
-async function runSeeds(seeds, opts) {
-  if (!opts.parallel) {
-    const results = [];
-    for (const seed of seeds) results.push(await timed(seed, () => simulate({ seed, opts })));
-    return results;
-  }
-  return Promise.all(
-    seeds.map((seed) =>
-      timed(
-        seed,
-        () =>
-          new Promise((resolve, reject) => {
-            const child = fork(__filename, ['--worker', JSON.stringify({ seed, opts })]);
-            let result = null;
-            child.on('message', (r) => (result = r));
-            child.on('error', reject);
-            child.on('exit', (code) => (result ? resolve(result) : reject(new Error(`seed ${seed}: worker exited with ${code} and no result`))));
-          })
-      )
-    )
-  );
-}
-
-async function timed(seed, fn) {
-  const t0 = Date.now();
-  const r = await fn();
-  console.log(`  seed ${seed}: ${((Date.now() - t0) / 1000).toFixed(1)} s`);
-  return r;
-}
-
 function gitInfo() {
   try {
-    const commit = execSync('git rev-parse --short HEAD', { cwd: ROOT }).toString().trim();
-    const dirty = execSync('git status --porcelain -- inject', { cwd: ROOT }).toString().trim() !== '';
+    const commit = execSync('git rev-parse --short HEAD', { cwd: sim.ROOT }).toString().trim();
+    const dirty = execSync('git status --porcelain -- inject', { cwd: sim.ROOT }).toString().trim() !== '';
     return { commit, dirty };
   } catch (e) {
     return { commit: null, dirty: null };
@@ -225,29 +123,17 @@ function printTimelines(results) {
 async function main() {
   const opts = parseArgs(process.argv.slice(2));
   const seeds = Array.from({ length: opts.seeds }, (_, i) => i + 1);
-  const openHours = sessions(opts).reduce((h, s) => h + (s.end - s.start) / HOUR_MS, 0);
-  console.log(`Simulating ${scheduleLabel(opts)} (${openHours} h open), feeder '${opts.feeder}', ${seeds.length} seeds${opts.parallel ? ' in parallel' : ''}, ${layout.width}x${layout.height} window`);
+  const openHours = sim.sessions(opts).reduce((h, s) => h + (s.end - s.start) / sim.HOUR_MS, 0);
+  console.log(
+    `Simulating ${sim.scheduleLabel(opts)} (${openHours} h open), feeder '${opts.feeder}', ${seeds.length} seeds${opts.parallel ? ' in parallel' : ''}, ${sim.layout.width}x${sim.layout.height} window`
+  );
 
-  const results = await runSeeds(seeds, opts);
+  const results = await sim.runSeeds(seeds, opts, { parallel: opts.parallel, onDone: (seed, s) => console.log(`  seed ${seed}: ${s.toFixed(1)} s`) });
   const metrics = collect(results);
   console.log(`\nMeans over ${seeds.length} seeds (time % of open time; counts per open hour; distances in px; care over all time)`);
   printTable(metrics);
   printTimelines(results);
-
-  // Invariants and errors, over all seeds.
-  const violations = {};
-  results.forEach((r, i) => {
-    for (const [rule, v] of Object.entries(r.violations)) {
-      const all = (violations[rule] ||= { count: 0, examples: [] });
-      all.count += v.count;
-      all.examples.push(...v.examples.map((e) => `seed ${seeds[i]}: ${e}`));
-    }
-    for (const e of r.errors) {
-      const all = (violations['world.js error'] ||= { count: 0, examples: [] });
-      all.count++;
-      all.examples.push(`seed ${seeds[i]}: ${e}`);
-    }
-  });
+  const violations = sim.gatherViolations(results, seeds);
 
   if (opts.snapshot) {
     fs.mkdirSync(SNAPSHOTS, { recursive: true });
@@ -258,12 +144,12 @@ async function main() {
         version: opts.version,
         ...gitInfo(),
         createdAt: new Date().toISOString(),
-        window: `${layout.width}x${layout.height}`,
-        schedule: scheduleLabel(opts),
+        window: `${sim.layout.width}x${sim.layout.height}`,
+        schedule: sim.scheduleLabel(opts),
         feeder: opts.feeder,
         seeds,
-        frameHz: Math.round(1000 / FRAME_MS),
-        inject: opts.injectDir === path.join(ROOT, 'inject') ? 'inject' : opts.injectDir,
+        frameHz: Math.round(1000 / sim.FRAME_MS),
+        inject: opts.injectDir === sim.DEFAULTS.injectDir ? 'inject' : opts.injectDir,
       },
       violations,
       metrics,
@@ -271,34 +157,14 @@ async function main() {
       heatmaps: Object.fromEntries(seeds.map((s, i) => [`seed ${s}`, results[i].heatmaps])),
     };
     fs.writeFileSync(file, JSON.stringify(snapshot, null, 1) + '\n');
-    console.log(`\nSnapshot: ${path.relative(ROOT, file)}`);
+    console.log(`\nSnapshot: ${path.relative(sim.ROOT, file)}`);
   }
 
-  const rules = Object.keys(violations);
-  if (!rules.length) {
-    console.log('\nPASS: no invariant broken, no errors.');
-    return;
-  }
-  console.log('\nFAIL:');
-  for (const rule of rules) {
-    console.log(`  ${rule}: ${violations[rule].count}x`);
-    for (const e of violations[rule].examples.slice(0, 5)) console.log(`    ${e}`);
-  }
+  if (sim.printViolations(violations)) process.exitCode = 1;
+  else console.log('\nPASS: no invariant broken, no errors.');
+}
+
+main().catch((e) => {
+  console.error(e);
   process.exitCode = 1;
-}
-
-// A worker runs one seed and hands its result back to the main process.
-if (process.argv[2] === '--worker') {
-  const { seed, opts } = JSON.parse(process.argv[3]);
-  simulate({ seed, opts })
-    .then((r) => process.send(r, () => process.exit(0)))
-    .catch((e) => {
-      console.error(e);
-      process.exit(1);
-    });
-} else {
-  main().catch((e) => {
-    console.error(e);
-    process.exitCode = 1;
-  });
-}
+});
