@@ -1,5 +1,50 @@
 # Changelog
 
+## 0.1.67
+
+The status bar icon is a black cat (🐈‍⬛) instead of the 🐟, since it now opens the menu for both
+feeding and the cat boxes; its tooltip reads "Your cats: feed them, see them in their boxes". The
+page knows the item by its label rather than its icon, so the icon is just text in the extension.
+
+## 0.1.66
+
+The 🐟 menu's buttons are a middle size: about 40 CSS px tall (twice the status bar), in the
+nearest whole number of screen pixels per art pixel, so still crisp. At 125% Windows scaling
+that is 45x40 (0.1.65 made them 22x20, too small).
+
+## 0.1.65
+
+The 🐟 menu's buttons are smaller: drawn in pixels half the cats' size (in whole screen pixels,
+so still crisp), about the size of the status bar.
+
+## 0.1.64
+
+Cleanup: the cat boxes panel and the 🐟's menu share a `Popup` (`src/browser/popup.ts`: a fixed
+element that Esc or a click outside closes) and `paintCanvas` (a canvas sized and painted in
+sprite pixels) instead of each having its own. The menu takes a `fish` and a `box` action and
+places itself from its measured size; `paintRows` can draw at twice the size. No change in
+behaviour.
+
+## 0.1.63
+
+The fish in the 🐟 menu keeps the menu open, so you can throw fish after fish; the box still
+closes it (it opens the cat boxes), as do Esc, a click elsewhere and the 🐟. The smoke test checks
+that the menu stays open after a fish.
+
+## 0.1.62
+
+Fix: in VS Code, clicking the fish in the 🐟 menu opened the cat boxes. The menu was one canvas,
+and which button was clicked came from the click's position, which VS Code reported off. Now each
+button is its own framed pixel tile with its own click handler, so no position is needed.
+
+## 0.1.61
+
+One status bar icon: the 📦 is gone, and clicking the 🐟 opens a little pixel menu just above it
+with two buttons, a fish (throw the cats a fish, from the 🐟) and a box (open the cat boxes).
+Esc, a click elsewhere or the 🐟 again closes it. In debug mode, modifier+clicks on the 🐟 still
+change meal deadlines and trust directly. The smoke test feeds and opens the boxes through the
+menu, and checks that fish are thrown.
+
 ## 0.1.60
 
 Cleanup: a click anywhere on a cat's tile in the cat boxes panel (its box, hearts or fish)

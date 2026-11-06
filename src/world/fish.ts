@@ -1,4 +1,4 @@
-// The fish thrown to the cats. Clicking the 🐟 in the status bar throws one from there, landing
+// The fish thrown to the cats. The fish in the 🐈‍⬛'s menu (status bar) throws one from there, landing
 // on a floor. Once down it flops about, now and then off the end of its floor and out of reach.
 // Fish stay until eaten; with more than MAX_FISH out, the oldest fades away.
 import { along, arc, Arc } from './arc';

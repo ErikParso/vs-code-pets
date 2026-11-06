@@ -9,7 +9,7 @@
 const FRAME_MS = 1000 / 60; // VS Code repaints at the display rate; 60 Hz is the common case
 const SCALE = 2; // pixelCat.scale's default
 const DPR = 1; // device pixels per CSS pixel
-const LABEL = 'Pixel Cat: throw a fish to '; // the start of the 🐟's label while cats are out
+const LABEL = 'Pixel Cat: throw a fish to '; // the start of the 🐈‍⬛'s label while cats are out
 
 /** Small, fast, seedable PRNG (mulberry32), so a run is repeatable. */
 function seededRandom(seed) {
@@ -110,7 +110,7 @@ function createSession({ api, layout, seed, startMs, storage, cats }) {
         shown: driver.shown,
       };
     },
-    /** Clicks the 🐟 in the status bar. */
+    /** Clicks the 🐈‍⬛ in the status bar. */
     clickFish() {
       if (!driver.shown) return;
       const r = boundingRect(layout.fishButton);

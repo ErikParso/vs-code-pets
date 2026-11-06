@@ -1,4 +1,4 @@
-// The person at the keyboard: when they click the 🐟 in the status bar. Each feeder is a fixed
+// The person at the keyboard: when they click the 🐈‍⬛ in the status bar. Each feeder is a fixed
 // rule (no randomness), so every run feeds the same way and only the cats' side varies by seed.
 // A feeder sees what the person would see (which cats are asking for fish) and the clock, and
 // says how many fish to throw this frame.

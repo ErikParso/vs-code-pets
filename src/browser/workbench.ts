@@ -1,14 +1,14 @@
 // VS Code's workbench as the cats see it: the parts whose edges are their floors and walls, the
-// 🐟 and 📦 the extension shows in the status bar while cats are out, and VS Code's text colour.
+// 🐈‍⬛ the extension shows in the status bar while cats are out, and VS Code's text colour.
 import { layoutFromRects, Layout, PARTS, Rect } from '../world/layout';
 
-// While any cats are out, the extension shows its 🐟 in the status bar, labelled (for screen
+// While any cats are out, the extension shows its 🐈‍⬛ in the status bar, labelled (for screen
 // readers, as aria-label) "Pixel Cat: throw a fish to Jexit, Erik", plus " (debug)" in debug
 // mode. No such item means: no cats.
 const LABEL = 'Pixel Cat: throw a fish to ';
 const STATUS_BAR = '.monaco-workbench .part.statusbar';
 
-/** A click on the 🐟: where it is (to throw a fish from), and which modifier keys were held. */
+/** A click on the 🐈‍⬛: where it is (to throw a fish from), and which modifier keys were held. */
 export interface FishClick {
   x: number;
   y: number;
@@ -32,7 +32,7 @@ export const workbench = {
     return layoutFromRects(rects, width, height, catW, catH);
   },
 
-  /** The 🐟's label, or '' if the extension shows none (no cats). */
+  /** The 🐈‍⬛'s label, or '' if the extension shows none (no cats). */
   statusLabel(): string {
     const item = document.querySelector(`.part.statusbar .statusbar-item[aria-label^="${LABEL}"]`);
     return (item && item.getAttribute('aria-label')) || '';
@@ -47,12 +47,12 @@ export const workbench = {
     );
   },
 
-  /** Calls `handler` whenever the 🐟 in the status bar is clicked. */
+  /** Calls `handler` whenever the 🐈‍⬛ in the status bar is clicked. */
   onFishClick(handler: (click: FishClick) => void): void {
     document.addEventListener(
       'click',
       (e) => {
-        const item = statusItem(e.target, '🐟');
+        const item = statusItem(e.target);
         if (!item) return;
         const r = item.getBoundingClientRect();
         handler({ x: r.left + r.width / 2, y: r.top, ctrlKey: e.ctrlKey, altKey: e.altKey, shiftKey: e.shiftKey });
@@ -61,14 +61,14 @@ export const workbench = {
     );
   },
 
-  /** Calls `onBoxes` whenever the 📦 in the status bar is clicked, and `elsewhere` with what was clicked for any other click. */
-  onBoxesClick(onBoxes: () => void, elsewhere: (target: EventTarget | null) => void): void {
-    document.addEventListener('click', (e) => (statusItem(e.target, '📦') ? onBoxes() : elsewhere(e.target)), true);
+  /** Calls `handler` with what was clicked whenever anything but the 🐈‍⬛ is clicked. */
+  onOtherClick(handler: (target: EventTarget | null) => void): void {
+    document.addEventListener('click', (e) => statusItem(e.target) || handler(e.target), true);
   },
 };
 
-// The status bar item `target` is in, if it shows `icon`.
-function statusItem(target: EventTarget | null, icon: string): Element | null {
+// The extension's status bar item, if `target` is in it (known by its label, whatever its icon).
+function statusItem(target: EventTarget | null): Element | null {
   const item = target instanceof Element && target.closest('.statusbar-item');
-  return item && (item.textContent || '').includes(icon) ? item : null;
+  return item && (item.getAttribute('aria-label') || '').startsWith(LABEL) ? item : null;
 }

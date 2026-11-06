@@ -14,7 +14,10 @@ Now and then a cat curls up to sleep next to another sleeping cat. Hearts are sh
 cat walks out of its window, and may turn up in another one (or come back). When a window
 closes, its cats move to another open window.
 
-**Feeding:** click the 🐟 in the status bar to throw the cats a fish. It lands
+**The 🐈‍⬛ menu:** click the 🐈‍⬛ in the status bar for a little menu with two buttons: a fish, to
+feed the cats, and a box, to see them all.
+
+**Feeding:** choose the fish in the 🐈‍⬛ menu to throw the cats a fish. It lands
 on a cat's floor, and an awake cat on that floor trots over and eats it. Sleeping cats ignore fish
 until they wake up. Up to 10 fish can lie around at once.
 
@@ -28,12 +31,11 @@ food until it eats.
 before its meal deadline, and drops by 0.05 when fed late. Hunger continues while VS Code
 is closed; trust changes only when a cat eats. Both are remembered across reloads.
 
-**Your cats:** click the 📦 in the status bar to see every cat in its own cardboard box, with
+**Your cats:** choose the box in the 🐈‍⬛ menu to see every cat in its own cardboard box, with
 its name on a sticker, wherever it is roaming. Under each box, its trust is shown as 5 hearts
 (each half a heart is 0.1 trust) and how full it is as 5 fish (each about 5 hours of its 26).
 A starving cat's last fish flashes red. After them come 12 closed, empty boxes, for cats still to come.
-Every window shows the same. Esc, a click outside, or
-the 📦 again closes it.
+Every window shows the same. Esc or a click outside closes it.
 
 **Packing:** click a cat's box to shut it in. A packed cat doesn't roam: it goes into its box
 from whatever window it is in, and its eyes look out through the slot. Click the box again to
@@ -66,7 +68,7 @@ Good to know:
 | Command | What it does |
 |---|---|
 | Pixel Cat: Hide / Show | Hide or show the cats |
-| Pixel Cat: Toggle Debug Mode | Show the floors and walls the cats get around on, each cat's hunger and trust, and a panel with controls to adjust meal deadlines and trust. Alt+click the 🐟 to make the cats hungrier, Shift+click to make them fuller; Ctrl+click adds trust, Ctrl+Shift+click takes it away |
+| Pixel Cat: Toggle Debug Mode | Show the floors and walls the cats get around on, each cat's hunger and trust, and a panel with controls to adjust meal deadlines and trust. Alt+click the 🐈‍⬛ to make the cats hungrier, Shift+click to make them fuller; Ctrl+click adds trust, Ctrl+Shift+click takes it away |
 | Pixel Cat: Remove from VS Code | Take the cats out and restore VS Code's files |
 | Pixel Cat: Let the Cat Back In | Put the cats back after removing them |
 
@@ -77,7 +79,7 @@ Good to know:
 ## Development: code layout
 
 - `src/extension/`: the VS Code extension. It injects the cat script into VS Code's window and
-  shows the 🐟 in the status bar (compiled by `tsc` to `out/`).
+  shows the 🐈‍⬛ in the status bar (compiled by `tsc` to `out/`).
 - `src/world/`: the cats' world, with no DOM (checked by `tsconfig.world.json`): `World` owns the
   cats, the fish and the layout; `Driver` moves it on each frame; `CatBrain` decides what a cat
   does next; `Cat`, `Hunger`, `FishPond` and `Navigator` each own their part. `config.ts` holds
@@ -95,9 +97,10 @@ in VS Code, without the window (`test/sim/session.js`), in a VS Code layout
 virtual clock. VS Code is open on weekdays and closed in between, while the cats' meal
 deadlines run on. Feeding follows fixed rules, and every run with the same code and seeds does
 exactly the same thing. A smoke test runs the real script, bundled as the extension injects it,
-in a fake VS Code window for half an hour, the second half in debug mode, with the cat boxes
-opened for a while (`test/sim/smoke.js`): it must not throw, must draw the cats, must save them,
-and the 📦 must open the boxes with every cat in them.
+in a fake VS Code window for half an hour, throwing fish from the 🐈‍⬛ menu, the second half in
+debug mode, with the cat boxes opened from the menu for a while and a cat packed and let out
+(`test/sim/smoke.js`): it must not throw, must draw the cats and the fish, must save them, the
+box must open the boxes with every cat in them, and a packed cat must stay in its box.
 
 Every run fails if a cat breaks a rule of its world: it walks further than
 `MAX_WALK_DISTANCE`, leaves its floor, ends up outside the window, gets stuck, eats while fed,

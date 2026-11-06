@@ -17,7 +17,7 @@ export const HOP_TIME = 0.35;
 
 // ---- fish ----
 //
-// Clicking the 🐟 in the status bar throws a fish from there, landing on a cat's floor. An
+// The fish in the 🐈‍⬛'s menu (in the status bar) throws a fish from there, landing on a cat's floor. An
 // awake cat on the floor of a fish goes and eats it. Fish stay until eaten; with more than
 // MAX_FISH out, the oldest fades away.
 

@@ -1,5 +1,5 @@
 // Drives a World the same way wherever it runs: in VS Code's window (app.ts) and in the tests
-// (test/sim/session.js). Every POLL_MS the status bar's 🐟 label is polled: it says whether the
+// (test/sim/session.js). Every POLL_MS the status bar's 🐈‍⬛ label is polled: it says whether the
 // cats are out and whether debug mode is on, and the first time the cats are out they are let in.
 // Every display frame the world moves on by the time since the last one.
 import type { CatDef } from './cat';
@@ -19,14 +19,14 @@ export interface DriverDeps {
 }
 
 export class Driver {
-  shown = false; // the cats are out (the extension shows its 🐟)
+  shown = false; // the cats are out (the extension shows its 🐈‍⬛)
   debug = false; // debug mode: floors, walls and hunger drawn, the care panel shown
   private roaming = false;
   private last = 0; // the last frame's time, ms
 
   constructor(private readonly deps: DriverDeps) {}
 
-  /** The status bar was polled; `label` is the 🐟's label, '' if there is none. */
+  /** The status bar was polled; `label` is the 🐈‍⬛'s label, '' if there is none. */
   poll(label: string): void {
     this.debug = label.includes(' (debug)');
     this.shown = !!label;

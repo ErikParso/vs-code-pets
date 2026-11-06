@@ -200,7 +200,7 @@ export class World {
     this.emotionList = this.emotionList.filter((z) => z.t < EMOTION_TIME);
   }
 
-  // The 🐟 was clicked at (x, y): a fish for one of the cats on a floor, or anywhere if none is.
+  // The 🐈‍⬛ was clicked at (x, y): a fish for one of the cats on a floor, or anywhere if none is.
   throwFish(x: number, y: number): void {
     const near = this.random.oneOf(this.cats.filter((c) => c.floor));
     const f = near ? (near.floor as Floor) : this.random.oneOf(this.floors);

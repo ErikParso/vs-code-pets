@@ -27,7 +27,7 @@ const layout = {
     '.part.panel': [rect(SIDEBAR_RIGHT, PANEL_TOP, W, STATUS_TOP)],
     '.part.statusbar': [rect(0, STATUS_TOP, W, H)],
   },
-  // The extension's 🐟, towards the right of the status bar.
+  // The extension's 🐈‍⬛, towards the right of the status bar.
   fishButton: rect(W - 260, STATUS_TOP, W - 230, H),
   // What the floors world.ts finds here are called in the reports, by height.
   floorNames: { [TITLE]: 'top', [PANEL_TOP]: 'panel', [STATUS_TOP]: 'status bar' },

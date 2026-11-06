@@ -5,6 +5,7 @@
 // VS Code's timers and animation frames, drawn by the Renderer.
 import { CarePanel } from './care-panel';
 import { CatBoxes } from './cat-boxes';
+import { FishMenu } from './fish-menu';
 import { localCareStore } from './care-store';
 import type { CatDef } from '../world/cat';
 import { systemClock } from '../world/clock';
@@ -38,6 +39,7 @@ export function startPixelCat(): void {
   let renderer: Renderer;
   let carePanel: CarePanel;
   let catBoxes: CatBoxes;
+  let menu: FishMenu;
   let ink = '#888';
   const driver = new Driver({
     world,
@@ -58,7 +60,7 @@ export function startPixelCat(): void {
     if (driver.shown !== wasShown) console.info(`[pixel-cat] ${driver.shown ? 'showing' : 'hiding'} the cats`);
     if (driver.shown && !wasShown) ink = workbench.ink();
     carePanel.render(world, driver.shown && driver.debug);
-    if (!driver.shown) catBoxes.close();
+    if (!driver.shown) for (const p of [catBoxes.popup, menu.popup]) p.close();
   }
 
   function frame(now: number) {
@@ -76,17 +78,21 @@ export function startPixelCat(): void {
     console.info('[pixel-cat] started');
     renderer = new Renderer(SCALE);
     carePanel = new CarePanel();
-    // The 📦 in the status bar: every cat in its box, wherever it is roaming. Clicking a box
-    // shuts its cat in (or lets it out).
+    // The cat boxes: every cat in its box, wherever it is roaming. Clicking a box shuts its cat
+    // in (or lets it out).
     catBoxes = new CatBoxes(CATS, localCareStore, systemClock, () => renderer);
-    workbench.onBoxesClick(
-      () => driver.shown && catBoxes.toggle(),
-      (target) => catBoxes.clickedAt(target)
-    );
+    // The 🐈‍⬛'s menu: a fish to throw from the 🐈‍⬛, a box to open the cat boxes.
+    menu = new FishMenu(() => renderer, {
+      fish: (at) => world.throwFish(at.x, at.y),
+      box: () => catBoxes.show(),
+    });
+    workbench.onOtherClick((target) => {
+      for (const p of [catBoxes.popup, menu.popup]) p.clickedAt(target);
+    });
     resize();
     window.addEventListener('resize', resize);
-    // The 🐟 the extension shows in the status bar: throw a fish from where it is. (In debug
-    // mode, modifier+clicks change the cats' meal deadline and trust instead.)
+    // The 🐈‍⬛ the extension shows in the status bar opens its menu. (In debug mode, modifier+clicks
+    // change the cats' meal deadline and trust instead.)
     workbench.onFishClick((click) => {
       if (!driver.shown) return;
       if (driver.debug && (click.ctrlKey || click.altKey || click.shiftKey)) {
@@ -97,7 +103,8 @@ export function startPixelCat(): void {
         world.save();
         return;
       }
-      world.throwFish(click.x, click.y);
+      catBoxes.popup.close();
+      menu.toggle(click.x, click.y);
     });
     setInterval(poll, POLL_MS);
     requestAnimationFrame(frame);

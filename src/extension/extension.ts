@@ -6,8 +6,8 @@ import { install, uninstall } from './injector';
 import { rememberAppRoot } from './state';
 
 // The cat itself runs inside VS Code's window (see src/browser/app.ts and src/world/world.ts). This side installs
-// it, and owns the status bar items the cat watches (the 🐟 and the 📦): while the 🐟 is shown
-// the cats are out, and its label says which ones.
+// it, and owns the status bar item the cat watches (the 🐈‍⬛): while the item is shown the
+// cats are out, and its label says which ones.
 
 interface CatDef {
   name: string;
@@ -71,31 +71,22 @@ export function activate(context: vscode.ExtensionContext): void {
   };
 
   // The fish button: the one status bar item. The cats' page catches the click itself (it
-  // knows where the button is), so the command only makes the item clickable. The page also
+  // knows where the button is, and opens its menu there: a fish to feed them, a box to see
+  // them), so the command only makes the item clickable. The page also
   // reads which cats are out (and debug mode) from its accessibility label, which VS Code
   // puts on the item as its aria-label; no item means no cats.
   const fish = vscode.window.createStatusBarItem('pixelCat.fish', vscode.StatusBarAlignment.Right, -1001);
   fish.name = 'Pixel Cat';
-  fish.text = '🐟';
-  fish.tooltip = 'Throw the cats a fish';
+  fish.text = '🐈‍⬛';
+  fish.tooltip = 'Your cats: feed them, see them in their boxes';
   fish.command = 'pixelCat.fish';
-  // The box button, next to it: opens the cat boxes, every cat with its trust and hunger. The
-  // page catches this click too.
-  const boxes = vscode.window.createStatusBarItem('pixelCat.boxes', vscode.StatusBarAlignment.Right, -1000);
-  boxes.name = 'Pixel Cat Boxes';
-  boxes.text = '📦';
-  boxes.tooltip = 'Your cats';
-  boxes.command = 'pixelCat.boxes';
-  boxes.accessibilityInformation = { label: 'Pixel Cat: your cats' };
   const render = (): void => {
     const out = CATS.map((c) => c.name);
     const debug = context.globalState.get('debug', false);
     fish.accessibilityInformation = { label: `Pixel Cat: throw a fish to ${out.join(', ')}${debug ? ' (debug)' : ''}` };
     const visible = !context.globalState.get('removed', false) && context.globalState.get('consented', false);
-    for (const item of [fish, boxes]) {
-      if (visible) item.show();
-      else item.hide();
-    }
+    if (visible) fish.show();
+    else fish.hide();
   };
 
   render();
@@ -127,9 +118,7 @@ export function activate(context: vscode.ExtensionContext): void {
 
   context.subscriptions.push(
     fish,
-    boxes,
     vscode.commands.registerCommand('pixelCat.fish', () => undefined),
-    vscode.commands.registerCommand('pixelCat.boxes', () => undefined),
     vscode.commands.registerCommand('pixelCat.debug', async () => {
       await context.globalState.update('debug', !context.globalState.get('debug', false));
       render();

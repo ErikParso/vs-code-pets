@@ -46,13 +46,14 @@ class Clock {
 
 /**
  * A drawing context that accepts every call and draws nothing; it counts images and rectangles in
- * `drawn`, and the cats among the images in this frame (a fish's sprite is twice as wide as tall;
- * a cat's is not).
+ * `drawn`, the cats among the images in this frame, and the fish (a fish's sprite is twice as wide
+ * as tall; a cat's is not).
  */
 function nullContext(drawn) {
   const drawImage = (img) => {
     drawn.images++;
     if (img && img.height > img.width / 2) drawn.catsInFrame++;
+    else drawn.fish++;
   };
   const fillRect = () => drawn.rects++;
   return new Proxy(
@@ -72,7 +73,7 @@ function createBrowser({ layout, seed, startMs, storage, cats, script }) {
   const clock = new Clock(startMs);
   const errors = [];
   const onError = (e) => errors.push(e && e.stack ? e.stack : String(e));
-  const drawn = { images: 0, rects: 0, catsInFrame: 0 };
+  const drawn = { images: 0, rects: 0, catsInFrame: 0, fish: 0 };
 
   class Element {
     constructor(tag, rect) {
@@ -126,15 +127,12 @@ function createBrowser({ layout, seed, startMs, storage, cats, script }) {
 
   const parts = Object.fromEntries(Object.entries(layout.parts).map(([sel, rects]) => [sel, rects.map((r) => new Element('div', r))]));
   const workbench = new Element('div', { left: 0, top: 0, width: layout.width, height: layout.height });
-  // The 🐟 the extension puts in the status bar while cats are out.
+  // The 🐈‍⬛ the extension puts in the status bar while cats are out.
   const fishItem = new Element('div', layout.fishButton);
   fishItem.setAttribute('class', 'statusbar-item');
   fishItem.setAttribute('aria-label', POLL_LABEL + cats.map((c) => c.name).join(', '));
-  fishItem.textContent = '🐟';
+  fishItem.textContent = '🐈‍⬛';
   // And the 📦 next to it, for the cat boxes.
-  const boxesItem = new Element('div', layout.fishButton);
-  boxesItem.setAttribute('class', 'statusbar-item');
-  boxesItem.textContent = '📦';
 
   const clickListeners = [];
   const click = (event) => {
@@ -224,22 +222,32 @@ function createBrowser({ layout, seed, startMs, storage, cats, script }) {
       }
       await new Promise((resolve) => setImmediate(resolve)); // promise callbacks (Web Locks) all run before the next frame, as in a browser
     },
-    /** Turns the extension's debug mode on or off (it says so in the 🐟's label). */
+    /** Turns the extension's debug mode on or off (it says so in the 🐈‍⬛'s label). */
     setDebug(on) {
       fishItem.setAttribute('aria-label', POLL_LABEL + cats.map((c) => c.name).join(', ') + (on ? ' (debug)' : ''));
     },
-    /** Clicks the 🐟 in the status bar, holding the modifier keys in `keys` ({ctrlKey, altKey, shiftKey}). */
+    /** Clicks the 🐈‍⬛ in the status bar, holding the modifier keys in `keys` ({ctrlKey, altKey, shiftKey}). */
     clickFish(keys = {}) {
       click({ target: fishItem, ctrlKey: !!keys.ctrlKey, altKey: !!keys.altKey, shiftKey: !!keys.shiftKey });
     },
-    /** Clicks the 📦 in the status bar. */
-    clickBoxes() {
-      click({ target: boxesItem, ctrlKey: false, altKey: false, shiftKey: false });
+    /** Clicks `button` ('fish' or 'box') in the 🐈‍⬛'s menu (its first or second button), first opening it with the 🐈‍⬛ if it is closed. */
+    choose(button) {
+      const menu = document.body.children.find((c) => c.className === 'pixel-cat-menu');
+      if (!menu) return;
+      if (menu.style.display !== 'flex') this.clickFish();
+      if (menu.style.display !== 'flex') return;
+      const canvas = menu.children[button === 'fish' ? 0 : 1];
+      canvas.dispatch('click', { target: canvas });
     },
     /** The cat boxes panel's description of the cats (its canvas's aria-label), or null if it never drew. */
     boxesLabel() {
       const panel = document.body.children.find((c) => c.className === 'pixel-cat-boxes');
       return panel ? panel.children[0].getAttribute('aria-label') : null;
+    },
+    /** Whether the 🐈‍⬛'s menu is showing. */
+    menuOpen() {
+      const menu = document.body.children.find((c) => c.className === 'pixel-cat-menu');
+      return !!menu && menu.style.display === 'flex';
     },
     /** Whether the cat boxes panel is showing. */
     boxesOpen() {
