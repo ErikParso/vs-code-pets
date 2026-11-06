@@ -1,4 +1,4 @@
-// The VS Code window the cats run in, as the rectangles of the workbench parts world.js reads.
+// The VS Code window the cats run in, as the rectangles of the workbench parts world.ts reads.
 // A notebook: a 1920x1080 screen at 125% scaling, VS Code maximized above the taskbar. The
 // sidebar on the left; in the middle, a file in the editor above the terminal panel. Every
 // move is possible here: the panel is low enough to jump onto from the status bar and back,
@@ -29,7 +29,7 @@ const layout = {
   },
   // The extension's 🐟, towards the right of the status bar.
   fishButton: rect(W - 260, STATUS_TOP, W - 230, H),
-  // What the floors world.js finds here are called in the reports, by height.
+  // What the floors world.ts finds here are called in the reports, by height.
   floorNames: { [TITLE]: 'top', [PANEL_TOP]: 'panel', [STATUS_TOP]: 'status bar' },
 };
 

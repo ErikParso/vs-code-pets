@@ -63,19 +63,36 @@ Good to know:
 
 - `pixelCat.scale`: size of one cat pixel, in screen pixels (default 2).
 
+## Development: code layout
+
+- `src/extension/`: the VS Code extension. It injects the cat script into VS Code's window and
+  shows the 🐟 in the status bar (compiled by `tsc` to `out/`).
+- `src/world/`: the cats' world, with no DOM (checked by `tsconfig.world.json`): `World` owns the
+  cats, the fish and the layout; `Driver` moves it on each frame; `CatBrain` decides what a cat
+  does next; `Cat`, `Hunger`, `FishPond` and `Navigator` each own their part. `config.ts` holds
+  every tuning number.
+- `src/browser/`: the cat script's browser side: reading VS Code's workbench, drawing, the care
+  panel, Web Locks. Bundled with `src/world` by esbuild into `out/pixel-cat.js`
+  (`scripts/bundle.js`).
+- `test/sim/`: the simulation tests, below.
+
 ## Development: simulation tests
 
-The tests run the real `inject/world.js` in a fake VS Code window (`test/sim/layouts.js`: a
-notebook, 1536x816, sidebar, one file and the terminal panel) on a virtual clock. VS Code is
-open on weekdays and closed in between, while the cats' meal deadlines run on. Feeding follows
-fixed rules, and every run with the same code and seeds does exactly the same thing.
+The simulations run the cats' `World` (`src/world/world.ts`) the way the cat script drives it
+in VS Code, without the window (`test/sim/session.js`), in a VS Code layout
+(`test/sim/layouts.js`: a notebook, 1536x816, sidebar, one file and the terminal panel) on a
+virtual clock. VS Code is open on weekdays and closed in between, while the cats' meal
+deadlines run on. Feeding follows fixed rules, and every run with the same code and seeds does
+exactly the same thing. A smoke test runs the real script, bundled as the extension injects it,
+in a fake VS Code window for half an hour, the second half in debug mode (`test/sim/smoke.js`):
+it must not throw, must draw the cats and must save them.
 
 Every run fails if a cat breaks a rule of its world: it walks further than
 `MAX_WALK_DISTANCE`, leaves its floor, ends up outside the window, gets stuck, eats while fed,
 its hunger or trust changes without a meal or is not kept while VS Code is closed, or the
 script throws.
 
-**`npm test`: the exact check (about 30 s).** Two short working days (9-13), two seeds. Every
+**`npm test`: the smoke test, then the exact check (about 10 s).** Two short working days (9-13), two seeds. Every
 action a cat starts, every meal and every fish is a line in an event log, compared line by
 line with the reference in `test/sim/traces/`. A change meant to leave behaviour alone (a
 refactor) must keep it identical; otherwise it shows the first line that differs. After a
@@ -98,7 +115,7 @@ same on Monday, Wednesday and Friday only), `spammer` (a fish every 10 minutes),
 
 Other options of `node test/sim/run.js`: `--hours 4` (one 4-hour session, about 20 s),
 `--days 10 --open 8-18`, `--seeds 3`, `--serial`, `--name my-try`, `--no-snapshot`. Both tools
-take `--inject <copy of inject/>` to try a change without touching the real files.
+take `--src <copy of src/>` to try a change without touching the real files.
 
 ## Credits
 

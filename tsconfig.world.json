@@ -1,0 +1,14 @@
+{
+  // The cats' world (src/world): plain TypeScript with no DOM and no Node, so nothing in it can
+  // reach for the browser. Type-checked only; esbuild bundles it.
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "ES2022",
+    "moduleResolution": "bundler",
+    "lib": ["ES2022"],
+    "types": [],
+    "strict": true,
+    "noEmit": true
+  },
+  "include": ["src/world"]
+}

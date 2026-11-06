@@ -2,7 +2,7 @@
   "name": "roaming-pixel-cats",
   "displayName": "Roaming Pixel Cats",
   "description": "Tiny pixel-art cats that roam your whole VS Code window: they walk, nap, jump between panels, climb up and slide down.",
-  "version": "0.1.36",
+  "version": "0.1.47",
   "publisher": "codericsro",
   "license": "MIT",
   "icon": "images/icon.png",
@@ -60,9 +60,10 @@
     }
   },
   "scripts": {
-    "compile": "tsc -p ./",
+    "compile": "tsc -p ./ && npm run build:inject",
+    "build:inject": "tsc -p tsconfig.world.json && tsc -p tsconfig.browser.json && node scripts/bundle.js",
     "watch": "tsc -watch -p ./",
-    "test": "node test/sim/trace.js",
+    "test": "node test/sim/smoke.js && node test/sim/trace.js",
     "sim": "node test/sim/run.js",
     "sim:compare": "node test/sim/compare.js",
     "sim:trace:record": "node test/sim/trace.js --record",
@@ -72,6 +73,7 @@
   "devDependencies": {
     "@types/node": "^20.0.0",
     "@types/vscode": "^1.80.0",
+    "esbuild": "^0.25.5",
     "typescript": "^5.4.0"
   }
 }

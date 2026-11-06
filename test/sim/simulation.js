@@ -5,27 +5,36 @@
 const fs = require('fs');
 const path = require('path');
 const { fork } = require('child_process');
-const { createBrowser, FRAME_MS } = require('./browser');
+const { loadWorld } = require('../../scripts/bundle');
+const { createSession, FRAME_MS } = require('./session');
 const { layout } = require('./layouts');
 const { Recorder } = require('./recorder');
 const { createFeeder } = require('./feeders');
 
 const ROOT = path.join(__dirname, '..', '..');
+const CATS_FILE = path.join(ROOT, 'inject', 'cats.json');
 const HOUR_MS = 60 * 60 * 1000;
 const DAY_MS = 24 * HOUR_MS;
+
+const worlds = new Map(); // srcDir -> Promise<the World module>, so each process bundles once
+const worldFrom = (srcDir) => {
+  if (!worlds.has(srcDir)) worlds.set(srcDir, loadWorld(srcDir));
+  return worlds.get(srcDir);
+};
 const WEEK_START_MS = Date.UTC(2026, 0, 5); // a fixed clock: Monday 5 January 2026, 00:00 UTC
 const WORKDAYS = 5; // Monday to Friday; VS Code stays closed at the weekend
 
 /**
  * What to run. `hours` (one session, always open) wins over `days` + `open` (VS Code open on
- * weekdays between those hours). `trace`: also return the event log.
+ * weekdays between those hours). `srcDir`: the cat script's sources (a copy of src/ to
+ * try out a change). `trace`: also return the event log.
  */
 const DEFAULTS = {
   days: 5,
   open: [9, 17],
   hours: null,
   feeder: 'attentive',
-  injectDir: path.join(ROOT, 'inject'),
+  srcDir: path.join(ROOT, 'src'),
   trace: false,
 };
 
@@ -45,12 +54,13 @@ function sessions(opts) {
 const scheduleLabel = (opts) => (opts.hours !== null ? `${opts.hours} h open` : `${opts.days} days, open weekdays ${opts.open.join('-')}`);
 
 /**
- * One seed, every session in turn. Each session is a fresh VS Code window; they share
+ * One seed, every session in turn. Each session is a fresh World (see session.js); they share
  * localStorage, where the cats' meal deadlines and trust are kept. The run starts as a fresh
  * install: nothing saved yet.
  */
 async function simulate({ seed, opts }) {
-  const cats = JSON.parse(fs.readFileSync(path.join(opts.injectDir, 'cats.json'), 'utf8'));
+  const cats = JSON.parse(fs.readFileSync(CATS_FILE, 'utf8'));
+  const api = await worldFrom(opts.srcDir);
   const storage = new Map();
   const recorder = new Recorder({ catNames: cats.map((c) => c.name), trace: opts.trace ? [] : null });
   const feeder = createFeeder(opts.feeder, cats.length);
@@ -58,27 +68,27 @@ async function simulate({ seed, opts }) {
   let fishThrown = 0;
 
   for (const [i, session] of sessions(opts).entries()) {
-    const browser = createBrowser({ layout, seed: seed * 1000 + i, startMs: session.start, storage, cats, injectDir: opts.injectDir });
-    const T = () => (browser.now - WEEK_START_MS) / 1000;
+    const run = createSession({ api, layout, seed: seed * 1000 + i, startMs: session.start, storage, cats });
+    const T = () => (run.now - WEEK_START_MS) / 1000;
     recorder.startSession(T(), session.start);
     feeder.startSession(session.start, session.end, WEEK_START_MS);
     const frames = Math.round((session.end - session.start) / FRAME_MS);
     let k = null;
     for (let f = 1; f <= frames; f++) {
-      await browser.step();
-      const s = browser.probe();
-      if (!s || !s.shown) continue; // still starting up (it polls the status bar)
+      run.step();
+      const s = run.view();
+      if (!s.shown) continue; // still starting up (it polls the status bar)
       k = s.constants;
       for (let n = feeder.fishNow(s); n > 0; n--) {
-        browser.clickFish();
+        run.clickFish();
         fishThrown++;
       }
       recorder.sample(s, T(), FRAME_MS / 1000);
     }
-    if (!k) errors.push(`Session ${i + 1}: the cats never came out (PixelCatProbe never showed them).`);
-    else recorder.endSession(T(), browser.now, k);
+    if (!k) errors.push(`Session ${i + 1}: the cats never came out.`);
+    else recorder.endSession(T(), run.now, k);
     recorder.dropFish();
-    errors.push(...browser.errors.map((e) => `session ${i + 1}: ${e}`));
+    errors.push(...run.errors.map((e) => `session ${i + 1}: ${e}`));
   }
   return { ...recorder.finish(fishThrown), errors };
 }
@@ -119,7 +129,7 @@ function gatherViolations(results, seeds) {
       all.examples.push(...v.examples.map((e) => `seed ${seeds[i]}: ${e}`));
     }
     for (const e of r.errors) {
-      const all = (violations['world.js error'] ||= { count: 0, examples: [] });
+      const all = (violations['cat script error'] ||= { count: 0, examples: [] });
       all.count++;
       all.examples.push(`seed ${seeds[i]}: ${e}`);
     }

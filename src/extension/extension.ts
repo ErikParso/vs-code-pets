@@ -5,7 +5,7 @@ import * as vscode from 'vscode';
 import { install, uninstall } from './injector';
 import { rememberAppRoot } from './state';
 
-// The cat itself runs inside VS Code's window (see inject/world.js). This side installs
+// The cat itself runs inside VS Code's window (see src/browser/app.ts and src/world/world.ts). This side installs
 // it, and owns the status bar item the cat watches (the 🐟): while the item is shown the
 // cats are out, and its label says which ones.
 
@@ -22,11 +22,12 @@ function readCats(extensionPath: string): CatDef[] {
 function buildScript(context: vscode.ExtensionContext): string {
   const scale = vscode.workspace.getConfiguration('pixelCat').get<number>('scale', 2);
   const version: string = context.extension.packageJSON.version;
-  const read = (file: string) => fs.readFileSync(path.join(context.extensionPath, 'inject', file), 'utf8');
-  const cats = JSON.parse(read('cats.json'));
-  // The version stamp makes every release a new script, so each update reloads once.
-  return `// Pixel Cat ${version}\nwindow.PixelCatConfig = ${JSON.stringify({ scale, cats })};\n` +
-    `${read('sprites.js')}\n${read('world.js')}`;
+  const cats = readCats(context.extensionPath);
+  // The cat script, bundled from src/browser and src/world by esbuild (npm run compile).
+  const bundle = fs.readFileSync(path.join(context.extensionPath, 'out', 'pixel-cat.js'), 'utf8');
+  // The version stamp makes every release a new script, so each update reloads once. Strict
+  // mode has to be the script's first statement, before the config.
+  return `// Pixel Cat ${version}\n'use strict';\nwindow.PixelCatConfig = ${JSON.stringify({ scale, cats })};\n${bundle}`;
 }
 
 // The page only picks up the cat when the window loads, and the extension starts after

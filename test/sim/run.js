@@ -11,9 +11,9 @@
 //                        [--hours 4]                instead: one session this long, always open
 //                        [--feeder attentive|daily|forgetful|spammer|none]
 //                        [--seeds 10] [--serial] [--name v0.1.36] [--no-snapshot]
-//                        [--inject <dir>]           a copy of inject/ to run instead, to try out a change
+//                        [--src <dir>]              a copy of src/ to run instead, to try out a change
 //
-// Exits 1 if any invariant was broken or world.js threw.
+// Exits 1 if any invariant was broken or the cat script threw.
 'use strict';
 
 const fs = require('fs');
@@ -43,7 +43,7 @@ function parseArgs(argv) {
     else if (arg === '--serial') opts.parallel = false;
     else if (arg === '--name') opts.name = value();
     else if (arg === '--no-snapshot') opts.snapshot = false;
-    else if (arg === '--inject') opts.injectDir = path.resolve(value());
+    else if (arg === '--src') opts.srcDir = path.resolve(value());
     else throw new Error(`Unknown option ${arg}`);
   }
   const [from, to] = opts.open;
@@ -57,7 +57,7 @@ function parseArgs(argv) {
 function gitInfo() {
   try {
     const commit = execSync('git rev-parse --short HEAD', { cwd: sim.ROOT }).toString().trim();
-    const dirty = execSync('git status --porcelain -- inject', { cwd: sim.ROOT }).toString().trim() !== '';
+    const dirty = execSync('git status --porcelain -- src/world src/browser inject', { cwd: sim.ROOT }).toString().trim() !== '';
     return { commit, dirty };
   } catch (e) {
     return { commit: null, dirty: null };
@@ -149,7 +149,7 @@ async function main() {
         feeder: opts.feeder,
         seeds,
         frameHz: Math.round(1000 / sim.FRAME_MS),
-        inject: opts.injectDir === sim.DEFAULTS.injectDir ? 'inject' : opts.injectDir,
+        src: opts.srcDir === sim.DEFAULTS.srcDir ? 'src' : opts.srcDir,
       },
       violations,
       metrics,

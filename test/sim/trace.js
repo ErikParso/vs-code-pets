@@ -7,7 +7,7 @@
 //
 //   node test/sim/trace.js              check against the reference
 //   node test/sim/trace.js --record     record a new reference (after a behaviour change you meant)
-//   node test/sim/trace.js --inject <dir>   check a copy of inject/ instead
+//   node test/sim/trace.js --src <dir>   check a copy of src/ instead
 'use strict';
 
 const fs = require('fs');
@@ -49,9 +49,9 @@ function firstDifference(expected, actual) {
 async function main() {
   const args = process.argv.slice(2);
   const record = args.includes('--record');
-  const injectAt = args.indexOf('--inject');
+  const srcAt = args.indexOf('--src');
   const opts = { ...sim.DEFAULTS, ...SCENARIO, trace: true };
-  if (injectAt >= 0) opts.injectDir = path.resolve(args[injectAt + 1]);
+  if (srcAt >= 0) opts.srcDir = path.resolve(args[srcAt + 1]);
 
   console.log(`Event log of ${sim.scheduleLabel(SCENARIO)}, feeder ${SCENARIO.feeder}, seeds ${SEEDS.join(', ')}${record ? ' (recording)' : ''}`);
   const results = await sim.runSeeds(SEEDS, opts, { onDone: (seed, s) => console.log(`  seed ${seed}: ${s.toFixed(1)} s`) });

@@ -1,0 +1,13 @@
+{
+  // The script injected into VS Code's window: the browser side (src/browser) and the world it
+  // drives. Type-checked here; esbuild bundles it (scripts/bundle.js).
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "ES2022",
+    "moduleResolution": "bundler",
+    "lib": ["ES2022", "DOM", "DOM.Iterable"],
+    "strict": true,
+    "noEmit": true
+  },
+  "include": ["src/world", "src/browser"]
+}

@@ -1,5 +1,5 @@
-// Watches the world frame by frame (through PixelCatProbe) and turns it into statistics and
-// invariant violations. It only reads what the probe shows; it never reaches into world.js.
+// Watches the world frame by frame (through World.view, see session.js) and turns it into
+// statistics and invariant violations. It only reads the view; it never reaches into the World.
 //
 // A run is one or more sessions (VS Code open). Behaviour is measured over open time; hunger
 // and trust over all time, since a cat's meal deadline keeps running while VS Code is closed.
@@ -109,7 +109,7 @@ class Recorder {
     this.lastSession = { T, now: nowMs, k };
   }
 
-  /** One frame: `s` is the probe's view, `T` seconds since the start, `dt` the frame length. */
+  /** One frame: `s` is the session's view, `T` seconds since the start, `dt` the frame length. */
   sample(s, T, dt) {
     this.T = T;
     this.open += dt;

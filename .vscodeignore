@@ -1,7 +1,7 @@
 .vscode/**
 src/**
 node_modules/**
-tsconfig.json
+tsconfig*.json
 **/*.map
 .claude/**
 installed-app-roots.json
@@ -10,3 +10,4 @@ installed-app-roots.json
 .gitignore
 !images/icon.png
 test/**
+scripts/**

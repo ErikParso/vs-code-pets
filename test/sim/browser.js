@@ -1,28 +1,14 @@
-// A stand-in for the VS Code window that inject/world.js runs in: a virtual clock, a seeded
-// Math.random, the workbench parts of the layout, Web Locks, localStorage and a canvas that
-// draws nothing. world.js runs unchanged inside it (in a vm context), so the cats behave as
-// they do in VS Code, only as fast as Node can step them.
+// A stand-in for the VS Code window that the cat script runs in, for the smoke test (smoke.js):
+// a virtual clock, a seeded Math.random, the workbench parts of the layout, Web Locks,
+// localStorage and a canvas that draws nothing but counts what is drawn. The real script (as the
+// extension injects it) runs unchanged inside it, in a vm context. The simulations drive the
+// World directly instead (session.js).
 'use strict';
 
-const fs = require('fs');
-const path = require('path');
 const vm = require('vm');
+const { seededRandom, FRAME_MS } = require('./session');
 
-const DEFAULT_INJECT = path.join(__dirname, '..', '..', 'inject');
-const FRAME_MS = 1000 / 60; // VS Code repaints at the display rate; 60 Hz is the common case
 const POLL_LABEL = 'Pixel Cat: throw a fish to ';
-
-/** Small, fast, seedable PRNG (mulberry32), so a run is repeatable. */
-function seededRandom(seed) {
-  let a = seed >>> 0;
-  return () => {
-    a = (a + 0x6d2b79f5) >>> 0;
-    let t = a;
-    t = Math.imul(t ^ (t >>> 15), t | 1);
-    t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
-    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
-  };
-}
 
 /** Timers driven by the simulation, not the wall clock. */
 class Clock {
@@ -58,31 +44,28 @@ class Clock {
   }
 }
 
-// world.js ends by starting itself; probe.js goes in just before that, inside its closure.
-const START_CALL = /\r?\n {2}start\(\);\r?\n\}\)\(\);\s*$/;
-
-/** world.js with probe.js spliced in, so the recorder can read the world. */
-function withProbe(world) {
-  const at = world.search(START_CALL);
-  if (at < 0) throw new Error("Can't add the probe: world.js no longer ends with `  start();` and `})();`");
-  const probe = fs.readFileSync(path.join(__dirname, 'probe.js'), 'utf8');
-  return world.slice(0, at) + '\n' + probe + world.slice(at);
-}
-
-/** A drawing context that accepts every call and draws nothing. */
-function nullContext() {
-  return new Proxy({}, { get: (target, key) => (key in target ? target[key] : () => {}), set: (target, key, v) => ((target[key] = v), true) });
+/** A drawing context that accepts every call and draws nothing; it counts images and rectangles in `drawn`. */
+function nullContext(drawn) {
+  const drawImage = () => drawn.images++;
+  const fillRect = () => drawn.rects++;
+  return new Proxy(
+    {},
+    {
+      get: (target, key) => (key === 'drawImage' ? drawImage : key === 'fillRect' ? fillRect : key in target ? target[key] : () => {}),
+      set: (target, key, v) => ((target[key] = v), true),
+    }
+  );
 }
 
 /**
- * Builds the window. `layout.parts` maps a workbench selector (as world.js queries it) to the
- * rectangles of the elements it matches. `storage` is localStorage: pass the same Map to every
- * window of a run, as VS Code keeps it between sessions.
+ * Builds the window and runs `script` in it. `layout.parts` maps a workbench selector (as
+ * app.ts queries it) to the rectangles of the elements it matches. `storage` is localStorage.
  */
-function createBrowser({ layout, seed, startMs, storage, cats, injectDir = DEFAULT_INJECT }) {
+function createBrowser({ layout, seed, startMs, storage, cats, script }) {
   const clock = new Clock(startMs);
   const errors = [];
   const onError = (e) => errors.push(e && e.stack ? e.stack : String(e));
+  const drawn = { images: 0, rects: 0 };
 
   class Element {
     constructor(tag, rect) {
@@ -98,7 +81,7 @@ function createBrowser({ layout, seed, startMs, storage, cats, injectDir = DEFAU
       return { left: r.left, top: r.top, width: r.width, height: r.height, right: r.left + r.width, bottom: r.top + r.height };
     }
     getContext() {
-      return nullContext();
+      return nullContext(drawn);
     }
     appendChild(child) {
       this.children.push(child);
@@ -179,17 +162,13 @@ function createBrowser({ layout, seed, startMs, storage, cats, injectDir = DEFAU
   context.__now = () => clock.now;
   vm.runInContext('Math.random = __random; Date.now = __now;', context);
 
-  const sprites = fs.readFileSync(path.join(injectDir, 'sprites.js'), 'utf8');
-  vm.runInContext(sprites, context, { filename: 'sprites.js' });
+  // As the extension injects it: the config, then the bundle.
   context.PixelCatConfig = { scale: 2, cats };
-  vm.runInContext(withProbe(fs.readFileSync(path.join(injectDir, 'world.js'), 'utf8')), context, { filename: 'world.js' });
+  vm.runInContext(script, context, { filename: 'pixel-cat.js' });
 
   return {
     errors,
-    get now() {
-      return clock.now;
-    },
-    probe: () => (context.PixelCatProbe ? context.PixelCatProbe() : null),
+    drawn,
     /** One display frame: timers first, then the animation frame, as a browser does. */
     async step() {
       clock.advance(FRAME_MS, onError);
@@ -202,11 +181,15 @@ function createBrowser({ layout, seed, startMs, storage, cats, injectDir = DEFAU
           onError(e);
         }
       }
-      await null; // let promise callbacks (Web Locks) run, as between real frames
+      await new Promise((resolve) => setImmediate(resolve)); // promise callbacks (Web Locks) all run before the next frame, as in a browser
     },
-    /** Clicks the 🐟 in the status bar. */
-    clickFish() {
-      const event = { target: fishItem, ctrlKey: false, altKey: false, shiftKey: false };
+    /** Turns the extension's debug mode on or off (it says so in the 🐟's label). */
+    setDebug(on) {
+      fishItem.setAttribute('aria-label', POLL_LABEL + cats.map((c) => c.name).join(', ') + (on ? ' (debug)' : ''));
+    },
+    /** Clicks the 🐟 in the status bar, holding the modifier keys in `keys` ({ctrlKey, altKey, shiftKey}). */
+    clickFish(keys = {}) {
+      const event = { target: fishItem, ctrlKey: !!keys.ctrlKey, altKey: !!keys.altKey, shiftKey: !!keys.shiftKey };
       for (const fn of clickListeners) {
         try {
           fn(event);
@@ -218,4 +201,4 @@ function createBrowser({ layout, seed, startMs, storage, cats, injectDir = DEFAU
   };
 }
 
-module.exports = { createBrowser, FRAME_MS };
+module.exports = { createBrowser };

@@ -1,5 +1,82 @@
 # Changelog
 
+## 0.1.47
+
+Cleanup: the sources are in `src/world` (no DOM, enforced by `tsconfig.world.json`), `src/browser`
+and `src/extension`. A shared `Driver` moves the world on in VS Code and in the tests alike, so the
+tests cannot drift from how the script runs. In the tests, a cat that walks out comes back after
+the same frame, as in VS Code (the old fake window took one frame longer): the event log was
+recorded again; across 30 seeds no statistic changes by more than 5%. Stale snapshots removed.
+No change for the cats in VS Code.
+
+## 0.1.46
+
+Refactor: the browser side is split by job: `Renderer` (canvas, sprites, drawing), `workbench`
+(reading VS Code's parts, the 🐟 and its clicks), `CarePanel` (debug mode's panel) and `roam`
+(Web Locks); `app.ts` only wires them to the World. No change for the cats: the event log is
+identical, and the smoke test draws exactly the same. The smoke test now spends its second half
+in debug mode.
+
+## 0.1.45
+
+Tests: the simulations drive the `World` directly (`test/sim/session.js`) instead of running the
+script in a fake window with a probe spliced in, about 5x faster: `npm test` takes about 10 s,
+`npm run sim` about a minute. A smoke test (`test/sim/smoke.js`) runs the real script in a fake
+window for half an hour. The event log and all statistics are identical. In the script, the
+workbench parts list moved to `layout.ts`, and the care store is built by `storageCareStore`.
+
+## 0.1.44
+
+Refactor: the cats' world is a `World` class with no DOM (`src/inject/world.ts`): it owns the cats,
+the fish, the layout and the emotions, carries out moves and moves everything on each frame
+(`step`), and offers a read-only `view()`. What a cat does next is decided by a `CatBrain`
+(`brain.ts`). The browser side (reading the workbench, drawing, the care panel, Web Locks) is
+`app.ts`. No change for the cats: the event log is identical.
+
+## 0.1.43
+
+Refactor: a cat is a `Cat` (`src/inject/cat.ts`) whose activity is one of sit, sleep, eat, walk,
+crouch, air, wall hop or slide, each carrying only its own data (a walk its target, a jump its
+flight, a climb its wall). The cat script type-checks with no implicit `any`. No change for the
+cats: the event log is identical.
+
+## 0.1.42
+
+Refactor: getting around belongs to a `Navigator` (`src/inject/navigator.ts`): where on a floor a
+cat may stand, which floors and walls it can reach, where it walks in, the floor below it,
+where it lands at the top of a wall. Moves are a typed `jump` or `climb`. No change for the
+cats: the event log is identical.
+
+## 0.1.41
+
+Refactor: the thrown fish belong to a `FishPond` (`src/inject/fish.ts`): tossing, flopping,
+landing, fading and leaving with their floor. Arcs through the air are in `arc.ts`, shared by
+fish and cats. No change for the cats: the event log is identical.
+
+## 0.1.40
+
+Refactor: each cat's meal deadline and trust belong to a `Hunger` (`src/inject/hunger.ts`), the
+only thing that changes them; saving them goes through a `CareStore` (`care-store.ts`, on
+`localStorage`). No change for the cats: the event log is identical.
+
+## 0.1.39
+
+Refactor: every random choice goes through `Random` (`src/inject/random.ts`) and the time
+through `Clock` (`src/inject/clock.ts`), so tests can drive them; in VS Code they still use
+`Math.random` and `Date.now`. No change for the cats: the event log is identical.
+
+## 0.1.38
+
+Refactor: the tuning constants (movement, fish, hunger, trust) moved to `src/inject/config.ts`,
+and reading floors and walls from the workbench parts to `src/inject/layout.ts` as pure
+geometry. No change for the cats: the event log is identical.
+
+## 0.1.37
+
+The cat script is TypeScript now (`src/inject`), bundled by esbuild into `out/pixel-cat.js`,
+which the extension injects. No change for the cats: the simulation event log is identical
+line for line. The tests bundle the same sources (`--src` replaces `--inject`).
+
 ## 0.1.36
 
 Each fish keeps a cat fed for 26 hours instead of 24, so feeding at about the same time every
