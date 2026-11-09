@@ -1,7 +1,8 @@
 // The cat boxes panel, drawn in sprite pixels (pixel-art.ts): an open cardboard box per cat, its
 // name on a sticker slapped on by hand, the cat peeking out over the lip (blinking now and then),
 // and under it its trust in hearts and how full it is in fish, and on the shelf beside it a
-// button for its next step; the boxes on shelves in a room (room-art.ts).
+// button for its next step; the boxes on shelves in a room (room-art.ts). And the sign that
+// asks before a cat goes for good.
 import { FISH, HEARTS, type BoxButton, type CatBox } from '../world/boxes';
 import { coatOf } from '../world/coats';
 import { SP, type Dot } from '../world/sprites';
@@ -389,7 +390,61 @@ const BUTTON_OFF = { ink: '#111111', art: '#4a4250' }; // a disabled icon: its o
 // A cat's button at (x, y): its icon in colour, or greyed out while it cannot be pressed.
 function paintButton(paint: Paint, button: BoxButton, x: number, y: number): void {
   paint(x, y, BUTTON, BUTTON, BUTTON_FRAME);
-  paint(x + 1, y + 1, BUTTON - 2, BUTTON - 2, button.enabled ? BUTTON_INSIDE.on : BUTTON_INSIDE.off);
+  paint(x + 1, y + 1, BUTTON - 2, BUTTON - 2, button.why ? BUTTON_INSIDE.off : BUTTON_INSIDE.on);
   const off = (ch: string) => (ch === 'K' ? BUTTON_OFF.ink : BUTTON_OFF.art);
-  paintRows(paint, BUTTON_ART[button.kind], x + 1, y + 1, (ch) => (button.enabled ? BUTTON_COLORS[ch] : off(ch)));
+  paintRows(paint, BUTTON_ART[button.kind], x + 1, y + 1, (ch) => (button.why ? off(ch) : BUTTON_COLORS[ch]));
+}
+
+// ---- saying goodbye ----
+
+// Before a cat goes for good, the panel dims and a sign over it asks: "Say goodbye to Jexit?",
+// with a Yes and a No. It hangs level with the cat's box (which is in view: it was just clicked).
+const GOODBYE = {
+  dim: 'rgba(0, 0, 0, 0.55)', // over the panel behind the sign
+  edge: '#000000',
+  sign: '#1f1f1f',
+  text: '#f6f0dc',
+  yes: '#8e3a2e',
+  no: '#3a4a5a',
+};
+const GOODBYE_H = 44;
+const ANSWER_H = 13; // a Yes or No sign's height
+const ANSWER_GAP = 16; // between them
+
+// Where the goodbye sign for box `i` (of `box.name`) goes, on a panel `width` x `height` in `cols`
+// columns, and its Yes and No.
+function goodbyeLayout(name: string, i: number, cols: number, width: number, height: number) {
+  const question = `SAY GOODBYE TO ${fontText(FONT_5X7, name, MAX_NAME)}?`;
+  const w = textWidth(FONT_5X7, question) + 16;
+  const boxMiddle = TOP + Math.floor(i / cols) * (CELL_H + GAP_Y) + BOX_TOP + Math.floor(BOX_H / 2);
+  const x = Math.max(0, Math.floor((width - w) / 2));
+  const y = Math.max(0, Math.min(height - GOODBYE_H, boxMiddle - Math.floor(GOODBYE_H / 2)));
+  const answerW = (label: string) => textWidth(FONT_5X7, label) + 10;
+  const ax = x + Math.floor((w - (answerW('YES') + ANSWER_GAP + answerW('NO'))) / 2);
+  const ay = y + 24;
+  return {
+    question, x, y, w,
+    yes: { label: 'YES', x: ax, y: ay, w: answerW('YES') },
+    no: { label: 'NO', x: ax + answerW('YES') + ANSWER_GAP, y: ay, w: answerW('NO') },
+  };
+}
+
+/** Dims the panel (`width` x `height`, `cols` columns) and asks whether to say goodbye to box `i`'s cat, `name`. */
+export function paintGoodbye(paint: Paint, name: string, i: number, cols: number, width: number, height: number): void {
+  const g = goodbyeLayout(name, i, cols, width, height);
+  paint(0, 0, width, height, GOODBYE.dim);
+  paint(g.x, g.y, g.w, GOODBYE_H, GOODBYE.edge);
+  paint(g.x + 1, g.y + 1, g.w - 2, GOODBYE_H - 2, GOODBYE.sign);
+  eachTextPixel(FONT_5X7, g.question, g.x + 8, g.y + 8, (px, py) => paint(px, py, 1, 1, GOODBYE.text));
+  for (const [a, color] of [[g.yes, GOODBYE.yes], [g.no, GOODBYE.no]] as const) {
+    paint(a.x, a.y, a.w, ANSWER_H, GOODBYE.edge);
+    paint(a.x + 1, a.y + 1, a.w - 2, ANSWER_H - 2, color);
+    eachTextPixel(FONT_5X7, a.label, a.x + 5, a.y + 3, (px, py) => paint(px, py, 1, 1, GOODBYE.text));
+  }
+}
+
+/** Whether (x, y) is on the Yes of the goodbye sign that paintGoodbye paints with the same arguments. */
+export function onGoodbyeYes(x: number, y: number, name: string, i: number, cols: number, width: number, height: number): boolean {
+  const { yes } = goodbyeLayout(name, i, cols, width, height);
+  return x >= yes.x && x < yes.x + yes.w && y >= yes.y && y < yes.y + ANSWER_H;
 }

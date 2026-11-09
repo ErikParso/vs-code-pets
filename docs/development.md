@@ -13,8 +13,9 @@
   every tuning number.
 - `src/browser/`: the cat script's browser side: reading VS Code's workbench, drawing, the debug
   care panel, the cat boxes (`cat-boxes.ts`: boxes from `box-art.ts` in a room from
-  `room-art.ts`), the 🐈‍⬛ menu (`fish-menu.ts`, buttons from `menu-art.ts`), Web Locks. Pixel
-  art is drawn through `pixel-art.ts`. Bundled with `src/world` by esbuild into
+  `room-art.ts`), the 🐈‍⬛ menu (`fish-menu.ts`, buttons from `menu-art.ts`), Web Locks, and a
+  tooltip anything can use (`tooltip.ts`: `show(text, x, y)`, `hide()`). Pixel art is drawn
+  through `pixel-art.ts`. Bundled with `src/world` by esbuild into
   `out/pixel-cat.js` (`scripts/bundle.js`).
 - `test/sim/`: the simulation tests, below.
 
@@ -29,7 +30,7 @@
   and drops by 0.05 when fed late; a play adds 0.02 once a day (see Play). Hunger continues while
   VS Code is closed; trust changes only when a cat eats or plays.
 - **The collection** (`collection.ts`, kept in `localStorage` as `pixelCat.cats`): your cats, at
-  most `BOXES` (12). It starts as `FIRST_CATS`. Each cat is one record: a unique `id`, a
+  most `BOXES` (15). It starts as `FIRST_CATS`. Each cat is one record: a unique `id`, a
   name, a coat, its energy, its step and its `care` (hunger, trust, play, packed; the World reads
   and saves it through `Collection.care`, by id, and never into a cat that is gone). Each cat
   takes three steps, one at a time, from the button
@@ -41,9 +42,11 @@
      then: a name not taken, a coat by rarity, energy 0.3-1.2. It starts out roaming.
   3. **Goodbye,** once it has brought its friend: its record leaves the collection, care and all;
      every window drops it at its next poll.
-  The rules are `canTakeStep` (collection.ts); `takeStep` checks them again against what is
-  saved, so a stale panel can't take a step twice. Debug mode's Reset cats clears the collection
-  and reloads the window.
+  The rules are `whyNot` (collection.ts): why a cat can't take its step yet, as the player is told
+  (hovering its greyed-out button shows it in a tooltip), or null if it can. `takeStep` checks
+  them again against what is saved, so a stale panel can't take a step twice. Goodbye is asked
+  first, on a sign over the dimmed panel (`paintGoodbye`): only its Yes takes the step. Debug
+  mode's Reset cats clears the collection and reloads the window.
   No progress can be lost: a cat only goes once it has brought its friend, so there are always
   as many cats still to bring theirs as there were at the start, and with every box full all the
   others may go.

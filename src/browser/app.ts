@@ -13,6 +13,7 @@ import { Driver, POLL_MS } from '../world/driver';
 import { Random } from '../world/random';
 import { Renderer } from './renderer';
 import { roam } from './roaming';
+import { Tooltip } from './tooltip';
 import { workbench } from './workbench';
 import { World } from '../world/world';
 
@@ -83,7 +84,7 @@ export function startPixelCat(): void {
     });
     // The cat boxes: every cat in its box, wherever it is roaming. Clicking a box shuts its cat
     // in (or lets it out); the button beside it takes the cat's next step.
-    catBoxes = new CatBoxes(collection, systemClock, () => renderer);
+    catBoxes = new CatBoxes(collection, systemClock, () => renderer, new Tooltip());
     // The 🐈‍⬛'s menu: a fish or a ball of yarn to throw from the 🐈‍⬛, a box to open the cat boxes.
     menu = new FishMenu(() => renderer, {
       fish: (from) => world.throwFish(from.x, from.y),

@@ -21,7 +21,7 @@ Click the 🐈‍⬛ in the status bar:
   button beside each box is the cat's next step:
   - at **two hearts** it claims its own collar;
   - at **five hearts** it brings a friend, a new cat in a random coat, if there's a box free
-    (there are 12);
+    (there are 15);
   - once it has brought its friend, it can **leave**, to make room.
 
 With more than one VS Code window open, the cats wander between them.

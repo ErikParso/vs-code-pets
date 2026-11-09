@@ -6,16 +6,16 @@ import type { Step } from './cat';
 import type { Clock } from './clock';
 import { STARVE_AFTER } from './config';
 import { Care, halfHearts } from './care';
-import { canTakeStep, collarOf, type CatRecord } from './collection';
+import { collarOf, whyNot, type CatRecord } from './collection';
 import { clamp } from './math';
 
 export { HEARTS } from './care';
 export const FISH = 5; // a full meal is all five
 
-/** The button beside a cat's box: its step, and whether it can take it yet. */
+/** The button beside a cat's box: its step, and why it cannot take it yet (null: it can). */
 export interface BoxButton {
   kind: Step;
-  enabled: boolean;
+  why: string | null;
 }
 
 export interface CatBox {
@@ -43,7 +43,7 @@ export function catBoxes(cats: readonly CatRecord[], clock: Clock): CatBox[] {
       fish: clamp(Math.ceil(full * FISH - 1e-9), 0, FISH),
       packed: !!cat.care?.packed,
       collar: collarOf(cat),
-      button: { kind: cat.step, enabled: canTakeStep(cat, care.trust, cats.length) },
+      button: { kind: cat.step, why: whyNot(cat, care.trust, cats.length) },
     };
   });
 }

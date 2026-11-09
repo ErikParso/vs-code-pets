@@ -16,7 +16,7 @@ import type { Clock } from './clock';
 import { coatOf, rollCoat } from './coats';
 import type { Random } from './random';
 
-export const BOXES = 12; // the most cats you can have
+export const BOXES = 15; // the most cats you can have
 export const COLLAR_HEARTS = 2; // the trust (in hearts) a cat claims its collar at
 export const FRIEND_HEARTS = 5; // ... and brings its friend at
 const ENERGY = [0.3, 1.2]; // a friend's, between Boris's (the laziest) and a bit livelier than Erik's
@@ -53,11 +53,20 @@ export function collarOf(def: CatDef): string | null {
   return def.step === 'collar' ? null : coatOf(def.coat).collar;
 }
 
+/**
+ * Why `def`, which trusts you `trust`, cannot take its step now, in a collection of `count` cats,
+ * as the player is told; null if it can.
+ */
+export function whyNot(def: CatDef, trust: number, count: number): string | null {
+  if (def.step === 'collar' && halfHearts(trust) < 2 * COLLAR_HEARTS) return `Unlocks collar at ${COLLAR_HEARTS} hearts`;
+  if (def.step === 'friend' && halfHearts(trust) < 2 * FRIEND_HEARTS) return `Brings a friend at ${FRIEND_HEARTS} hearts`;
+  if (def.step === 'friend' && count >= BOXES) return 'Boxes are full';
+  return null;
+}
+
 /** Whether `def`, which trusts you `trust`, can take its step now, in a collection of `count` cats. */
 export function canTakeStep(def: CatDef, trust: number, count: number): boolean {
-  if (def.step === 'collar') return halfHearts(trust) >= 2 * COLLAR_HEARTS;
-  if (def.step === 'friend') return halfHearts(trust) >= 2 * FRIEND_HEARTS && count < BOXES;
-  return true;
+  return whyNot(def, trust, count) === null;
 }
 
 export class Collection {

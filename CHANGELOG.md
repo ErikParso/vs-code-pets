@@ -1,5 +1,24 @@
 # Changelog
 
+## 0.1.111
+
+- 15 boxes instead of 12: room for more cats (three full shelves of five).
+
+## 0.1.110
+
+- Saying goodbye to a cat asks first: "Say goodbye to Jexit?", Yes or No, on a sign over the
+  dimmed panel. Only Yes sends it away; a click anywhere else (or closing the panel) is a no, so a
+  double-click can't lose a cat.
+
+## 0.1.109
+
+- Shorter tooltips: "Unlocks collar at 2 hearts", "Brings a friend at 5 hearts", "Boxes are full".
+
+## 0.1.108
+
+- Hovering a cat's greyed-out button says why, in a tooltip that comes up almost at once: how
+  many hearts it needs (and has), or that all 12 boxes are full.
+
 ## 0.1.107
 
 - The cats a collection starts with live in the code (`FIRST_CATS`); `inject/cats.json` is gone
