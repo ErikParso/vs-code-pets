@@ -2,7 +2,7 @@
 // statistics and invariant violations. It only reads the view; it never reaches into the World.
 //
 // A run is one or more sessions (VS Code open). Behaviour is measured over open time; hunger
-// and trust over all time, since a cat's meal deadline keeps running while VS Code is closed.
+// and trust over all time, since a cat's hunger keeps running while VS Code is closed.
 'use strict';
 
 const { floorName } = require('./layouts');
@@ -31,20 +31,20 @@ function walkLabel(c, firstSight, k) {
 const walkLimit = (label, k) => k.MAX_WALK_DISTANCE + (label === 'stroll' || label === 'trot' || label === 'to wall' ? 0 : k.catW) + 1;
 
 // Where a cat is in its meal cycle: fed (ignores fish), normal (would eat), asking, starving.
-// Each phase starts at a fixed time before its meal deadline.
-function phaseStarts(nextMealAt, k) {
-  return { normal: nextMealAt - (k.NEXT_MEAL_AFTER - k.EAT_AFTER), asking: nextMealAt - k.ASK_BEFORE, starving: nextMealAt };
+// Each phase starts at a fixed time after its last meal.
+function phaseStarts(fedAt, k) {
+  return { normal: fedAt + k.EAT_AFTER, asking: fedAt + k.ASK_AFTER, starving: fedAt + k.STARVE_AFTER };
 }
-function phaseAt(nextMealAt, now, k) {
-  const p = phaseStarts(nextMealAt, k);
+function phaseAt(fedAt, now, k) {
+  const p = phaseStarts(fedAt, k);
   if (now >= p.starving) return 'starving';
   if (now >= p.asking) return 'asking';
   if (now >= p.normal) return 'normal';
   return 'fed';
 }
-/** Seconds in each phase between two times, with the deadline unchanged (VS Code closed). */
-function phaseSpans(nextMealAt, fromMs, toMs, k) {
-  const p = phaseStarts(nextMealAt, k);
+/** Seconds in each phase between two times, with no meal in between (VS Code closed). */
+function phaseSpans(fedAt, fromMs, toMs, k) {
+  const p = phaseStarts(fedAt, k);
   const edges = [[-Infinity, p.normal, 'fed'], [p.normal, p.asking, 'normal'], [p.asking, p.starving, 'asking'], [p.starving, Infinity, 'starving']];
   const out = {};
   for (const [a, b, phase] of edges) out[phase] = Math.max(0, Math.min(b, toMs) - Math.max(a, fromMs)) / 1000;
@@ -88,10 +88,10 @@ class Recorder {
     this.log('open');
     const last = this.lastSession;
     if (!last) return;
-    // While it was closed, each cat's meal deadline ran on.
+    // While it was closed, each cat's hunger ran on.
     for (const st of Object.values(this.cats)) {
       if (!st.care) continue;
-      const spans = phaseSpans(st.care.nextMealAt, last.now, nowMs, last.k);
+      const spans = phaseSpans(st.care.fedAt, last.now, nowMs, last.k);
       for (const phase of PHASES) st.hungerAll[phase] += spans[phase];
       st.expectCare = st.care; // it should come back exactly as saved
     }
@@ -103,11 +103,11 @@ class Recorder {
     this.log('close');
     for (const [name, st] of Object.entries(this.cats)) {
       if (st.prev) {
-        st.care = { nextMealAt: st.prev.nextMealAt, trust: st.prev.trust };
+        st.care = { fedAt: st.prev.fedAt, trust: st.prev.trust };
         this.endVisit(st);
       }
-      if (st.care) this.log(`${name} care deadline=${st.care.nextMealAt.toFixed(0)} trust=${st.care.trust.toFixed(4)}`);
-      if (st.care) st.timeline.push({ day: +(T / DAY_S).toFixed(3), trust: +st.care.trust.toFixed(3), mealInH: +((st.care.nextMealAt - nowMs) / HOUR_MS).toFixed(2) });
+      if (st.care) this.log(`${name} care deadline=${(st.care.fedAt + k.STARVE_AFTER).toFixed(0)} trust=${st.care.trust.toFixed(4)}`);
+      if (st.care) st.timeline.push({ day: +(T / DAY_S).toFixed(3), trust: +st.care.trust.toFixed(3), mealInH: +((st.care.fedAt + k.STARVE_AFTER - nowMs) / HOUR_MS).toFixed(2) });
     }
     this.lastSession = { T, now: nowMs, k };
   }
@@ -126,7 +126,7 @@ class Recorder {
       const st = this.cats[name];
       if (here.has(name)) continue;
       if (st.prev) {
-        st.care = { nextMealAt: st.prev.nextMealAt, trust: st.prev.trust };
+        st.care = { fedAt: st.prev.fedAt, trust: st.prev.trust };
         this.endVisit(st);
       }
       if (T - Math.max(st.lastSeen, this.sessionStart) > MAX_ABSENT_S && !st.absentReported) {
@@ -149,7 +149,7 @@ class Recorder {
   sampleCat(c, s, k, dt) {
     const st = this.cats[c.name];
     if (st.prev && st.prev.visit !== c.visit) {
-      st.care = { nextMealAt: st.prev.nextMealAt, trust: st.prev.trust };
+      st.care = { fedAt: st.prev.fedAt, trust: st.prev.trust };
       this.endVisit(st);
     }
     const p = st.prev;
@@ -182,7 +182,7 @@ class Recorder {
       const i = Math.min(HEAT_BINS - 1, Math.max(0, Math.floor(((c.x - c.floor.x1) / (c.floor.x2 - c.floor.x1)) * HEAT_BINS)));
       bins[i] += dt;
     }
-    const phase = phaseAt(c.nextMealAt, s.now, k);
+    const phase = phaseAt(c.fedAt, s.now, k);
     st.hungerOpen[phase] += dt;
     st.hungerAll[phase] += dt;
 
@@ -247,11 +247,11 @@ class Recorder {
 
   // A meal starts: was it on time, and how long had the cat been asking?
   recordMeal(st, c, s, k) {
-    const phase = phaseAt(c.nextMealAt, s.now, k);
-    if (phase === 'fed') this.violate('ate while fed', `${c.name} ate ${((c.nextMealAt - s.now) / HOUR_MS).toFixed(1)}h before its deadline`);
+    const phase = phaseAt(c.fedAt, s.now, k);
+    if (phase === 'fed') this.violate('ate while fed', `${c.name} ate ${((s.now - c.fedAt) / HOUR_MS).toFixed(1)}h after its last meal`);
     if (phase === 'starving') st.lateMeals++;
-    this.log(`${c.name} meal ${phase} deadline=${c.nextMealAt.toFixed(0)} trust=${c.trust.toFixed(4)}`);
-    const askingSince = phaseStarts(c.nextMealAt, k).asking;
+    this.log(`${c.name} meal ${phase} deadline=${(c.fedAt + k.STARVE_AFTER).toFixed(0)} trust=${c.trust.toFixed(4)}`);
+    const askingSince = phaseStarts(c.fedAt, k).asking;
     if (s.now >= askingSince) st.askWaits.push((s.now - askingSince) / HOUR_MS);
     else st.mealsBeforeAsking++;
   }
@@ -262,25 +262,25 @@ class Recorder {
     if (a.state === 'sleep') st.naps.push(this.T - a.start);
   }
 
-  // A cat coming into a new window has the meal deadline and trust it had when it left.
+  // A cat coming into a new window has the last meal and trust it had when it left.
   checkCareKept(c, st) {
     const want = st.expectCare;
     st.expectCare = null;
     if (!want) return;
-    if (c.nextMealAt !== want.nextMealAt || Math.abs(c.trust - want.trust) > 1e-9) {
-      this.violate('care not kept', `${c.name} came back with deadline ${c.nextMealAt}, trust ${c.trust}; left with ${want.nextMealAt}, ${want.trust}`);
+    if (c.fedAt !== want.fedAt || Math.abs(c.trust - want.trust) > 1e-9) {
+      this.violate('care not kept', `${c.name} came back fed at ${c.fedAt}, trust ${c.trust}; left with ${want.fedAt}, ${want.trust}`);
     }
   }
 
   checkCare(c, p, s, k) {
     if (!(c.trust >= 0 && c.trust <= 1)) this.violate('trust out of range', `${c.name} trust ${c.trust}`);
-    if (c.nextMealAt > s.now + k.NEXT_MEAL_AFTER + 1000) {
-      this.violate('deadline more than a day away', `${c.name} next meal in ${((c.nextMealAt - s.now) / HOUR_MS).toFixed(1)}h`);
+    if (c.fedAt > s.now + 1000) {
+      this.violate('fed in the future', `${c.name} fed ${((c.fedAt - s.now) / HOUR_MS).toFixed(1)}h from now`);
     }
-    // Trust and the deadline change only when a meal is finished.
+    // Trust and the last meal change only when a meal is finished.
     const mealDone = p && p.state === 'eat' && c.state !== 'eat';
-    if (p && !mealDone && (p.trust !== c.trust || p.nextMealAt !== c.nextMealAt)) {
-      this.violate('care changed without a meal', `${c.name} trust ${p.trust}->${c.trust}, deadline ${p.nextMealAt}->${c.nextMealAt}`);
+    if (p && !mealDone && (p.trust !== c.trust || p.fedAt !== c.fedAt)) {
+      this.violate('care changed without a meal', `${c.name} trust ${p.trust}->${c.trust}, fed at ${p.fedAt}->${c.fedAt}`);
     }
   }
 
@@ -491,7 +491,7 @@ function newCatStats() {
     mealsBeforeAsking: 0,
     askWaits: [],
     trustStart: null,
-    care: null, // {nextMealAt, trust} as last seen, kept while the cat is away
+    care: null, // {fedAt, trust} as last seen, kept while the cat is away
     expectCare: null,
     timeline: [],
   };

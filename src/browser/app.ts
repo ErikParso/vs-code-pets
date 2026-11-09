@@ -93,13 +93,13 @@ export function startPixelCat(): void {
     resize();
     window.addEventListener('resize', resize);
     // The 🐈‍⬛ the extension shows in the status bar opens its menu. (In debug mode, modifier+clicks
-    // change the cats' meal deadline and trust instead.)
+    // change the cats' last meal and trust instead.)
     workbench.onFishClick((click) => {
       if (!driver.shown) return;
       if (driver.debug && (click.ctrlKey || click.altKey || click.shiftKey)) {
         for (const c of world.cats) {
           if (click.ctrlKey) c.hunger.addTrust(click.shiftKey ? -0.1 : 0.1);
-          else c.hunger.shiftDeadline(click.altKey ? -6 : 6);
+          else c.hunger.shiftFedAt(click.altKey ? -6 : 6);
         }
         world.save();
         return;

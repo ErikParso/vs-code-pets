@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.1.89
+
+- Tidier inside: a cat now remembers when it last ate instead of when its next meal is due;
+  the cats behave the same. Hunger starts over once (every cat as if just fed).
+
 ## 0.1.88
 
 - The yarn in the 🐈‍⬛'s menu is now a wicker basket of balls of yarn.

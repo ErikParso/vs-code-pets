@@ -13,7 +13,7 @@ const DAILY_AT_HOURS = [10, 13, 16]; // the times of day a regular feeder throws
 const FORGETFUL_DAYS = [0, 2, 4]; // days of the week (0 = Monday) a forgetful feeder remembers
 const SPAM_EVERY_MIN = 10;
 
-const asking = (s, c) => s.now >= c.nextMealAt - s.constants.ASK_BEFORE;
+const asking = (s, c) => s.now - c.fedAt >= s.constants.ASK_AFTER;
 
 /** Throws a fish every `everyMin` minutes of open time, whatever the cats want. */
 function every(everyMin) {

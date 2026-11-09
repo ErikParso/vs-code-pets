@@ -36,7 +36,7 @@ async function main() {
   const frames = Math.round((MINUTES * 60 * 1000) / FRAME_MS);
   const fishEvery = Math.round((FISH_EVERY_MIN * 60 * 1000) / FRAME_MS);
   // The second half in debug mode: floors, walls and meters drawn, the care panel shown, and the
-  // 🐈‍⬛'s modifier-clicks (trust and meal deadline) tried too.
+  // 🐈‍⬛'s modifier-clicks (trust and last meal) tried too.
   const DEBUG_CLICKS = [{ ctrlKey: true }, { ctrlKey: true, shiftKey: true }, { altKey: true }, { shiftKey: true }];
   // Fish are thrown from the 🐈‍⬛'s menu. The cat boxes: opened from it too, a quarter of the way
   // in; the next click on the 🐈‍⬛ (to throw a fish) closes them.

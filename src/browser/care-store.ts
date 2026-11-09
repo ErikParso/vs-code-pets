@@ -2,7 +2,7 @@
 // is its localStorage: shared by all its windows and kept between sessions.
 import type { Care, CareStore } from '../world/hunger';
 
-const KEY = 'pixelCat.care'; // {name: {nextMealAt, trust, packed}}
+const KEY = 'pixelCat.care'; // {name: {fedAt, trust, packed}}
 
 /** The part of the Web Storage API a CareStore needs. */
 export interface KeyValueStorage {

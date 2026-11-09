@@ -19,12 +19,13 @@
 
 ## Rules of the game
 
-- **Hunger:** each fish keeps a cat fed for 26 hours, so a fish at about the same time every day
-  is always on time. It ignores fish for the first three hours, then will eat again; in its final
-  six hours it asks for food now and then with a little fish floating over its head. Once
-  starving, it only walks or meows for food until it eats.
-- **Trust:** from 0 to 1, starting at 0.1. It grows by 0.03 when a cat eats before its meal
-  deadline and drops by 0.05 when fed late. Hunger continues while VS Code is closed; trust
+- **Hunger:** a cat keeps when it last ate (`fedAt`), and each state is the time since then. A fish
+  keeps it fed for 26 hours, so a fish at about the same time every day is always on time.
+  It ignores fish for the first three hours, then will eat again; after 20
+  hours it asks for food now and then with a little fish floating over its head. After 26 it
+  starves, and only walks or meows for food until it eats.
+- **Trust:** from 0 to 1, starting at 0.1. It grows by 0.03 when a cat eats before it starves
+  and drops by 0.05 when fed late. Hunger continues while VS Code is closed; trust
   changes only when a cat eats.
 - **Play:** a ball of yarn lying still on a cat's floor within reach makes `play` one of the
   things it picks from (weight `PLAY_WEIGHT`); fish still come first and starving cats don't play.
@@ -42,7 +43,7 @@
 
 Only while developing: in an Extension Development Host (F5, from `.vscode/launch.json`), the
 command **Pixel Cat: Toggle Debug Mode** shows the floors and walls the cats get around on, each
-cat's hunger and trust, and a panel to adjust meal deadlines and trust. In an installed extension
+cat's hunger and trust, and a panel to adjust their last meal and trust. In an installed extension
 the command is hidden and debug mode stays off. Alt+click the 🐈‍⬛ to make the
 cats hungrier, Shift+click to make them fuller; Ctrl+click adds trust, Ctrl+Shift+click takes it
 away.
@@ -52,8 +53,8 @@ away.
 The simulations run the cats' `World` (`src/world/world.ts`) the way the cat script drives it
 in VS Code, without the window (`test/sim/session.js`), in a VS Code layout
 (`test/sim/layouts.js`: a notebook, 1536x816, sidebar, one file and the terminal panel) on a
-virtual clock. VS Code is open on weekdays and closed in between, while the cats' meal
-deadlines run on. Feeding follows fixed rules, and every run with the same code and seeds does
+virtual clock. VS Code is open on weekdays and closed in between, while the cats'
+hunger runs on. Feeding follows fixed rules, and every run with the same code and seeds does
 exactly the same thing. A smoke test runs the real script, bundled as the extension injects it,
 in a fake VS Code window for half an hour (`test/sim/smoke.js`): throwing fish from the 🐈‍⬛
 menu, the second half in debug mode, the cat boxes opened from the menu, a cat packed and let

@@ -44,14 +44,14 @@ export const ROLL_FRICTION = 150; // px/s² it slows down by
 
 // ---- hunger and trust ----
 //
-// Each fish gives a cat 26 hours before its meal deadline: a day plus some slack, so feeding at
-// about the same time every day is never late. For the first three hours it ignores fish; in
-// the final six it asks for one now and then.
+// All counted from a cat's last meal. For the first three hours it ignores fish; after 20 it
+// asks for one now and then; after 26 it starves: a day plus some slack, so feeding at about the
+// same time every day is never late.
 
 export const HOUR = 60 * 60 * 1000; // ms
-export const NEXT_MEAL_AFTER = 26 * HOUR;
 export const EAT_AFTER = 3 * HOUR;
-export const ASK_BEFORE = 6 * HOUR;
+export const ASK_AFTER = 20 * HOUR;
+export const STARVE_AFTER = 26 * HOUR;
 export const TRUST_START = 0.1;
 export const TRUST_ON_TIME = 0.03;
 export const TRUST_LATE = 0.05;

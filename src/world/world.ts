@@ -54,7 +54,7 @@ export interface CatView {
   toFish: boolean;
   toYarn: boolean;
   trust: number;
-  nextMealAt: number;
+  fedAt: number;
 }
 
 /** A read-only snapshot of something thrown to the cats. */
@@ -268,7 +268,7 @@ export class World {
           toFish: c.heading?.to === 'fish',
           toYarn: c.heading?.to === 'ball',
           trust: c.hunger.trust,
-          nextMealAt: c.hunger.nextMealAt,
+          fedAt: c.hunger.fedAt,
         };
       }),
       fishes: this.fish.items.map((g) => ({ ...thrown(g), eater: g.cat ? g.cat.name : null })),

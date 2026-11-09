@@ -1,6 +1,6 @@
-// Debug mode's Cat Care panel: each cat's meal deadline and trust, with buttons to change them.
+// Debug mode's Cat Care panel: each cat's hunger and trust, with buttons to change them.
 import type { Cat } from '../world/cat';
-import { HOUR } from '../world/config';
+import { HOUR, STARVE_AFTER } from '../world/config';
 import type { World } from '../world/world';
 
 export class CarePanel {
@@ -41,7 +41,7 @@ export class CarePanel {
       details.style.flex = '1';
       row.appendChild(details);
       const adjust = (hours: number, trust: number) => () => {
-        c.hunger.shiftDeadline(hours);
+        c.hunger.shiftFedAt(hours);
         c.hunger.addTrust(trust);
         world.save();
         this.render(world, visible);
@@ -56,7 +56,7 @@ export class CarePanel {
 }
 
 function mealLabel(c: Cat, now: number): string {
-  const left = c.hunger.nextMealAt - now;
+  const left = STARVE_AFTER - c.hunger.sinceFed();
   if (left <= 0) return 'Starving';
   const hours = Math.floor(left / HOUR);
   const minutes = Math.floor((left % HOUR) / (60 * 1000));

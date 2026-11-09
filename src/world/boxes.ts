@@ -3,7 +3,7 @@
 // VS Code window shares, so every cat shows the same wherever it is roaming.
 import type { CatDef } from './cat';
 import type { Clock } from './clock';
-import { NEXT_MEAL_AFTER } from './config';
+import { STARVE_AFTER } from './config';
 import { Hunger, type CareStore } from './hunger';
 import { clamp } from './math';
 
@@ -31,7 +31,7 @@ export function catBoxes(cats: readonly CatDef[], store: CareStore, clock: Clock
   const saved = store.load();
   return cats.map((def) => {
     const hunger = Hunger.restore(clock, saved[def.name]);
-    const full = clamp((hunger.nextMealAt - clock.now()) / NEXT_MEAL_AFTER, 0, 1);
+    const full = clamp(1 - hunger.sinceFed() / STARVE_AFTER, 0, 1);
     return {
       name: def.name,
       coat: def.coat,
