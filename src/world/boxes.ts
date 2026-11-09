@@ -4,7 +4,7 @@
 import type { CatDef } from './cat';
 import type { Clock } from './clock';
 import { STARVE_AFTER } from './config';
-import { Hunger, type CareStore } from './hunger';
+import { Care, type CareStore } from './care';
 import { clamp } from './math';
 
 export const HEARTS = 5; // trust 1 is all five; they fill in halves
@@ -30,13 +30,13 @@ export function togglePacked(store: CareStore, name: string): void {
 export function catBoxes(cats: readonly CatDef[], store: CareStore, clock: Clock): CatBox[] {
   const saved = store.load();
   return cats.map((def) => {
-    const hunger = Hunger.restore(clock, saved[def.name]);
-    const full = clamp(1 - hunger.sinceFed() / STARVE_AFTER, 0, 1);
+    const care = Care.restore(clock, saved[def.name]);
+    const full = clamp(1 - care.sinceFed() / STARVE_AFTER, 0, 1);
     return {
       name: def.name,
       coat: def.coat,
       // A heart (or half of one) fills only once it is reached; the epsilon is for float noise.
-      halfHearts: clamp(Math.floor(hunger.trust * 2 * HEARTS + 1e-9), 0, 2 * HEARTS),
+      halfHearts: clamp(Math.floor(care.trust * 2 * HEARTS + 1e-9), 0, 2 * HEARTS),
       // Any food left shows a fish; the last one goes when it starts starving.
       fish: clamp(Math.ceil(full * FISH - 1e-9), 0, FISH),
       packed: !!saved[def.name]?.packed,

@@ -6,7 +6,7 @@
   shows the 🐈‍⬛ in the status bar (compiled by `tsc` to `out/`).
 - `src/world/`: the cats' world, with no DOM (checked by `tsconfig.world.json`): `World` owns the
   cats, the fish and yarn, and the layout; `Driver` moves it on each frame; `CatBrain` decides
-  what a cat does next; `Cat`, `Hunger`, `Navigator`, `FishPond` (`fish.ts`) and `YarnPile`
+  what a cat does next; `Cat`, `Care`, `Navigator`, `FishPond` (`fish.ts`) and `YarnPile`
   (`yarn.ts`) each own their part, the last two sharing what is thrown to the cats (`thrown.ts`:
   the throw, falling off a floor, the limit of `MAX_FISH`); `boxes.ts` is what
   the cat boxes show. `config.ts` holds every tuning number.
@@ -25,13 +25,14 @@
   hours it asks for food now and then with a little fish floating over its head. After 26 it
   starves, and only walks or meows for food until it eats.
 - **Trust:** from 0 to 1, starting at 0.1. It grows by 0.03 when a cat eats before it starves
-  and drops by 0.05 when fed late. Hunger continues while VS Code is closed; trust
-  changes only when a cat eats.
+  and drops by 0.05 when fed late; a play adds 0.02 once a day (see Play). Hunger continues while
+  VS Code is closed; trust changes only when a cat eats or plays.
 - **Play:** a ball of yarn lying still on a cat's floor within reach makes `play` one of the
   things it picks from (weight `PLAY_WEIGHT`); fish still come first and starving cats don't play.
   One cat at a time bats at a ball for a few seconds, then swipes it away 100-250 px; once it
   stops it is up for play again, and one that rolls off the end of its floor is gone. Up to
-  `MAX_FISH` balls are out, like fish. Play changes no stats.
+  `MAX_FISH` balls are out, like fish. A play earns 0.02 trust (and a heart floats up), at most
+  once every 20 hours (`playedAt`, `PLAY_REWARD_AFTER`).
 - **The cat boxes** show trust as 5 hearts (half a heart is 0.1) and food as 5 fish (each about
   5 hours of the 26). A packed cat stays in its box (its window keeps its Web Lock); its hunger
   and trust go on. All of it is kept in VS Code's `localStorage` (`pixelCat.care`), shared by
@@ -41,12 +42,12 @@
 
 ## Debug mode
 
-Only while developing: in an Extension Development Host (F5, from `.vscode/launch.json`), the
-command **Pixel Cat: Toggle Debug Mode** shows the floors and walls the cats get around on, each
-cat's hunger and trust, and a panel to adjust their last meal and trust. In an installed extension
-the command is hidden and debug mode stays off. Alt+click the 🐈‍⬛ to make the
-cats hungrier, Shift+click to make them fuller; Ctrl+click adds trust, Ctrl+Shift+click takes it
-away.
+Only while developing: set `DEBUG = true` in `src/extension/extension.ts` (and back to `false`
+before a release). It shows the floors and walls the cats get around on, each cat's hunger and
+trust, and a Cat Care panel with, for each cat, a Feeding, Playing and Trust row: when it last ate,
+when it last played for trust (happy for 20 hours after), and its trust, each with its own
+buttons. Alt+click the 🐈‍⬛ to make the cats hungrier, Shift+click to make them fuller; Ctrl+click
+adds trust, Ctrl+Shift+click takes it away.
 
 ## Simulation tests
 

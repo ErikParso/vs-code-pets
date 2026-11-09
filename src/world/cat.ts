@@ -4,7 +4,7 @@
 // world's (see world.ts).
 import type { Arc } from './arc';
 import type { Fish } from './fish';
-import type { Hunger } from './hunger';
+import type { Care } from './care';
 import type { Floor, Wall } from './layout';
 import type { ClimbMove } from './navigator';
 import type { AtIt, Thrown } from './thrown';
@@ -69,7 +69,7 @@ export class Cat implements AtIt {
 
   constructor(
     readonly def: CatDef,
-    readonly hunger: Hunger,
+    readonly care: Care,
     /** Called when it walks out of the window, so another window can have it. */
     readonly done: () => void,
     /** Which time this cat has come into the window: each visit is a new Cat. */

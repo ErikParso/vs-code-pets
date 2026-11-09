@@ -98,8 +98,8 @@ export function startPixelCat(): void {
       if (!driver.shown) return;
       if (driver.debug && (click.ctrlKey || click.altKey || click.shiftKey)) {
         for (const c of world.cats) {
-          if (click.ctrlKey) c.hunger.addTrust(click.shiftKey ? -0.1 : 0.1);
-          else c.hunger.shiftFedAt(click.altKey ? -6 : 6);
+          if (click.ctrlKey) c.care.addTrust(click.shiftKey ? -0.1 : 0.1);
+          else c.care.shiftFedAt(click.altKey ? -6 : 6);
         }
         world.save();
         return;

@@ -9,6 +9,10 @@ import { rememberAppRoot } from './state';
 // it, and owns the status bar item the cat watches (the 🐈‍⬛): while the item is shown the
 // cats are out, and its label says which ones.
 
+// Debug mode, for developing Pixel Cat: floors, walls and meters drawn, the Cat Care panel shown.
+// Must be false in a release.
+const DEBUG = false;
+
 interface CatDef {
   name: string;
 }
@@ -72,13 +76,9 @@ export function activate(context: vscode.ExtensionContext): void {
   fish.text = '🐈‍⬛';
   fish.tooltip = 'Your cats: feed them, see them in their boxes';
   fish.command = 'pixelCat.fish';
-  // Debug mode is for developing Pixel Cat: only in an Extension Development Host (F5).
-  const dev = context.extensionMode === vscode.ExtensionMode.Development;
-  void vscode.commands.executeCommand('setContext', 'pixelCat.dev', dev); // shows the command (package.json)
   const render = (): void => {
     const out = CATS.map((c) => c.name);
-    const debug = dev && context.globalState.get('debug', false);
-    fish.accessibilityInformation = { label: `Pixel Cat: throw a fish to ${out.join(', ')}${debug ? ' (debug)' : ''}` };
+    fish.accessibilityInformation = { label: `Pixel Cat: throw a fish to ${out.join(', ')}${DEBUG ? ' (debug)' : ''}` };
     if (context.globalState.get('consented', false)) fish.show();
     else fish.hide();
   };
@@ -108,12 +108,7 @@ export function activate(context: vscode.ExtensionContext): void {
 
   context.subscriptions.push(
     fish,
-    vscode.commands.registerCommand('pixelCat.fish', () => undefined),
-    vscode.commands.registerCommand('pixelCat.debug', async () => {
-      if (!dev) return;
-      await context.globalState.update('debug', !context.globalState.get('debug', false));
-      render();
-    })
+    vscode.commands.registerCommand('pixelCat.fish', () => undefined)
   );
 
   ensureInstalled();

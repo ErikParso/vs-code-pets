@@ -6,7 +6,7 @@
 import { catBoxes, FISH, HEARTS, SPARE_BOXES, togglePacked, type CatBox } from '../world/boxes';
 import type { CatDef } from '../world/cat';
 import type { Clock } from '../world/clock';
-import type { CareStore } from '../world/hunger';
+import type { CareStore } from '../world/care';
 import { boxAt, closeAt, columnsFor, lookKey, paintPanel, panelSize } from './box-art';
 import { paintCanvas, Popup } from './popup';
 

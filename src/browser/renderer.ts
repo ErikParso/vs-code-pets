@@ -216,8 +216,8 @@ export class Renderer {
     const x = Math.round((hold ? hold.wall.x : cat.x) * dpr - w / 2);
     const y = Math.round((cat.y + 3) * dpr);
     const bars: [number, string][] = [
-      [cat.hunger.level(), cat.hunger.asking() ? '#e63946' : cat.hunger.canEat() ? '#ff9f1c' : '#2ec4b6'],
-      [cat.hunger.trust, SP.palette.P],
+      [cat.care.level(), cat.care.asking() ? '#e63946' : cat.care.canEat() ? '#ff9f1c' : '#2ec4b6'],
+      [cat.care.trust, SP.palette.P],
     ];
     bars.forEach(([value, color], i) => {
       const by = y + i * 2 * t;

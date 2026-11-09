@@ -1,6 +1,6 @@
 // The cats' hunger and trust, kept as JSON under one key of a key-value storage. In VS Code that
 // is its localStorage: shared by all its windows and kept between sessions.
-import type { Care, CareStore } from '../world/hunger';
+import type { SavedCare, CareStore } from '../world/care';
 
 const KEY = 'pixelCat.care'; // {name: {fedAt, trust, packed}}
 
@@ -20,7 +20,7 @@ export function storageCareStore(storage: () => KeyValueStorage): CareStore {
         return {};
       }
     },
-    save(all: Record<string, Partial<Care>>) {
+    save(all: Record<string, Partial<SavedCare>>) {
       try {
         storage().setItem(KEY, JSON.stringify(all));
       } catch (e) {

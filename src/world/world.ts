@@ -9,7 +9,7 @@ import { EAT_TIME, HOP_TIME, PLAY_TIME, ROLL_DISTANCE, WALK_SPEED, WALL_LEAP, WI
 import { Fish, FishPond } from './fish';
 import type { Pile, Thrown } from './thrown';
 import { type Yarn, YarnPile } from './yarn';
-import { CareStore, Hunger } from './hunger';
+import { CareStore, Care } from './care';
 import type { Floor, Layout, Wall } from './layout';
 import { clamp } from './math';
 import { ClimbMove, JumpMove, Move, Navigator } from './navigator';
@@ -178,9 +178,9 @@ export class World {
 
   // A cat comes out: it walks in along the bottom. `done` lets it go to another window.
   spawn(def: CatDef, done: () => void): void {
-    const care = this.careStore.load()[def.name];
-    const cat = new Cat(def, Hunger.restore(this.clock, care), done, ++this.visits);
-    cat.packed = !!care?.packed;
+    const saved = this.careStore.load()[def.name];
+    const cat = new Cat(def, Care.restore(this.clock, saved), done, ++this.visits);
+    cat.packed = !!saved?.packed;
     this.catList.push(cat);
     this.walkIn(cat);
   }
@@ -236,7 +236,7 @@ export class World {
   // Every cat in this window, saved along with the ones that are elsewhere.
   save(): void {
     const all = this.careStore.load();
-    for (const c of this.catList) all[c.name] = { ...all[c.name], ...c.hunger.care() }; // keeps `packed`
+    for (const c of this.catList) all[c.name] = { ...all[c.name], ...c.care.saved() }; // keeps `packed`
     this.careStore.save(all);
   }
 
@@ -267,8 +267,8 @@ export class World {
           toWall: c.heading?.to === 'wall',
           toFish: c.heading?.to === 'fish',
           toYarn: c.heading?.to === 'ball',
-          trust: c.hunger.trust,
-          fedAt: c.hunger.fedAt,
+          trust: c.care.trust,
+          fedAt: c.care.fedAt,
         };
       }),
       fishes: this.fish.items.map((g) => ({ ...thrown(g), eater: g.cat ? g.cat.name : null })),
@@ -391,7 +391,7 @@ export class World {
       case 'eat':
         if (a.t >= a.dur) {
           this.fish.remove(a.meal);
-          const onTime = cat.hunger.eat();
+          const onTime = cat.care.eat();
           this.save();
           if (onTime) this.spawnEmotion('heart', cat);
           cat.sit(this.random.between(2, 5));
@@ -402,6 +402,10 @@ export class World {
         if (a.t >= a.dur) {
           a.ball.cat = null;
           this.yarn.roll(a.ball, cat.dir, this.random.between(ROLL_DISTANCE[0], ROLL_DISTANCE[1]));
+          if (cat.care.played()) {
+            this.save();
+            this.spawnEmotion('heart', cat);
+          }
           cat.sit(this.random.between(2, 5));
         }
         break;
@@ -464,8 +468,8 @@ export class World {
     for (const c of this.cats) {
       if (c.activity.kind === 'sleep') {
         if (this.random.chance(0.25)) this.spawnEmotion('z', c);
-      } else if (c.hunger.asking()) {
-        if (this.random.chance(c.hunger.starving() ? 1 / 6 : 1 / 18)) this.spawnEmotion('fish', c);
+      } else if (c.care.asking()) {
+        if (this.random.chance(c.care.starving() ? 1 / 6 : 1 / 18)) this.spawnEmotion('fish', c);
       }
     }
   }

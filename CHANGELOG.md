@@ -1,5 +1,24 @@
 # Changelog
 
+## 0.1.93
+
+- Release build: debug mode off.
+
+## 0.1.92
+
+- Cat Care panel: the Playing row reads like Feeding, "Happy" or "Bored" and when the cat last
+  played for trust.
+
+## 0.1.91
+
+- Debug mode's Cat Care panel shows each cat in three rows, Feeding (how long since its last meal),
+  Playing (how long until a play earns trust) and Trust, each with its own buttons.
+
+## 0.1.90
+
+- A play earns a little trust too (a heart floats up), at most once a day.
+- Debug mode is now a constant in the code (`DEBUG` in `extension.ts`) instead of a command.
+
 ## 0.1.89
 
 - Tidier inside: a cat now remembers when it last ate instead of when its next meal is due;

@@ -188,6 +188,7 @@ class Recorder {
 
     this.checkCat(c, s, k, st);
     this.checkCare(c, p, s, k);
+    if (p && finished(p, c, 'play') && c.trust !== p.trust) st.rewardedPlays++;
     st.prev = c;
   }
 
@@ -277,10 +278,14 @@ class Recorder {
     if (c.fedAt > s.now + 1000) {
       this.violate('fed in the future', `${c.name} fed ${((c.fedAt - s.now) / HOUR_MS).toFixed(1)}h from now`);
     }
-    // Trust and the last meal change only when a meal is finished.
-    const mealDone = p && p.state === 'eat' && c.state !== 'eat';
-    if (p && !mealDone && (p.trust !== c.trust || p.fedAt !== c.fedAt)) {
-      this.violate('care changed without a meal', `${c.name} trust ${p.trust}->${c.trust}, fed at ${p.fedAt}->${c.fedAt}`);
+    // The last meal changes only when a meal is finished; trust also when a play is.
+    if (!p) return;
+    const ate = finished(p, c, 'eat');
+    if (!ate && p.fedAt !== c.fedAt) {
+      this.violate('fed without a meal', `${c.name} fed at ${p.fedAt}->${c.fedAt}`);
+    }
+    if (!ate && !finished(p, c, 'play') && p.trust !== c.trust) {
+      this.violate('trust changed without a meal or play', `${c.name} trust ${p.trust}->${c.trust}`);
     }
   }
 
@@ -428,6 +433,7 @@ class Recorder {
       m['care: mean h asking before fed'] = mean(st.askWaits);
       m['care: max h asking before fed'] = st.askWaits.length ? Math.max(...st.askWaits) : null;
       const trustEnd = st.care ? st.care.trust : st.prev ? st.prev.trust : st.trustStart;
+      m['care: rewarded plays'] = st.rewardedPlays;
       m['care: trust start'] = st.trustStart;
       m['care: trust end'] = trustEnd;
       m['care: trust change'] = st.trustStart === null ? null : trustEnd - st.trustStart;
@@ -471,6 +477,11 @@ const MOVING = ['stroll', 'trot', 'to wall', 'to friend', 'fish sprint', 'to yar
 const WALK_LABELS = ['stroll', 'trot', 'to wall', 'to friend', 'fish sprint', 'to yarn', 'arrive', 'leave'];
 const COUNT_LABELS = [...WALK_LABELS, 'nap alone', 'nap snuggled', 'jump', 'climb', 'climb up', 'climb give-up', 'slide down', 'meal', 'play'];
 
+/** The cat was in `state` last sample and has left it now. */
+function finished(p, c, state) {
+  return p.state === state && c.state !== state;
+}
+
 function newCatStats() {
   return {
     prev: null,
@@ -489,6 +500,7 @@ function newCatStats() {
     hungerAll: { fed: 0, normal: 0, asking: 0, starving: 0 },
     lateMeals: 0,
     mealsBeforeAsking: 0,
+    rewardedPlays: 0, // plays that earned trust
     askWaits: [],
     trustStart: null,
     care: null, // {fedAt, trust} as last seen, kept while the cat is away

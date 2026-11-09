@@ -50,7 +50,7 @@ export class CatBrain {
       return this.toFish(cat, g);
     }
     // Starving, it only sits or walks about (asking for food) until it eats.
-    const starving = cat.hunger.starving();
+    const starving = cat.care.starving();
     const ball = starving ? null : this.ballFor(cat, was?.to === 'ball' ? was.item : null);
     // Walked over to the ball it chose to play with (and it is still there, lying still): play.
     if (ball && was?.to === 'ball' && was.item === ball) {
@@ -100,7 +100,7 @@ export class CatBrain {
 
   // The fish it would eat, if it is hungry enough (`mine`: the one it was going for): see nearest.
   private fishFor(c: Cat, mine: Fish | null): Fish | null {
-    if (!c.hunger.canEat()) return null;
+    if (!c.care.canEat()) return null;
     return this.nearest(c, this.world.fish.items, mine);
   }
 
