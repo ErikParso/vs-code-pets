@@ -77,11 +77,7 @@ export function startPixelCat(): void {
     }
     console.info('[pixel-cat] started');
     renderer = new Renderer(SCALE);
-    // Its reset starts this window afresh, as on a first run.
-    carePanel = new CarePanel(() => {
-      collection.reset();
-      location.reload();
-    });
+    carePanel = new CarePanel();
     // The cat boxes: every cat in its box, wherever it is roaming. Clicking a box shuts its cat
     // in (or lets it out); the button beside it takes the cat's next step.
     catBoxes = new CatBoxes(collection, systemClock, () => renderer, new Tooltip());

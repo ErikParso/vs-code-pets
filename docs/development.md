@@ -45,8 +45,7 @@
   The rules are `whyNot` (collection.ts): why a cat can't take its step yet, as the player is told
   (hovering its greyed-out button shows it in a tooltip), or null if it can. `takeStep` checks
   them again against what is saved, so a stale panel can't take a step twice. Goodbye is asked
-  first, on a sign over the dimmed panel (`paintGoodbye`): only its Yes takes the step. Debug
-  mode's Reset cats clears the collection and reloads the window.
+  first, on a sign over the dimmed panel (`paintGoodbye`): only its Yes takes the step.
   No progress can be lost: a cat only goes once it has brought its friend, so there are always
   as many cats still to bring theirs as there were at the start, and with every box full all the
   others may go.

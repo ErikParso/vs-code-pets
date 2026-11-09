@@ -108,11 +108,6 @@ export class Collection {
     this.store.save(this.records().map((c) => (c.id === id ? { ...c, care: { ...c.care, packed: !c.care?.packed } } : c)));
   }
 
-  /** Debug: back to the first cats, as new, every other cat forgotten. */
-  reset(): void {
-    this.store.save(firstRecords());
-  }
-
   /** Your cats as they are kept, each with its care; the first time, the first cats. */
   records(): CatRecord[] {
     const saved = this.store.load();

@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.1.113
+
+- Release build: debug mode off.
+
+## 0.1.112
+
+- Debug mode's Reset cats is gone.
+
 ## 0.1.111
 
 - 15 boxes instead of 12: room for more cats (three full shelves of five).

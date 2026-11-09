@@ -1,5 +1,5 @@
 // Debug mode's Cat Care panel: each cat's feeding, playing and trust, each with buttons to change
-// it, and a button that resets the collection to the first cats. It collapses to its title bar.
+// it. It collapses to its title bar.
 import type { Cat } from '../world/cat';
 import { HOUR } from '../world/config';
 import type { World } from '../world/world';
@@ -10,8 +10,7 @@ export class CarePanel {
   private readonly el: HTMLDivElement;
   private collapsed = readCollapsed();
 
-  /** `reset`: back to the first cats, as new. */
-  constructor(private readonly reset: () => void) {
+  constructor() {
     this.el = document.createElement('div');
     Object.assign(this.el.style, {
       position: 'fixed', right: '16px', top: '36px', zIndex: '1000', display: 'none',
@@ -40,12 +39,6 @@ export class CarePanel {
     title.textContent = 'Cat Care';
     panel.appendChild(title);
     if (this.collapsed) return;
-    const reset = button('Reset cats', 'Reset the collection to the first cats, as new', () => {
-      this.reset();
-      this.render(world, visible);
-    });
-    reset.style.float = 'right';
-    panel.appendChild(reset);
     if (!world.cats.length) {
       const empty = document.createElement('div');
       empty.textContent = 'No cats are visiting this window.';

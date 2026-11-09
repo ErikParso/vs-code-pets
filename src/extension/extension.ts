@@ -11,7 +11,7 @@ import { rememberAppRoot } from './state';
 
 // Debug mode, for developing Pixel Cat: floors, walls and meters drawn, the Cat Care panel shown.
 // Must be false in a release.
-const DEBUG = true;
+const DEBUG = false;
 
 function buildScript(context: vscode.ExtensionContext): string {
   const version: string = context.extension.packageJSON.version;
