@@ -9,7 +9,7 @@ const { loadWorld } = require('../../scripts/bundle');
 const { createSession, FRAME_MS } = require('./session');
 const { layout } = require('./layouts');
 const { Recorder } = require('./recorder');
-const { createFeeder } = require('./feeders');
+const { createFeeder, every } = require('./feeders');
 
 const ROOT = path.join(__dirname, '..', '..');
 const CATS_FILE = path.join(ROOT, 'inject', 'cats.json');
@@ -34,6 +34,7 @@ const DEFAULTS = {
   open: [9, 17],
   hours: null,
   feeder: 'attentive',
+  yarn: null, // minutes of open time between balls of yarn; null: none
   srcDir: path.join(ROOT, 'src'),
   trace: false,
 };
@@ -64,14 +65,17 @@ async function simulate({ seed, opts }) {
   const storage = new Map();
   const recorder = new Recorder({ catNames: cats.map((c) => c.name), trace: opts.trace ? [] : null });
   const feeder = createFeeder(opts.feeder, cats.length);
+  const yarner = opts.yarn ? every(opts.yarn) : null;
   const errors = [];
   let fishThrown = 0;
+  let yarnThrown = 0;
 
   for (const [i, session] of sessions(opts).entries()) {
     const run = createSession({ api, layout, seed: seed * 1000 + i, startMs: session.start, storage, cats });
     const T = () => (run.now - WEEK_START_MS) / 1000;
     recorder.startSession(T(), session.start);
     feeder.startSession(session.start, session.end, WEEK_START_MS);
+    if (yarner) yarner.startSession(session.start);
     const frames = Math.round((session.end - session.start) / FRAME_MS);
     let k = null;
     for (let f = 1; f <= frames; f++) {
@@ -83,6 +87,10 @@ async function simulate({ seed, opts }) {
         run.clickFish();
         fishThrown++;
       }
+      if (yarner && yarner.fishNow(s)) {
+        run.clickYarn();
+        yarnThrown++;
+      }
       recorder.sample(s, T(), FRAME_MS / 1000);
     }
     if (!k) errors.push(`Session ${i + 1}: the cats never came out.`);
@@ -90,7 +98,7 @@ async function simulate({ seed, opts }) {
     recorder.dropFish();
     errors.push(...run.errors.map((e) => `session ${i + 1}: ${e}`));
   }
-  return { ...recorder.finish(fishThrown), errors };
+  return { ...recorder.finish(fishThrown, yarner ? yarnThrown : null), errors };
 }
 
 /** Runs every seed, each in its own process when `parallel`. Results come back in seed order. */

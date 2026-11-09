@@ -81,4 +81,4 @@ function createFeeder(name, catCount) {
   return FEEDERS[name](catCount);
 }
 
-module.exports = { createFeeder, FEEDER_NAMES: Object.keys(FEEDERS) };
+module.exports = { createFeeder, every, FEEDER_NAMES: Object.keys(FEEDERS) };

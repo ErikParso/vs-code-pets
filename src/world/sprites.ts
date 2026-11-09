@@ -1,6 +1,6 @@
 // Hand-drawn cat frames, 24x16 pixels, facing right.
 // One character per pixel: '.' transparent, K outline, O fur, D stripe, W cream, P pink,
-// B fish, L fish belly.
+// B fish, L fish belly, R yarn, S yarn shade.
 
 const palette = {
   K: '#2b1d14',
@@ -10,6 +10,8 @@ const palette = {
   P: '#f29bb0',
   B: '#4f9bd9',
   L: '#cfe6f5',
+  R: '#d9506e',
+  S: '#9c2f4b',
 };
 
 // Standing body, shared by every on-four-legs frame (rows 0-12).
@@ -224,6 +226,20 @@ const frames = {
   // A fish for the cats, 10x5, head to the right; the second frame flips its tail.
   fishA: ['....KKKK..', 'K..KBBBBK.', 'KKKBBBBKBK', 'K..KLLLLK.', '....KKKK..'],
   fishB: ['K...KKKK..', '.K.KBBBBK.', '..KBBBBKBK', '.K.KLLLLK.', 'K...KKKK..'],
+  // Playing: sat up, a front paw raised at the ball, then swiping out and down at it.
+  playUp: patch(sit, {
+    8: '.............KODOWWKKKK.',
+    9: '............KOODOWWWWWWK',
+    10: '............KOODOOWWKKKK',
+  }),
+  playSwipe: patch(sit, {
+    11: '..........KOOOODOOWWKKK.',
+    12: '..KK.....KOOOOOOOOKWWWWK',
+    13: '.KOK....KOOOODOOOOKWWKKK',
+  }),
+  // A ball of yarn, 10x7, its loose end trailing; the second frame is it a little turned.
+  yarnA: ['...KKK....', '..KRRSK...', '.KRSSRRK..', '.KSRRSRK..', '.KRRSSRK..', '..KSRRK...', '...KKKRR..'],
+  yarnB: ['...KKK....', '..KSRRK...', '.KRRSSRK..', '.KRSRRSK..', '.KSRRSRK..', '..KRRSK...', '...KKKRR..'],
   sleep1: sleep,
   sleep2: patch(sleep, {
     6: '........KKKKKKK..K...K..',

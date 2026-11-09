@@ -236,13 +236,13 @@ function createBrowser({ layout, seed, startMs, storage, cats, script }) {
     clickFish(keys = {}) {
       click({ target: fishItem, ctrlKey: !!keys.ctrlKey, altKey: !!keys.altKey, shiftKey: !!keys.shiftKey });
     },
-    /** Clicks `button` ('fish' or 'box') in the 🐈‍⬛'s menu (its first or second button), first opening it with the 🐈‍⬛ if it is closed. */
+    /** Clicks `button` ('fish', 'yarn' or 'box') in the 🐈‍⬛'s menu (its first, second or last button), first opening it with the 🐈‍⬛ if it is closed. */
     choose(button) {
       const menu = document.body.children.find((c) => c.className === 'pixel-cat-menu');
       if (!menu) return;
       if (menu.style.display !== 'flex') this.clickFish();
       if (menu.style.display !== 'flex') return;
-      const canvas = menu.children[button === 'fish' ? 0 : 1];
+      const canvas = menu.children[button === 'fish' ? 0 : button === 'yarn' ? 1 : menu.children.length - 1];
       canvas.dispatch('click', { target: canvas });
     },
     /** The cat boxes panel's description of the cats (its canvas's aria-label), or null if it never drew. */

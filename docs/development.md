@@ -5,8 +5,10 @@
 - `src/extension/`: the VS Code extension. It injects the cat script into VS Code's window and
   shows the 🐈‍⬛ in the status bar (compiled by `tsc` to `out/`).
 - `src/world/`: the cats' world, with no DOM (checked by `tsconfig.world.json`): `World` owns the
-  cats, the fish and the layout; `Driver` moves it on each frame; `CatBrain` decides what a cat
-  does next; `Cat`, `Hunger`, `FishPond` and `Navigator` each own their part; `boxes.ts` is what
+  cats, the fish and yarn, and the layout; `Driver` moves it on each frame; `CatBrain` decides
+  what a cat does next; `Cat`, `Hunger`, `Navigator`, `FishPond` (`fish.ts`) and `YarnPile`
+  (`yarn.ts`) each own their part, the last two sharing what is thrown to the cats (`thrown.ts`:
+  the throw, falling off a floor, the limit of `MAX_FISH`); `boxes.ts` is what
   the cat boxes show. `config.ts` holds every tuning number.
 - `src/browser/`: the cat script's browser side: reading VS Code's workbench, drawing, the debug
   care panel, the cat boxes (`cat-boxes.ts`: boxes from `box-art.ts` in a room from
@@ -24,6 +26,11 @@
 - **Trust:** from 0 to 1, starting at 0.1. It grows by 0.03 when a cat eats before its meal
   deadline and drops by 0.05 when fed late. Hunger continues while VS Code is closed; trust
   changes only when a cat eats.
+- **Play:** a ball of yarn lying still on a cat's floor within reach makes `play` one of the
+  things it picks from (weight `PLAY_WEIGHT`); fish still come first and starving cats don't play.
+  One cat at a time bats at a ball for a few seconds, then swipes it away 100-250 px; once it
+  stops it is up for play again, and one that rolls off the end of its floor is gone. Up to
+  `MAX_FISH` balls are out, like fish. Play changes no stats.
 - **The cat boxes** show trust as 5 hearts (half a heart is 0.1) and food as 5 fish (each about
   5 hours of the 26). A packed cat stays in its box (its window keeps its Web Lock); its hunger
   and trust go on. All of it is kept in VS Code's `localStorage` (`pixelCat.care`), shared by
@@ -79,6 +86,9 @@ npm run sim:compare -- v0.1.36 v0.1.37 --all
 Feeders (`--feeder`): `attentive` (a fish 10 minutes after a cat starts asking, and every 10
 minutes while one is), `daily` (one fish per cat at 10, 13 and 16 o'clock), `forgetful` (the
 same on Monday, Wednesday and Friday only), `spammer` (a fish every 10 minutes), `none`.
+
+`--yarn 30` also throws a ball of yarn every 30 minutes of open time (default none; the yarn
+statistics are printed only with it).
 
 Other options of `node test/sim/run.js`: `--hours 4` (one 4-hour session, about 20 s),
 `--days 10 --open 8-18`, `--seeds 3`, `--serial`, `--name my-try`, `--no-snapshot`. Both tools

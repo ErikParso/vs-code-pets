@@ -12,6 +12,8 @@ Click the 🐈‍⬛ in the status bar:
 
 - **The bucket** throws a fish. Hungry cats ask for one with a little fish over their heads. Feed
   them about once a day, and they'll trust you more.
+- **The yarn** throws a ball of yarn. The cats run over to bat at it, then swipe it away, until it
+  rolls off an edge.
 - **The boxes** show all your cats, their trust in hearts and how full they are in fish. Click a
   cat's box to pack it away: it stops roaming until you let it out (it still gets hungry).
 

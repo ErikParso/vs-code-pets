@@ -81,9 +81,10 @@ export function startPixelCat(): void {
     // The cat boxes: every cat in its box, wherever it is roaming. Clicking a box shuts its cat
     // in (or lets it out).
     catBoxes = new CatBoxes(CATS, localCareStore, systemClock, () => renderer);
-    // The 🐈‍⬛'s menu: a fish to throw from the 🐈‍⬛, a box to open the cat boxes.
+    // The 🐈‍⬛'s menu: a fish or a ball of yarn to throw from the 🐈‍⬛, a box to open the cat boxes.
     menu = new FishMenu(() => renderer, {
       fish: (from) => world.throwFish(from.x, from.y),
+      yarn: (from) => world.throwYarn(from.x, from.y),
       box: () => catBoxes.show(),
     });
     workbench.onOtherClick((target) => {

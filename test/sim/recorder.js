@@ -20,6 +20,7 @@ function walkLabel(c, firstSight, k) {
   if (firstSight) return 'arrive';
   if (c.leaving) return 'leave';
   if (c.toFish) return 'fish sprint';
+  if (c.toYarn) return 'to yarn';
   if (c.toFriend) return 'to friend';
   if (c.toWall) return 'to wall';
   return c.speed > k.WALK_SPEED * 1.5 ? 'trot' : 'stroll';
@@ -64,6 +65,8 @@ class Recorder {
     this.cats = Object.fromEntries(catNames.map((n) => [n, newCatStats()]));
     this.fish = new Map(); // id -> {thrownAt, landedAt, eatAt, last}
     this.fishDone = { eaten: 0, fell: 0, pushedOut: 0, waits: [] };
+    this.yarn = new Map(); // id -> {landedAt, plays, last}
+    this.yarnDone = { fell: 0, pushedOut: 0, plays: [], lifetimes: [] };
     this.violations = {};
   }
 
@@ -132,6 +135,7 @@ class Recorder {
       }
     }
     this.sampleFish(s, T);
+    this.sampleYarn(s, T);
   }
 
   // Walked out of the window (it may already be back, as a new visit).
@@ -233,6 +237,9 @@ class Recorder {
         count('meal');
         this.recordMeal(st, c, s, k);
         return 'eat';
+      case 'play':
+        count('play');
+        return 'play';
       default:
         return c.state; // sit
     }
@@ -335,14 +342,54 @@ class Recorder {
     }
   }
 
-  /** The fish left lying when VS Code closes go with the window. */
+  // Balls of yarn: how often each is played with, and how long it lasts before it rolls off the
+  // end of its floor (or is pushed out by newer ones).
+  sampleYarn(s, T) {
+    const seen = new Set();
+    for (const g of s.yarns) {
+      seen.add(g.id);
+      let y = this.yarn.get(g.id);
+      if (!y) {
+        this.yarn.set(g.id, (y = { landedAt: null, plays: 0, last: g }));
+        this.log(`yarn ${g.id} thrown`);
+      }
+      if (g.landed && y.landedAt === null) {
+        y.landedAt = T;
+        this.log(`yarn ${g.id} landed x=${n2(g.x)} y=${n2(g.y)}`);
+      }
+      if (g.player && !y.last.player) {
+        y.plays++;
+        this.log(`yarn ${g.id} played with by ${g.player}`);
+      }
+      if (!Number.isFinite(g.x) || !Number.isFinite(g.y)) this.violate('not a number', `yarn ${g.id} at ${g.x},${g.y}`);
+      y.last = g;
+    }
+    for (const [id, y] of this.yarn) {
+      if (seen.has(id)) continue;
+      this.yarn.delete(id);
+      this.yarnDone.plays.push(y.plays);
+      if (y.landedAt !== null) this.yarnDone.lifetimes.push(T - y.landedAt);
+      if (y.last.falling) {
+        this.yarnDone.fell++;
+        this.log(`yarn ${id} fell off`);
+      } else if (y.last.fading) {
+        this.yarnDone.pushedOut++;
+        this.log(`yarn ${id} pushed out`);
+      } else this.violate('yarn vanished', `yarn ${id} disappeared without falling off or fading`);
+    }
+  }
+
+  /** The fish (and yarn) left lying when VS Code closes go with the window. */
   dropFish() {
     this.fishLeftAtClose = (this.fishLeftAtClose || 0) + this.fish.size;
     this.fish.clear();
+    this.yarnLeftAtClose = (this.yarnLeftAtClose || 0) + this.yarn.size;
+    for (const y of this.yarn.values()) this.yarnDone.plays.push(y.plays);
+    this.yarn.clear();
   }
 
   /** The statistics of the run, as {group: {metric: number|null}}, plus per-cat timelines. */
-  finish(fishThrown) {
+  finish(fishThrown, yarnThrown = null) {
     const hours = this.open / 3600;
     const metrics = {};
     const heatmaps = {};
@@ -403,14 +450,26 @@ class Recorder {
       'mean s landing to eaten': mean(waits),
       'median s landing to eaten': waits.length ? waits[waits.length >> 1] : null,
     };
+    if (yarnThrown !== null) {
+      const y = this.yarnDone;
+      const gone = y.fell + y.pushedOut;
+      metrics.yarn = {
+        thrown: yarnThrown,
+        'fell off %': gone ? (100 * y.fell) / gone : null,
+        'pushed out %': gone ? (100 * y.pushedOut) / gone : null,
+        'left when VS Code closed': this.yarnLeftAtClose || 0,
+        'plays per ball': mean(y.plays),
+        'mean min landing to gone': y.lifetimes.length ? mean(y.lifetimes) / 60 : null,
+      };
+    }
     return { metrics, heatmaps, timelines, violations: this.violations, trace: this.trace };
   }
 }
 
-const TIME_LABELS = ['sit', 'stroll', 'trot', 'to wall', 'to friend', 'fish sprint', 'arrive', 'leave', 'nap alone', 'nap snuggled', 'eat', 'jump', 'climb', 'slide'];
-const MOVING = ['stroll', 'trot', 'to wall', 'to friend', 'fish sprint', 'arrive', 'leave', 'jump', 'climb', 'slide'];
-const WALK_LABELS = ['stroll', 'trot', 'to wall', 'to friend', 'fish sprint', 'arrive', 'leave'];
-const COUNT_LABELS = [...WALK_LABELS, 'nap alone', 'nap snuggled', 'jump', 'climb', 'climb up', 'climb give-up', 'slide down', 'meal'];
+const TIME_LABELS = ['sit', 'stroll', 'trot', 'to wall', 'to friend', 'fish sprint', 'to yarn', 'arrive', 'leave', 'nap alone', 'nap snuggled', 'eat', 'play', 'jump', 'climb', 'slide'];
+const MOVING = ['stroll', 'trot', 'to wall', 'to friend', 'fish sprint', 'to yarn', 'arrive', 'leave', 'jump', 'climb', 'slide'];
+const WALK_LABELS = ['stroll', 'trot', 'to wall', 'to friend', 'fish sprint', 'to yarn', 'arrive', 'leave'];
+const COUNT_LABELS = [...WALK_LABELS, 'nap alone', 'nap snuggled', 'jump', 'climb', 'climb up', 'climb give-up', 'slide down', 'meal', 'play'];
 
 function newCatStats() {
   return {

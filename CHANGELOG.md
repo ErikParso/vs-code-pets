@@ -1,5 +1,34 @@
 # Changelog
 
+## 0.1.88
+
+- The yarn in the 🐈‍⬛'s menu is now a wicker basket of balls of yarn.
+
+## 0.1.87
+
+- Simpler drawing of the rolling ball of yarn; it looks the same.
+
+## 0.1.86
+
+- A ball of yarn really rolls now: it turns as it goes, its loose end going round with it, and
+  stops at whatever turn it got to.
+
+## 0.1.84
+
+- Tidier inside: a cat keeps one note of what it is walking over for, instead of five; the cats
+  behave the same.
+
+## 0.1.83
+
+- Tidier inside: fish and yarn share the code for what is thrown to the cats; the cats behave the
+  same.
+
+## 0.1.82
+
+- Play: the 🐈‍⬛'s menu has balls of yarn to throw. A cat runs over and bats at one, then swipes it
+  away; it rolls off and lies still for the next go, until it rolls off an edge. Up to 10 at a
+  time, like the fish.
+
 ## 0.1.81
 
 - Click the 🐈‍⬛ in the status bar for a little menu: a bucket to throw the cats a fish, and boxes

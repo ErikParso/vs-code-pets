@@ -94,6 +94,7 @@ function createSession({ api, layout, seed, startMs, storage, cats }) {
         walls: v.walls,
         cats: v.cats,
         fishes: v.fishes,
+        yarns: v.yarns || [], // (none before balls of yarn were added)
         constants: {
           WALK_SPEED: c.WALK_SPEED,
           MAX_WALK_DISTANCE: c.MAX_WALK_DISTANCE,
@@ -115,6 +116,12 @@ function createSession({ api, layout, seed, startMs, storage, cats }) {
       if (!driver.shown) return;
       const r = boundingRect(layout.fishButton);
       guard(() => world.throwFish(r.left + r.width / 2, r.top));
+    },
+    /** Throws a ball of yarn from the 🐈‍⬛'s menu (from the 🐈‍⬛, close enough). */
+    clickYarn() {
+      if (!driver.shown) return;
+      const r = boundingRect(layout.fishButton);
+      guard(() => world.throwYarn(r.left + r.width / 2, r.top));
     },
   };
 }

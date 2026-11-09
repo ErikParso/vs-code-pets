@@ -13,6 +13,9 @@ export interface Look {
   ink: string;
 }
 
+// Playing: three swipes a second; each is the second half of its beat.
+const swiping = (t: number) => (t * 3) % 1 >= 0.5;
+
 const Z = ['KKKK', '..K.', '.K..', 'KKKK'];
 const HEART = ['KK.KK', 'KKKKK', '.KKK.', '..K..'];
 
@@ -65,6 +68,7 @@ export class Renderer {
     if (!shown) return;
     if (look.debug) this.drawDebug(world);
     this.drawFish(world);
+    this.drawYarn(world);
     for (const c of world.cats) {
       this.drawCat(world, c);
       if (look.debug) this.drawMeters(world, c, look.ink);
@@ -124,6 +128,9 @@ export class Renderer {
         if (n % 1 > 0.6) return 'eatTug';
         return Math.floor(n) % 3 === 1 ? 'eatTail' : 'eatChew';
       }
+      case 'play':
+        // Paw up, swipe, paw up, swipe...
+        return swiping(a.t) ? 'playSwipe' : 'playUp';
       case 'air':
         return a.flight.vy + GRAVITY * a.t < 0 ? 'leap' : 'walkA';
       default:
@@ -137,13 +144,13 @@ export class Renderer {
   // it loses a chunk with each tug, from the cat's end; pushed out by newer fish, it fades away.
   private drawFish(world: World): void {
     const { ctx, dpr, px } = this;
-    for (const g of world.pond.fish) {
+    for (const g of world.fish.items) {
       const since = g.t - g.flopFrom; // into the current flop
-      const flopping = g.landed && !g.eater && !g.falling && since < g.flopTime;
+      const flopping = g.landed && !g.cat && !g.falling && since < g.flopTime;
       const tumbling = !g.landed || g.falling;
       const wiggle = tumbling || flopping ? Math.floor(g.t * 12) % 2 : 0;
       const img = this.sprites.orange[wiggle ? 'fishB' : 'fishA'];
-      const bites = g.eater ? clamp(Math.floor((g.eater.t - SNIFF) / CHEW + 0.4), 0, BITES) : 0;
+      const bites = g.cat ? clamp(Math.floor((g.cat.t - SNIFF) / CHEW + 0.4), 0, BITES) : 0;
       const cols = img.width / px;
       const cut = Math.min(cols - 1, Math.round((cols * bites) / BITES)) * px;
       const turn = tumbling ? (Math.floor(g.t * 8) % 4) * (g.vx < 0 ? -1 : 1) : 0;
@@ -155,9 +162,30 @@ export class Renderer {
       ctx.rotate((turn * Math.PI) / 2);
       if (!tumbling && facing < 0) ctx.scale(-1, 1);
       // The bitten-off end is the one towards the cat, in the fish's own (maybe flipped) frame.
-      const sx = g.eater && g.eater.dir * (facing < 0 ? -1 : 1) > 0 ? cut : 0;
+      const sx = g.cat && g.cat.dir * (facing < 0 ? -1 : 1) > 0 ? cut : 0;
       const w = img.width - cut;
       ctx.drawImage(img, sx, 0, w, img.height, sx - Math.round(img.width / 2), -Math.round(img.height / 2), w, img.height);
+      ctx.restore();
+    }
+    ctx.globalAlpha = 1;
+  }
+
+  // Balls of yarn: tumbling through the air like a fish; on the floor, a quarter turn per ~5.5
+  // sprite px it has rolled (right: clockwise), turning about the middle of the ball (4.5, 3.5 px
+  // into the sprite) so it stays put; batted, it jogs away from the paw on each swipe.
+  private drawYarn(world: World): void {
+    const { ctx, dpr, px } = this;
+    for (const g of world.yarn.items) {
+      const tumbling = !g.landed || g.falling;
+      const swiper = g.cat && swiping(g.cat.t) ? g.cat : null;
+      const img = this.sprites.orange[swiper ? 'yarnB' : 'yarnA'];
+      const nudge = swiper ? swiper.dir * (px / dpr) : 0;
+      const turn = tumbling ? (Math.floor(g.t * 8) % 4) * (g.vx < 0 ? -1 : 1) : Math.floor((g.x * dpr) / (5.5 * px));
+      ctx.globalAlpha = g.fade ? 1 - g.fade / FADE_TIME : 1;
+      ctx.save();
+      ctx.translate(Math.round((g.x + nudge) * dpr), Math.round(g.y * dpr) - 3.5 * px);
+      ctx.rotate((turn * Math.PI) / 2);
+      ctx.drawImage(img, -4.5 * px, -3.5 * px);
       ctx.restore();
     }
     ctx.globalAlpha = 1;

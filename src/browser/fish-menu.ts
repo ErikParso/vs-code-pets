@@ -1,6 +1,7 @@
 // The 🐈‍⬛'s menu: clicking the 🐈‍⬛ in the status bar opens a little pixel menu just above it, with
-// two buttons, each its own canvas: a bucket of fish (throw the cats one, out of the bucket; the
-// menu stays, for the next) and a pile of boxes (see them all in their boxes; the menu closes).
+// three buttons, each its own canvas: a bucket of fish (throw the cats one, out of the bucket; the
+// menu stays, for the next), a pile of yarn (throw them a ball of yarn, the same way) and a pile
+// of boxes (see them all in their boxes; the menu closes).
 import { BUTTON_H, BUTTON_W, paintButton } from './menu-art';
 import { paintCanvas, Popup } from './popup';
 
@@ -9,16 +10,17 @@ const BUTTON_TALL = 40; // about how tall a button is, CSS px (twice the status 
 
 export interface MenuActions {
   fish: (from: { x: number; y: number }) => void; // `from`: the bucket's middle and top, CSS px
+  yarn: (from: { x: number; y: number }) => void; // `from`: the pile's middle and top, CSS px
   box: () => void;
 }
 
 export class FishMenu {
   readonly popup = new Popup('pixel-cat-menu', { zIndex: '1002', gap: `${GAP}px` }, 'flex');
-  private readonly buttons: [HTMLCanvasElement, 'fish' | 'box'][];
+  private readonly buttons: [HTMLCanvasElement, 'fish' | 'yarn' | 'box'][];
 
   /** `pixels`: from the Renderer. */
   constructor(private readonly pixels: () => { px: number; dpr: number }, actions: MenuActions) {
-    this.buttons = (['fish', 'box'] as const).map((kind) => {
+    this.buttons = (['fish', 'yarn', 'box'] as const).map((kind) => {
       const canvas = document.createElement('canvas');
       Object.assign(canvas.style, { cursor: 'pointer', boxShadow: '0 4px 12px rgba(0, 0, 0, 0.5)' });
       canvas.addEventListener('click', () => {
@@ -27,7 +29,7 @@ export class FishMenu {
           return actions.box();
         }
         const r = canvas.getBoundingClientRect();
-        actions.fish({ x: r.left + r.width / 2, y: r.top });
+        actions[kind]({ x: r.left + r.width / 2, y: r.top });
       });
       this.popup.el.appendChild(canvas);
       return [canvas, kind];

@@ -1,12 +1,14 @@
-// The cats' world, without the DOM: the cats in this window, the fish thrown to them, the floors
+// The cats' world, without the DOM: the cats in this window, the fish and yarn thrown to them, the floors
 // and walls they get around on, and what they show (Zs, hearts, fish requests). Each frame it
 // moves everything on (step); the browser side reads it to draw (see app.ts).
 import { along, arc } from './arc';
 import { CatBrain } from './brain';
 import { Cat, CatDef, Flight } from './cat';
 import type { Clock } from './clock';
-import { EAT_TIME, HOP_TIME, WALK_SPEED, WALL_LEAP, WIND_UP } from './config';
+import { EAT_TIME, HOP_TIME, PLAY_TIME, ROLL_DISTANCE, WALK_SPEED, WALL_LEAP, WIND_UP } from './config';
 import { Fish, FishPond } from './fish';
+import type { Pile, Thrown } from './thrown';
+import { type Yarn, YarnPile } from './yarn';
 import { CareStore, Hunger } from './hunger';
 import type { Floor, Layout, Wall } from './layout';
 import { clamp } from './math';
@@ -50,20 +52,29 @@ export interface CatView {
   toFriend: boolean;
   toWall: boolean;
   toFish: boolean;
+  toYarn: boolean;
   trust: number;
   nextMealAt: number;
 }
 
-/** A read-only snapshot of a fish. */
-export interface FishView {
+/** A read-only snapshot of something thrown to the cats. */
+export interface ThrownView {
   id: number;
   x: number;
   y: number;
   floor: Floor | null;
   landed: boolean;
-  eater: string | null; // the name of the cat eating it
   fading: boolean;
   falling: boolean;
+}
+
+export interface FishView extends ThrownView {
+  eater: string | null; // the name of the cat eating it
+}
+
+export interface YarnView extends ThrownView {
+  player: string | null; // the name of the cat playing with it
+  rolling: boolean;
 }
 
 /** A read-only snapshot of the world, for anything outside it that wants to look (the tests). */
@@ -74,6 +85,7 @@ export interface WorldView {
   walls: Wall[];
   cats: CatView[];
   fishes: FishView[];
+  yarns: YarnView[];
 }
 
 export interface WorldDeps {
@@ -86,7 +98,8 @@ export class World {
   readonly random: Random;
   readonly clock: Clock;
   readonly careStore: CareStore;
-  readonly pond: FishPond;
+  readonly fish: FishPond;
+  readonly yarn: YarnPile;
   readonly nav: Navigator;
   private readonly brain: CatBrain;
   private catList: Cat[] = [];
@@ -104,7 +117,8 @@ export class World {
     this.random = random;
     this.clock = clock;
     this.careStore = careStore;
-    this.pond = new FishPond(random);
+    this.fish = new FishPond(random);
+    this.yarn = new YarnPile(random);
     this.nav = new Navigator(random, () => ({ floors: this.floors, walls: this.walls, width: this.width, catW: this.catW, catH: this.catH }));
     this.brain = new CatBrain(this);
   }
@@ -146,7 +160,7 @@ export class World {
     for (const cat of this.cats) {
       if (cat.leaving) continue; // on its way out of the window anyway
       const f = cat.floor && this.nav.floorAt(cat.x, cat.y);
-      cat.route = null; // the wall it was walking to may have moved
+      if (cat.heading?.to === 'wall') cat.heading = null; // the wall may have moved
       if (f) {
         cat.floor = f;
         const a = cat.activity;
@@ -155,10 +169,11 @@ export class World {
       }
       const hold = cat.onWall;
       if (hold) cat.x = clamp(hold.wall.x, this.catW / 2, this.width - this.catW / 2);
-      this.leaveMeal(cat);
+      this.interrupt(cat);
       this.fall(cat);
     }
-    this.pond.relayout(this.floors);
+    this.fish.relayout(this.floors);
+    this.yarn.relayout(this.floors);
   }
 
   // A cat comes out: it walks in along the bottom. `done` lets it go to another window.
@@ -178,7 +193,7 @@ export class World {
     const care = this.careStore.load();
     for (const cat of this.catList) {
       const packed = !!care[cat.name]?.packed;
-      if (packed && !cat.packed) this.leaveMeal(cat);
+      if (packed && !cat.packed) this.interrupt(cat);
       if (!packed && cat.packed) this.walkIn(cat);
       cat.packed = packed;
     }
@@ -187,7 +202,8 @@ export class World {
   /** Moves everything on by dt seconds. */
   step(dt: number): void {
     for (const cat of this.cats) this.update(cat, dt);
-    this.pond.update(dt, this.width);
+    this.fish.update(dt, this.width);
+    this.yarn.update(dt, this.width);
     this.spawnEmotions(dt);
   }
 
@@ -202,10 +218,19 @@ export class World {
 
   // The 🐈‍⬛ was clicked at (x, y): a fish for one of the cats on a floor, or anywhere if none is.
   throwFish(x: number, y: number): void {
+    this.throwTo(this.fish, x, y);
+  }
+
+  // The yarn in the 🐈‍⬛'s menu was clicked at (x, y): a ball of yarn, thrown just like a fish.
+  throwYarn(x: number, y: number): void {
+    this.throwTo(this.yarn, x, y);
+  }
+
+  private throwTo<T extends Thrown>(pile: Pile<T>, x: number, y: number): void {
     const near = this.random.oneOf(this.cats.filter((c) => c.floor));
     const f = near ? (near.floor as Floor) : this.random.oneOf(this.floors);
     const [lo, hi] = this.nav.range(f);
-    this.pond.toss(x, y, f, lo, hi, near ? near.x : undefined);
+    pile.toss(x, y, f, lo, hi, near ? near.x : undefined);
   }
 
   // Every cat in this window, saved along with the ones that are elsewhere.
@@ -217,6 +242,7 @@ export class World {
 
   view(): WorldView {
     const floorOf = (f: Floor | null) => f && { x1: f.x1, x2: f.x2, y: f.y };
+    const thrown = (g: Thrown): ThrownView => ({ id: g.id, x: g.x, y: g.y, floor: floorOf(g.floor), landed: g.landed, fading: !!g.fade, falling: g.falling });
     return {
       now: this.clock.now(),
       width: this.width,
@@ -237,23 +263,16 @@ export class World {
           speed: a.kind === 'walk' ? a.speed : undefined,
           floor: floorOf(c.floor),
           leaving: c.leaving,
-          toFriend: c.napNext,
-          toWall: !!c.route,
-          toFish: !!c.goingFor,
+          toFriend: c.heading?.to === 'friend',
+          toWall: c.heading?.to === 'wall',
+          toFish: c.heading?.to === 'fish',
+          toYarn: c.heading?.to === 'ball',
           trust: c.hunger.trust,
           nextMealAt: c.hunger.nextMealAt,
         };
       }),
-      fishes: this.pond.fish.map((g) => ({
-        id: g.id,
-        x: g.x,
-        y: g.y,
-        floor: floorOf(g.floor),
-        landed: g.landed,
-        eater: g.eater ? g.eater.name : null,
-        fading: !!g.fade,
-        falling: g.falling,
-      })),
+      fishes: this.fish.items.map((g) => ({ ...thrown(g), eater: g.cat ? g.cat.name : null })),
+      yarns: this.yarn.items.map((g) => ({ ...thrown(g), player: g.cat ? g.cat.name : null, rolling: !!g.roll })),
     };
   }
 
@@ -266,8 +285,7 @@ export class World {
     cat.floor = floor;
     cat.y = floor.y;
     cat.x = x;
-    cat.leaving = false; // (packed on its way out, it is let out to stay)
-    cat.route = null;
+    cat.heading = null; // (packed on its way out, it is let out to stay)
     cat.walkTo(tx, WALK_SPEED);
   }
 
@@ -291,7 +309,7 @@ export class World {
   // Take a move from nav.reachable(): jump to the floor, or walk over to the wall.
   go(cat: Cat, o: Move): void {
     if (o.kind === 'jump') return this.jumpTo(cat, o);
-    cat.route = o;
+    cat.heading = { to: 'wall', move: o };
     cat.walkTo(o.tx, WALK_SPEED);
   }
 
@@ -330,15 +348,28 @@ export class World {
   }
 
   eat(cat: Cat, g: Fish): void {
-    g.eater = cat;
-    cat.dir = g.x >= cat.x ? 1 : -1;
+    this.settleAt(cat, g);
     cat.eat(g, EAT_TIME);
   }
 
-  // Interrupted (it fell): the fish is up for grabs again.
-  private leaveMeal(cat: Cat): void {
-    if (cat.activity.kind === 'eat') cat.activity.meal.eater = null;
-    cat.goingFor = null;
+  play(cat: Cat, ball: Yarn): void {
+    this.settleAt(cat, ball);
+    cat.play(ball, this.random.between(PLAY_TIME[0], PLAY_TIME[1]));
+  }
+
+  // At a fish or a ball: it is this cat's now, and the cat faces it.
+  private settleAt(cat: Cat, g: Thrown): void {
+    cat.heading = null; // there
+    g.cat = cat;
+    cat.dir = g.x >= cat.x ? 1 : -1;
+  }
+
+  // Interrupted (it fell, or was packed): a fish or ball it was at is up for grabs again, and
+  // whatever it was walking over for is forgotten.
+  private interrupt(cat: Cat): void {
+    if (cat.activity.kind === 'eat') cat.activity.meal.cat = null;
+    if (cat.activity.kind === 'play') cat.activity.ball.cat = null;
+    cat.heading = null;
   }
 
   // Walked out of the window: saved for whichever window gets it next (maybe this one).
@@ -359,11 +390,18 @@ export class World {
         break;
       case 'eat':
         if (a.t >= a.dur) {
-          this.pond.remove(a.meal);
-          cat.goingFor = null;
+          this.fish.remove(a.meal);
           const onTime = cat.hunger.eat();
           this.save();
           if (onTime) this.spawnEmotion('heart', cat);
+          cat.sit(this.random.between(2, 5));
+        }
+        break;
+      case 'play':
+        // Done: one last swipe sends the ball rolling away, and it sits back.
+        if (a.t >= a.dur) {
+          a.ball.cat = null;
+          this.yarn.roll(a.ball, cat.dir, this.random.between(ROLL_DISTANCE[0], ROLL_DISTANCE[1]));
           cat.sit(this.random.between(2, 5));
         }
         break;

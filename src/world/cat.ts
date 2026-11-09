@@ -3,10 +3,12 @@
 // its flight, a climb its wall. The Cat changes activity; deciding what comes next is the
 // world's (see world.ts).
 import type { Arc } from './arc';
-import type { Fish, FishEater } from './fish';
+import type { Fish } from './fish';
 import type { Hunger } from './hunger';
 import type { Floor, Wall } from './layout';
 import type { ClimbMove } from './navigator';
+import type { AtIt, Thrown } from './thrown';
+import type { Yarn } from './yarn';
 
 /** A cat as configured in inject/cats.json. Energy (1 = an everyday cat): the more it has, the more it walks, trots and jumps, and the less often and less long it naps. */
 export interface CatDef {
@@ -32,6 +34,7 @@ export type Activity =
   | { kind: 'sit'; t: number; dur: number }
   | { kind: 'sleep'; t: number; dur: number }
   | { kind: 'eat'; t: number; dur: number; meal: Fish }
+  | { kind: 'play'; t: number; dur: number; ball: Yarn } // batting at a ball of yarn
   | { kind: 'walk'; t: number; tx: number; speed: number }
   // Gathering itself before a jump (`flight` is the jump) or after landing (no flight).
   | { kind: 'crouch'; t: number; dur: number; flight: Flight | null }
@@ -43,18 +46,25 @@ export type Activity =
 
 export type WallActivity = Extract<Activity, { kind: 'wallhop' | 'slide' }>;
 
-export class Cat implements FishEater {
+/**
+ * What a cat is walking over for: out of the window, to curl up next to a sleeping cat, to a
+ * wall to climb it, to a fish to eat it, or to a ball of yarn to play with it. Arrived, it does
+ * that (see CatBrain.decide); the heading is gone once it gets there.
+ */
+export type Heading =
+  | { to: 'leave' }
+  | { to: 'friend' }
+  | { to: 'wall'; move: ClimbMove }
+  | { to: 'fish'; item: Fish }
+  | { to: 'ball'; item: Yarn };
+
+export class Cat implements AtIt {
   x = 0;
   y = 0;
   dir = 1; // 1 facing right, -1 left
   floor: Floor | null = null; // null in the air or on a wall
   activity: Activity = { kind: 'walk', t: 0, tx: 0, speed: 0 };
-  // What it is walking over for: out of the window, to curl up next to a sleeping cat, to a
-  // wall to climb it, or to a fish to eat it.
-  leaving = false;
-  napNext = false;
-  route: ClimbMove | null = null;
-  goingFor: Fish | null = null;
+  heading: Heading | null = null; // what it is walking over for, if anything
   packed = false; // shut in its box: not out, though this window still has it
 
   constructor(
@@ -68,6 +78,17 @@ export class Cat implements FishEater {
 
   get name(): string {
     return this.def.name;
+  }
+
+  /** On its way out of the window. */
+  get leaving(): boolean {
+    return this.heading?.to === 'leave';
+  }
+
+  /** The fish or ball it is going for, if that is what it is walking over for. */
+  get goingFor(): Thrown | null {
+    const h = this.heading;
+    return h && 'item' in h ? h.item : null;
   }
 
   get coat(): string {
@@ -99,6 +120,10 @@ export class Cat implements FishEater {
 
   eat(meal: Fish, dur: number): void {
     this.activity = { kind: 'eat', t: 0, dur, meal };
+  }
+
+  play(ball: Yarn, dur: number): void {
+    this.activity = { kind: 'play', t: 0, dur, ball };
   }
 
   walkTo(tx: number, speed: number): void {

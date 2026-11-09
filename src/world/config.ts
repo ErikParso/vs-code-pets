@@ -29,6 +29,19 @@ export const BITES = Math.ceil((EAT_TIME - SNIFF) / CHEW);
 export const FADE_TIME = 1.5;
 export const FISH_GRAVITY = 1000; // floatier than the cats
 
+// ---- yarn ----
+//
+// The yarn in the 🐈‍⬛'s menu throws a ball of yarn, the same way as a fish. Play is one of the
+// things a cat picks from (see CatBrain.decide) when a ball lies still on its floor within
+// MAX_WALK_DISTANCE: it walks over and bats at it, then swipes it away. The ball rolls a little
+// and stops, and is up for play again; one that rolls off the end of its floor is gone. With
+// more than MAX_FISH balls out, the oldest fades away.
+
+export const PLAY_WEIGHT = 40; // more than sit 22 and walk 32: a ball does not lie still for long
+export const PLAY_TIME = [3, 6]; // s of batting at it
+export const ROLL_DISTANCE = [100, 250]; // px the swipe at the end sends it
+export const ROLL_FRICTION = 150; // px/s² it slows down by
+
 // ---- hunger and trust ----
 //
 // Each fish gives a cat 26 hours before its meal deadline: a day plus some slack, so feeding at
