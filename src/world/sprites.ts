@@ -283,20 +283,12 @@ const collars: Record<string, Dot[]> = {
   eatTug: collarEat.map(([x, y, c]) => [x, y - 1, c]), // its head a pixel up
 };
 
-// Coats: the same art with different outline (K), fur (O), stripes (D) and chest (W).
-const coats = {
-  orange: {}, // the palette as is
-  black: { K: '#120e10', O: '#3a3440', D: '#26222b', W: '#e9e2d6' }, // with a white chest
-  brown: { O: '#8a5a3c', D: '#6b4129', W: '#e9cfb0' },
-};
-
 export interface Sprites {
   width: number;
   height: number;
-  palette: Record<string, string>;
-  coats: Record<string, Record<string, string>>;
+  palette: Record<string, string>; // a coat (coats.ts) recolours its outline, fur, stripes and chest
   frames: Record<string, string[]>;
   collars: Record<string, Dot[]>; // by frame; a frame without one shows no collar
 }
 
-export const SP: Sprites = { width: 24, height: 16, palette, coats, frames, collars };
+export const SP: Sprites = { width: 24, height: 16, palette, frames, collars };

@@ -1,5 +1,63 @@
 # Changelog
 
+## 0.1.107
+
+- The cats a collection starts with live in the code (`FIRST_CATS`); `inject/cats.json` is gone
+  and the extension no longer passes them into the page.
+- Debug mode's Cat Care panel collapses to its title bar (▾ / ▸), and remembers it.
+
+## 0.1.106
+
+- Tidier code: every cat always has its next step (new cats start at the collar), the cat boxes
+  read the collection once per update, and they redraw from everything they show. Nothing
+  plays differently.
+
+## 0.1.105
+
+- Each cat is saved as one record, with its hunger, trust and box inside it: a cat that leaves takes
+  all of it along. Your cats start afresh once more.
+
+## 0.1.104
+
+- Simpler collection code: each cat keeps the one step it is at, packing and the steps both go
+  through the collection, and debug mode's Reset cats reloads the window. Nothing plays
+  differently (saved collars and friends from 0.1.98-0.1.103 are not carried over).
+
+## 0.1.103
+
+- A double-click on a cat's button counts as two clicks again (a confirmation before saying
+  goodbye is to come).
+
+## 0.1.102
+
+- A double-click on a cat's button takes only one step: bringing a friend no longer sends the cat
+  away on the second click.
+- Every step is checked against what is saved when it is clicked, so a panel a moment out of date
+  can never take a step twice or too soon.
+- Debug reset: a first cat that had left comes back too.
+
+## 0.1.101
+
+- Debug mode's Cat Care panel has a Reset cats button: back to Jexit, Erik and Boris, as new.
+
+## 0.1.100
+
+- The 20 coats are one table, each with a fixed id and its number in the list, ready for a
+  collection of coats to find. Nothing looks different.
+
+## 0.1.99
+
+- Debug mode on, for testing the collection.
+
+## 0.1.98
+
+- Your cats are now a collection, up to 12, kept across windows and sessions. It starts with
+  Jexit, Erik and Boris. Existing cats start afresh.
+- A button beside each cat's box takes its next step: claim its collar at two hearts, bring a
+  friend at five hearts (if a box is free), then leave to make room.
+- Friends are new cats with a random name, energy and coat: 20 coats in three rarities (common,
+  uncommon, rare), named as cat fanciers name them. Each coat has its own collar colour.
+
 ## 0.1.97
 
 - Release build: debug mode off.

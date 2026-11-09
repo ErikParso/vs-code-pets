@@ -8,8 +8,9 @@
   cats, the fish and yarn, and the layout; `Driver` moves it on each frame; `CatBrain` decides
   what a cat does next; `Cat`, `Care`, `Navigator`, `FishPond` (`fish.ts`) and `YarnPile`
   (`yarn.ts`) each own their part, the last two sharing what is thrown to the cats (`thrown.ts`:
-  the throw, falling off a floor, the limit of `MAX_FISH`); `boxes.ts` is what
-  the cat boxes show. `config.ts` holds every tuning number.
+  the throw, falling off a floor, the limit of `MAX_FISH`); `collection.ts` is your cats and their
+  steps, `coats.ts` the coats they come in, `boxes.ts` what the cat boxes show. `config.ts` holds
+  every tuning number.
 - `src/browser/`: the cat script's browser side: reading VS Code's workbench, drawing, the debug
   care panel, the cat boxes (`cat-boxes.ts`: boxes from `box-art.ts` in a room from
   `room-art.ts`), the 🐈‍⬛ menu (`fish-menu.ts`, buttons from `menu-art.ts`), Web Locks. Pixel
@@ -27,9 +28,28 @@
 - **Trust:** from 0 to 1, starting at 0.1. It grows by 0.03 when a cat eats before it starves
   and drops by 0.05 when fed late; a play adds 0.02 once a day (see Play). Hunger continues while
   VS Code is closed; trust changes only when a cat eats or plays.
-- **Collar:** while a cat's trust is two hearts or more (`COLLAR_TRUST`, 0.4) it wears its
-  collar, roaming and in its box; below that it loses it again. Each cat's is in its own colour (`collar` in `inject/cats.json`). The collar's pixels for each frame are in
-  `SP.collars` (sprites.ts); the box's are `PEEK_COLLAR` (box-art.ts).
+- **The collection** (`collection.ts`, kept in `localStorage` as `pixelCat.cats`): your cats, at
+  most `BOXES` (12). It starts as `FIRST_CATS`. Each cat is one record: a unique `id`, a
+  name, a coat, its energy, its step and its `care` (hunger, trust, play, packed; the World reads
+  and saves it through `Collection.care`, by id, and never into a cat that is gone). Each cat
+  takes three steps, one at a time, from the button
+  beside its box (`step`, the one it is at: `collar`, `friend`, `depart`):
+  1. **Collar,** from 2 hearts (`COLLAR_HEARTS`): from then on it wears its collar, roaming and
+     in its box, in its coat's colour. The collar's pixels for each frame are in `SP.collars`
+     (sprites.ts); the box's are `PEEK_COLLAR`.
+  2. **Friend,** at 5 hearts (`FRIEND_HEARTS`) with a box free: a new cat joins, made up there and
+     then: a name not taken, a coat by rarity, energy 0.3-1.2. It starts out roaming.
+  3. **Goodbye,** once it has brought its friend: its record leaves the collection, care and all;
+     every window drops it at its next poll.
+  The rules are `canTakeStep` (collection.ts); `takeStep` checks them again against what is
+  saved, so a stale panel can't take a step twice. Debug mode's Reset cats clears the collection
+  and reloads the window.
+  No progress can be lost: a cat only goes once it has brought its friend, so there are always
+  as many cats still to bring theirs as there were at the start, and with every box full all the
+  others may go.
+- **Coats** (`coats.ts`): 20, named as cat fanciers name them, each the same art in its own
+  outline, fur, stripes and white, with its collar colour. A friend's is common 60%, uncommon 30%,
+  rare 10%, then any coat of that rarity.
 - **Play:** a ball of yarn lying still on a cat's floor within reach makes `play` one of the
   things it picks from (weight `PLAY_WEIGHT`); fish still come first and starving cats don't play.
   One cat at a time bats at a ball for a few seconds, then swipes it away 100-250 px; once it
@@ -38,8 +58,8 @@
   once every 20 hours (`playedAt`, `PLAY_REWARD_AFTER`).
 - **The cat boxes** show trust as 5 hearts (half a heart is 0.1) and food as 5 fish (each about
   5 hours of the 26). A packed cat stays in its box (its window keeps its Web Lock); its hunger
-  and trust go on. All of it is kept in VS Code's `localStorage` (`pixelCat.care`), shared by
-  every window.
+  and trust go on. All of it is in the cats' records in VS Code's `localStorage`
+  (`pixelCat.cats`), shared by every window.
 - **More than one window:** each cat is in one window at a time (a Web Lock per cat); now and
   then it walks out and may turn up in another.
 

@@ -1,6 +1,7 @@
 // Drives a World the same way wherever it runs: in VS Code's window (app.ts) and in the tests
 // (test/sim/session.js). Every POLL_MS the status bar's 🐈‍⬛ label is polled: it says whether the
-// cats are out and whether debug mode is on, and the first time the cats are out they are let in.
+// cats are out and whether debug mode is on. While they are, the collection is read too: a cat
+// new to it (the first time: all of them) is let in, and the world keeps up with it.
 // Every display frame the world moves on by the time since the last one.
 import type { CatDef } from './cat';
 import type { Layout } from './layout';
@@ -11,7 +12,8 @@ const MAX_DT = 0.05; // s; a longer pause (a hidden window) is not caught up on
 
 export interface DriverDeps {
   world: World;
-  cats: readonly CatDef[];
+  /** The cats in the collection now. */
+  cats: () => readonly CatDef[];
   /** The workbench's floors and walls now. */
   layout: () => Layout;
   /** Lets the cats in, each whenever this window gets it (see roaming.ts). */
@@ -21,7 +23,7 @@ export interface DriverDeps {
 export class Driver {
   shown = false; // the cats are out (the extension shows its 🐈‍⬛)
   debug = false; // debug mode: floors, walls and hunger drawn, the care panel shown
-  private roaming = false;
+  private readonly letIn = new Set<string>(); // the ids of the cats let in so far
   private last = 0; // the last frame's time, ms
 
   constructor(private readonly deps: DriverDeps) {}
@@ -32,11 +34,11 @@ export class Driver {
     this.shown = !!label;
     if (!this.shown) return;
     this.relayout();
-    if (!this.roaming) {
-      this.roaming = true;
-      this.deps.letIn(this.deps.world, this.deps.cats);
-    }
-    this.deps.world.checkPacked();
+    const cats = this.deps.cats();
+    const fresh = cats.filter((c) => !this.letIn.has(c.id));
+    for (const c of fresh) this.letIn.add(c.id);
+    if (fresh.length) this.deps.letIn(this.deps.world, fresh);
+    this.deps.world.sync(cats);
     this.deps.world.save();
   }
 

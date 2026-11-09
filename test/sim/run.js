@@ -60,7 +60,7 @@ function parseArgs(argv) {
 function gitInfo() {
   try {
     const commit = execSync('git rev-parse --short HEAD', { cwd: sim.ROOT }).toString().trim();
-    const dirty = execSync('git status --porcelain -- src/world src/browser inject', { cwd: sim.ROOT }).toString().trim() !== '';
+    const dirty = execSync('git status --porcelain -- src/world src/browser', { cwd: sim.ROOT }).toString().trim() !== '';
     return { commit, dirty };
   } catch (e) {
     return { commit: null, dirty: null };

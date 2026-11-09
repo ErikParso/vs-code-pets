@@ -1,8 +1,15 @@
 // A cat's care: when it last ate, how far it trusts you and when it last played. A meal on
 // time earns trust, a late one costs it; a play earns some too, at most once every PLAY_REWARD_AFTER.
-import { ASK_AFTER, COLLAR_TRUST, EAT_AFTER, HOUR, PLAY_REWARD_AFTER, STARVE_AFTER, TRUST_LATE, TRUST_ON_TIME, TRUST_PLAY, TRUST_START } from './config';
+import { ASK_AFTER, EAT_AFTER, HOUR, PLAY_REWARD_AFTER, STARVE_AFTER, TRUST_LATE, TRUST_ON_TIME, TRUST_PLAY, TRUST_START } from './config';
 import type { Clock } from './clock';
 import { clamp } from './math';
+
+export const HEARTS = 5; // trust 1 is all five; they fill in halves
+
+/** `trust` in half hearts, 0..2*HEARTS: a heart (or half of one) counts only once it is reached. */
+export function halfHearts(trust: number): number {
+  return clamp(Math.floor(trust * 2 * HEARTS + 1e-9), 0, 2 * HEARTS); // the epsilon is for float noise
+}
 
 /** What is kept of a cat between windows and sessions. */
 export interface SavedCare {
@@ -12,7 +19,7 @@ export interface SavedCare {
   packed?: boolean; // shut in its box (see boxes.ts): it does not roam
 }
 
-/** Where every cat's saved care is kept, by name. */
+/** Where every cat's saved care is kept, by its id. */
 export interface CareStore {
   load(): Record<string, Partial<SavedCare>>;
   save(all: Record<string, Partial<SavedCare>>): void;
@@ -44,11 +51,6 @@ export class Care {
 
   get playedAt(): number {
     return this.lastPlayed;
-  }
-
-  /** It trusts you enough to wear its collar (and loses it again if its trust drops). */
-  wearsCollar(): boolean {
-    return this.trustLevel >= COLLAR_TRUST - 1e-9; // the epsilon is for float noise, as with the hearts
   }
 
   saved(): SavedCare {

@@ -3,6 +3,8 @@
 // cats stay crisp at any zoom level.
 import type { Cat } from '../world/cat';
 import { BITES, CHEW, FADE_TIME, GRAVITY, HOP_TIME, SNIFF, WALK_SPEED, WIND_UP } from '../world/config';
+import { COATS, coatOf } from '../world/coats';
+import { collarOf } from '../world/collection';
 import { clamp } from '../world/math';
 import { SP } from '../world/sprites';
 import { EMOTION_TIME, World } from '../world/world';
@@ -18,12 +20,14 @@ const swiping = (t: number) => (t * 3) % 1 >= 0.5;
 
 const Z = ['KKKK', '..K.', '.K..', 'KKKK'];
 const HEART = ['KK.KK', 'KKKKK', '.KKK.', '..K..'];
+const PLAIN = COATS[0].id; // fish and yarn are drawn in the palette as it is, which this coat keeps
 
 export class Renderer {
   private readonly canvas: HTMLCanvasElement;
   private readonly ctx: CanvasRenderingContext2D;
-  private sprites: Record<string, Record<string, HTMLCanvasElement>> = {}; // sprites[coat][frame]
+  private sprites: Record<string, Record<string, HTMLCanvasElement>> = {}; // sprites[coat][frame], built as needed
   private collars: Record<string, Record<string, HTMLCanvasElement>> = {}; // collars[colour][frame], built as needed
+  private built = false; // sized for this pixel ratio yet
   dpr = 1; // device pixels per CSS pixel
   px: number; // device pixels per sprite pixel
   width = 0; // the window's, CSS px
@@ -48,7 +52,7 @@ export class Renderer {
   /** Fits the canvas to the window (and the sprites to its pixel ratio). */
   resize(): void {
     const ratio = window.devicePixelRatio || 1;
-    if (ratio !== this.dpr || !Object.keys(this.sprites).length) {
+    if (ratio !== this.dpr || !this.built) {
       this.dpr = ratio;
       this.px = Math.max(1, Math.round(this.scale * this.dpr));
       this.buildSprites();
@@ -77,21 +81,22 @@ export class Renderer {
     this.drawEmotions(world, look.ink);
   }
 
-  // One set of frames per coat.
+  // The sprites are built as they are needed, at this pixel size; a new size starts them afresh.
   private buildSprites(): void {
     this.sprites = {};
     this.collars = {};
-    for (const [coatName, coat] of Object.entries(SP.coats)) {
-      const palette = { ...SP.palette, ...coat };
-      const set: Record<string, HTMLCanvasElement> = {};
-      for (const [name, rows] of Object.entries(SP.frames)) {
-        // Most frames are 24x16; climbing ones are 16x24.
-        set[name] = this.spriteCanvas(rows[0].length, rows.length, (dot) =>
-          rows.forEach((row, y) => [...row].forEach((ch, x) => dot(x, y, palette[ch])))
-        );
-      }
-      this.sprites[coatName] = set;
-    }
+    this.built = true;
+  }
+
+  /** A frame in coat `coatId` (coats.ts). */
+  private spriteFor(coatId: string, frame: string): HTMLCanvasElement {
+    const set = (this.sprites[coatId] ??= {});
+    const rows = SP.frames[frame];
+    const palette: Record<string, string> = { ...SP.palette, ...coatOf(coatId).palette };
+    // Most frames are 24x16; climbing ones are 16x24.
+    return (set[frame] ??= this.spriteCanvas(rows[0].length, rows.length, (dot) =>
+      rows.forEach((row, y) => [...row].forEach((ch, x) => dot(x, y, palette[ch])))
+    ));
   }
 
   /** A frame's collar in `colour`, the size of the frame so it goes on the same way; null if it shows none. */
@@ -167,7 +172,7 @@ export class Renderer {
       const flopping = g.landed && !g.cat && !g.falling && since < g.flopTime;
       const tumbling = !g.landed || g.falling;
       const wiggle = tumbling || flopping ? Math.floor(g.t * 12) % 2 : 0;
-      const img = this.sprites.orange[wiggle ? 'fishB' : 'fishA'];
+      const img = this.spriteFor(PLAIN, wiggle ? 'fishB' : 'fishA');
       const bites = g.cat ? clamp(Math.floor((g.cat.t - SNIFF) / CHEW + 0.4), 0, BITES) : 0;
       const cols = img.width / px;
       const cut = Math.min(cols - 1, Math.round((cols * bites) / BITES)) * px;
@@ -196,7 +201,7 @@ export class Renderer {
     for (const g of world.yarn.items) {
       const tumbling = !g.landed || g.falling;
       const swiper = g.cat && swiping(g.cat.t) ? g.cat : null;
-      const img = this.sprites.orange[swiper ? 'yarnB' : 'yarnA'];
+      const img = this.spriteFor(PLAIN, swiper ? 'yarnB' : 'yarnA');
       const nudge = swiper ? swiper.dir * (px / dpr) : 0;
       const turn = tumbling ? (Math.floor(g.t * 8) % 4) * (g.vx < 0 ? -1 : 1) : Math.floor((g.x * dpr) / (5.5 * px));
       ctx.globalAlpha = g.fade ? 1 - g.fade / FADE_TIME : 1;
@@ -251,8 +256,9 @@ export class Renderer {
   private drawCat(world: World, cat: Cat): void {
     const { ctx, dpr } = this;
     const frame = this.frameName(cat);
-    const img = this.sprites[cat.coat][frame];
-    const collar = cat.care.wearsCollar() ? this.collarFor(cat.def.collar, frame) : null;
+    const img = this.spriteFor(cat.coat, frame);
+    const colour = collarOf(cat.def);
+    const collar = colour ? this.collarFor(colour, frame) : null;
     const w = img.width;
     const h = img.height;
     // On a wall: seen from behind, hugging the border, centred on the wall line.

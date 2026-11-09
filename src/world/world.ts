@@ -178,7 +178,7 @@ export class World {
 
   // A cat comes out: it walks in along the bottom. `done` lets it go to another window.
   spawn(def: CatDef, done: () => void): void {
-    const saved = this.careStore.load()[def.name];
+    const saved = this.careStore.load()[def.id];
     const cat = new Cat(def, Care.restore(this.clock, saved), done, ++this.visits);
     cat.packed = !!saved?.packed;
     this.catList.push(cat);
@@ -186,13 +186,24 @@ export class World {
   }
 
   /**
-   * Cats packed in their boxes (from any window) go in at once; cats let out walk in again. A
-   * packed cat stays this window's (it is not done), so no other window gets it.
+   * Keeps up with the collection, now `cats`, and with the boxes, from any window. A cat no longer
+   * in it is gone at once, without a word: it has left for good. Every other cat gets its latest
+   * def (a collar claimed, say); a cat packed in its box goes in at once, one let out walks in
+   * again. A packed cat stays this window's (it is not done), so no other window gets it.
    */
-  checkPacked(): void {
+  sync(cats: readonly CatDef[]): void {
+    const byId = new Map(cats.map((d) => [d.id, d]));
     const care = this.careStore.load();
-    for (const cat of this.catList) {
-      const packed = !!care[cat.name]?.packed;
+    for (const cat of [...this.catList]) {
+      const def = byId.get(cat.id);
+      if (!def) {
+        this.interrupt(cat);
+        this.catList = this.catList.filter((c) => c !== cat);
+        cat.done();
+        continue;
+      }
+      cat.def = def;
+      const packed = !!care[cat.id]?.packed;
       if (packed && !cat.packed) this.interrupt(cat);
       if (!packed && cat.packed) this.walkIn(cat);
       cat.packed = packed;
@@ -236,7 +247,7 @@ export class World {
   // Every cat in this window, saved along with the ones that are elsewhere.
   save(): void {
     const all = this.careStore.load();
-    for (const c of this.catList) all[c.name] = { ...all[c.name], ...c.care.saved() }; // keeps `packed`
+    for (const c of this.catList) all[c.id] = { ...all[c.id], ...c.care.saved() }; // keeps `packed`
     this.careStore.save(all);
   }
 

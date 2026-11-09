@@ -4,19 +4,25 @@ Tiny pixel-art cats that live in your whole VS Code window, not in a panel. They
 edges of the sidebar, editor and panels, jump between them, climb up and slide down, and nap
 wherever they like.
 
-Meet **Jexit** (orange, sleepy), **Erik** (black, the everyday cat) and **Boris** (brown, lazy).
+Meet **Jexit** (a sleepy red tabby), **Erik** (a tuxedo, the everyday cat) and **Boris** (a lazy
+brown tabby). Look after them well and they'll bring friends: 20 coats to find, some rarer than
+others.
 
 ## Looking after them
 
 Click the 🐈‍⬛ in the status bar:
 
 - **The bucket** throws a fish. Hungry cats ask for one with a little fish over their heads. Feed
-  them about once a day, and they'll trust you more. A cat that trusts you two hearts or more
-  wears its own collar.
+  them about once a day, and they'll trust you more.
 - **The yarn** throws a ball of yarn. The cats run over to bat at it, then swipe it away, until it
   rolls off an edge. A play earns a little trust too, once a day.
 - **The boxes** show all your cats, their trust in hearts and how full they are in fish. Click a
-  cat's box to pack it away: it stops roaming until you let it out (it still gets hungry).
+  cat's box to pack it away: it stops roaming until you let it out (it still gets hungry). The
+  button beside each box is the cat's next step:
+  - at **two hearts** it claims its own collar;
+  - at **five hearts** it brings a friend, a new cat in a random coat, if there's a box free
+    (there are 12);
+  - once it has brought its friend, it can **leave**, to make room.
 
 With more than one VS Code window open, the cats wander between them.
 

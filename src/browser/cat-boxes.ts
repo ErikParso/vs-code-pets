@@ -1,16 +1,17 @@
 // The cat boxes panel: every cat in its box, wherever it is roaming, floating in the middle of
 // the window. The box in the 🐈‍⬛'s menu opens it; its X, Esc or a click outside closes it.
-// Clicking a cat's box shuts it in (packed: it does not roam) or lets it out again. It reads the
-// shared care store (catBoxes), so all windows show the same, and it keeps up with meals eaten
-// and boxes shut in other windows, and with hunger growing by itself.
-import { catBoxes, FISH, HEARTS, SPARE_BOXES, togglePacked, type CatBox } from '../world/boxes';
-import type { CatDef } from '../world/cat';
+// Clicking a cat's box shuts it in (packed: it does not roam) or lets it out again. The button
+// beside the box takes the cat's next step (collection.ts): claim its collar, bring a friend, or
+// say goodbye. It reads the collection (catBoxes), shared by every window, so all windows show
+// the same, and it keeps up with meals eaten, boxes shut and
+// steps taken in other windows, and with hunger growing by itself.
+import { catBoxes, FISH, HEARTS, type CatBox } from '../world/boxes';
 import type { Clock } from '../world/clock';
-import type { CareStore } from '../world/care';
-import { boxAt, closeAt, columnsFor, lookKey, paintPanel, panelSize } from './box-art';
+import { BOXES, type Collection } from '../world/collection';
+import { boxAt, closeAt, columnsFor, lookKey, onButton, paintPanel, panelSize } from './box-art';
 import { paintCanvas, Popup } from './popup';
 
-const REREAD_MS = 1000; // how often it reads the care store again while open
+const REREAD_MS = 1000; // how often it reads the collection again while open
 const MAX_COLS = 5;
 const MAX_WIDTH = 0.9; // of the window
 const MAX_HEIGHT = 0.85;
@@ -28,21 +29,15 @@ export class CatBoxes {
 
   /** `px`: device pixels per sprite pixel; `dpr`: device pixels per CSS pixel (both from the Renderer). */
   constructor(
-    private readonly cats: readonly CatDef[],
-    private readonly store: CareStore,
+    private readonly collection: Collection,
     private readonly clock: Clock,
     private readonly pixels: () => { px: number; dpr: number }
   ) {
     this.canvas.setAttribute('role', 'img');
     this.popup.el.appendChild(this.canvas);
-    // A click on the X closes it; on a cat's box, shuts the cat in or lets it out (world.ts does the rest).
     this.canvas.addEventListener('click', (e) => {
       const { px, dpr } = this.pixels();
-      const [x, y] = [(e.offsetX * dpr) / px, (e.offsetY * dpr) / px];
-      if (closeAt(x, y, this.canvas.width / px)) return this.popup.close();
-      const i = boxAt(x, y, this.cols);
-      if (!this.boxes[i]) return; // not a cat's box
-      togglePacked(this.store, this.boxes[i].name);
+      this.clickAt((e.offsetX * dpr) / px, (e.offsetY * dpr) / px, this.canvas.width / px);
       this.readAt = -Infinity; // show it at once
     });
   }
@@ -54,16 +49,26 @@ export class CatBoxes {
     this.drawn = '';
   }
 
+  // A click at (x, y) on the panel, `width` wide (all sprite px).
+  private clickAt(x: number, y: number, width: number): void {
+    if (closeAt(x, y, width)) return this.popup.close();
+    const i = boxAt(x, y, this.cols);
+    const box = this.boxes[i];
+    if (!box) return; // not a cat's box
+    if (onButton(x, y, this.cols, i)) this.collection.takeStep(box.id);
+    else this.collection.togglePacked(box.id);
+  }
+
   /** Redraws it if it is open and anything shown has changed. Called every animation frame. */
   frame(now: number): void {
     if (!this.popup.isOpen) return;
     if (now - this.readAt >= REREAD_MS) {
-      this.boxes = catBoxes(this.cats, this.store, this.clock);
+      this.boxes = catBoxes(this.collection.records(), this.clock);
       this.readAt = now;
     }
     const { px, dpr } = this.pixels();
     const fit = Math.floor((window.innerWidth * MAX_WIDTH * dpr) / px);
-    const cols = Math.min(MAX_COLS, this.boxes.length + SPARE_BOXES || 1, columnsFor(fit));
+    const cols = Math.min(MAX_COLS, columnsFor(fit));
     this.cols = cols;
     const t = now / 1000;
     const key = `${px}|${dpr}|${lookKey(this.boxes, cols, t)}`;
@@ -73,12 +78,17 @@ export class CatBoxes {
   }
 
   private paint(cols: number, t: number, px: number, dpr: number): void {
-    const { width, height } = panelSize(this.boxes.length + SPARE_BOXES, cols);
-    paintCanvas(this.canvas, width, height, { px, dpr }, (paint) => paintPanel(paint, this.boxes, SPARE_BOXES, cols, t, px));
+    const spare = Math.max(0, BOXES - this.boxes.length);
+    const { width, height } = panelSize(this.boxes.length + spare, cols);
+    paintCanvas(this.canvas, width, height, { px, dpr }, (paint) => paintPanel(paint, this.boxes, spare, cols, t, px));
     this.canvas.setAttribute('aria-label', this.boxes.map(describe).join('; '));
   }
 }
 
 function describe(b: CatBox): string {
-  return `${b.name}${b.packed ? ' (packed)' : ''}: trust ${b.halfHearts / 2} of ${HEARTS} hearts, ${b.fish} of ${FISH} fish${b.collar ? ', wearing its collar' : ''}`;
+  const step = { collar: 'claim its collar', friend: 'bring a friend', depart: 'say goodbye' }[b.button.kind];
+  return (
+    `${b.name}${b.packed ? ' (packed)' : ''}: trust ${b.halfHearts / 2} of ${HEARTS} hearts, ${b.fish} of ${FISH} fish` +
+    `${b.collar ? ', wearing its collar' : ''}; next: ${step}${b.button.enabled ? '' : ' (not yet)'}`
+  );
 }

@@ -27,7 +27,8 @@ export { World } from './world';
 export { Driver, POLL_MS } from './driver';
 export { Random } from './random';
 export { layoutFromRects, PARTS } from './layout';
-export { storageCareStore } from '../browser/care-store';
+export { storageCatStore } from '../browser/cat-store';
+export { Collection, FIRST_CATS } from './collection';
 export * as config from './config';
 `;
 

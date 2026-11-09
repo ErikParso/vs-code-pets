@@ -2,7 +2,6 @@
 // (statistics and snapshots) and trace.js (the exact event log).
 'use strict';
 
-const fs = require('fs');
 const path = require('path');
 const { fork } = require('child_process');
 const { loadWorld } = require('../../scripts/bundle');
@@ -12,7 +11,6 @@ const { Recorder } = require('./recorder');
 const { createFeeder, every } = require('./feeders');
 
 const ROOT = path.join(__dirname, '..', '..');
-const CATS_FILE = path.join(ROOT, 'inject', 'cats.json');
 const HOUR_MS = 60 * 60 * 1000;
 const DAY_MS = 24 * HOUR_MS;
 
@@ -60,8 +58,8 @@ const scheduleLabel = (opts) => (opts.hours !== null ? `${opts.hours} h open` : 
  * install: nothing saved yet.
  */
 async function simulate({ seed, opts }) {
-  const cats = JSON.parse(fs.readFileSync(CATS_FILE, 'utf8'));
   const api = await worldFrom(opts.srcDir);
+  const cats = api.FIRST_CATS;
   const storage = new Map();
   const recorder = new Recorder({ catNames: cats.map((c) => c.name), trace: opts.trace ? [] : null });
   const feeder = createFeeder(opts.feeder, cats.length);
@@ -71,7 +69,7 @@ async function simulate({ seed, opts }) {
   let yarnThrown = 0;
 
   for (const [i, session] of sessions(opts).entries()) {
-    const run = createSession({ api, layout, seed: seed * 1000 + i, startMs: session.start, storage, cats });
+    const run = createSession({ api, layout, seed: seed * 1000 + i, startMs: session.start, storage });
     const T = () => (run.now - WEEK_START_MS) / 1000;
     recorder.startSession(T(), session.start);
     feeder.startSession(session.start, session.end, WEEK_START_MS);

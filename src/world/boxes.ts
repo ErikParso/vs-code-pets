@@ -1,47 +1,49 @@
 // What the cat boxes panel shows of each cat: its name and coat, its trust in hearts, how full
-// it is in fish, and whether it is packed in its box. Read from the care store, which every
-// VS Code window shares, so every cat shows the same wherever it is roaming.
-import type { CatDef } from './cat';
+// it is in fish, whether it is packed in its box, and the button beside the box for its next
+// step (collection.ts). Read from the collection, which every VS Code window shares, so every cat
+// shows the same wherever it is roaming.
+import type { Step } from './cat';
 import type { Clock } from './clock';
 import { STARVE_AFTER } from './config';
-import { Care, type CareStore } from './care';
+import { Care, halfHearts } from './care';
+import { canTakeStep, collarOf, type CatRecord } from './collection';
 import { clamp } from './math';
 
-export const HEARTS = 5; // trust 1 is all five; they fill in halves
+export { HEARTS } from './care';
 export const FISH = 5; // a full meal is all five
-export const SPARE_BOXES = 12; // empty boxes after the cats', for cats still to come
+
+/** The button beside a cat's box: its step, and whether it can take it yet. */
+export interface BoxButton {
+  kind: Step;
+  enabled: boolean;
+}
 
 export interface CatBox {
+  id: string;
   name: string;
   coat: string;
   halfHearts: number; // 0..2*HEARTS
   fish: number; // 0..FISH; 0 only when starving
   packed: boolean; // shut in its box: it does not roam (its hunger and trust go on as ever)
-  collar: string | null; // its collar's colour, while it wears one
+  collar: string | null; // its collar's colour, once it has claimed it
+  button: BoxButton;
 }
 
-/** Packs `name` in its box if it is out, lets it out if it is packed. */
-export function togglePacked(store: CareStore, name: string): void {
-  const all = store.load();
-  all[name] = { ...all[name], packed: !all[name]?.packed };
-  store.save(all);
-}
-
-/** One box per cat in `cats`, in that order. */
-export function catBoxes(cats: readonly CatDef[], store: CareStore, clock: Clock): CatBox[] {
-  const saved = store.load();
-  return cats.map((def) => {
-    const care = Care.restore(clock, saved[def.name]);
+/** One box per cat in `cats` (the collection's records, each with its care), in that order. */
+export function catBoxes(cats: readonly CatRecord[], clock: Clock): CatBox[] {
+  return cats.map((cat) => {
+    const care = Care.restore(clock, cat.care);
     const full = clamp(1 - care.sinceFed() / STARVE_AFTER, 0, 1);
     return {
-      name: def.name,
-      coat: def.coat,
-      // A heart (or half of one) fills only once it is reached; the epsilon is for float noise.
-      halfHearts: clamp(Math.floor(care.trust * 2 * HEARTS + 1e-9), 0, 2 * HEARTS),
+      id: cat.id,
+      name: cat.name,
+      coat: cat.coat,
+      halfHearts: halfHearts(care.trust),
       // Any food left shows a fish; the last one goes when it starts starving.
       fish: clamp(Math.ceil(full * FISH - 1e-9), 0, FISH),
-      packed: !!saved[def.name]?.packed,
-      collar: care.wearsCollar() ? def.collar : null,
+      packed: !!cat.care?.packed,
+      collar: collarOf(cat),
+      button: { kind: cat.step, enabled: canTakeStep(cat, care.trust, cats.length) },
     };
   });
 }

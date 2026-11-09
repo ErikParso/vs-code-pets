@@ -30,14 +30,15 @@ const boundingRect = (r) => ({ left: r.left, top: r.top, width: r.width, height:
  * A session starting at `startMs`. `api` is the World's module (see scripts/bundle.js's
  * loadWorld), `storage` a Map shared by the sessions of a run (VS Code's localStorage).
  */
-function createSession({ api, layout, seed, startMs, storage, cats }) {
+function createSession({ api, layout, seed, startMs, storage }) {
   const errors = [];
   let now = startMs;
-  const world = new api.World({
-    random: new api.Random(seededRandom(seed)),
-    clock: { now: () => now },
-    careStore: api.storageCareStore(() => ({ getItem: (k) => (storage.has(k) ? storage.get(k) : null), setItem: (k, v) => storage.set(k, String(v)) })),
-  });
+  const clock = { now: () => now };
+  // Your cats, as in VS Code: a collection kept in localStorage, which starts as FIRST_CATS. (Its own
+  // random draws, for friends, never happen here: nobody presses the boxes' buttons.)
+  const store = api.storageCatStore(() => ({ getItem: (k) => (storage.has(k) ? storage.get(k) : null), setItem: (k, v) => storage.set(k, String(v)) }));
+  const collection = new api.Collection(store, new api.Random(seededRandom(seed)), clock);
+  const world = new api.World({ random: new api.Random(seededRandom(seed)), clock, careStore: collection.care });
   const guard = (fn) => {
     try {
       fn();
@@ -55,8 +56,8 @@ function createSession({ api, layout, seed, startMs, storage, cats }) {
     const rects = api.PARTS.flatMap((sel) => (layout.parts[sel] || []).map(boundingRect));
     return api.layoutFromRects(rects, layout.width, layout.height, world.catW, world.catH);
   };
-  const driver = new api.Driver({ world, cats, layout: scan, letIn: (w, defs) => waiting.push(...defs) });
-  const label = LABEL + cats.map((c) => c.name).join(', ');
+  const driver = new api.Driver({ world, cats: () => collection.cats(), layout: scan, letIn: (w, defs) => waiting.push(...defs) });
+  const label = LABEL + 'your cats'; // as the extension labels it
 
   guard(() => {
     world.resize(layout.width, Math.max(1, Math.round(SCALE * DPR)), DPR);

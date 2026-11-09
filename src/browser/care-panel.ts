@@ -1,12 +1,17 @@
-// Debug mode's Cat Care panel: each cat's feeding, playing and trust, each with buttons to change it.
+// Debug mode's Cat Care panel: each cat's feeding, playing and trust, each with buttons to change
+// it, and a button that resets the collection to the first cats. It collapses to its title bar.
 import type { Cat } from '../world/cat';
 import { HOUR } from '../world/config';
 import type { World } from '../world/world';
 
+const COLLAPSED_KEY = 'pixelCat.carePanelCollapsed'; // remembered by this window's browser, a convenience
+
 export class CarePanel {
   private readonly el: HTMLDivElement;
+  private collapsed = readCollapsed();
 
-  constructor() {
+  /** `reset`: back to the first cats, as new. */
+  constructor(private readonly reset: () => void) {
     this.el = document.createElement('div');
     Object.assign(this.el.style, {
       position: 'fixed', right: '16px', top: '36px', zIndex: '1000', display: 'none',
@@ -23,9 +28,24 @@ export class CarePanel {
     panel.style.display = visible ? 'block' : 'none';
     if (!visible) return;
     panel.replaceChildren();
+    panel.style.minWidth = this.collapsed ? '' : '310px';
+    const toggle = button(this.collapsed ? '▸' : '▾', this.collapsed ? 'Expand Cat Care' : 'Collapse Cat Care', () => {
+      this.collapsed = !this.collapsed;
+      writeCollapsed(this.collapsed);
+      this.render(world, visible);
+    });
+    Object.assign(toggle.style, { minWidth: '22px', marginLeft: '0', marginRight: '6px' });
+    panel.appendChild(toggle);
     const title = document.createElement('strong');
     title.textContent = 'Cat Care';
     panel.appendChild(title);
+    if (this.collapsed) return;
+    const reset = button('Reset cats', 'Reset the collection to the first cats, as new', () => {
+      this.reset();
+      this.render(world, visible);
+    });
+    reset.style.float = 'right';
+    panel.appendChild(reset);
     if (!world.cats.length) {
       const empty = document.createElement('div');
       empty.textContent = 'No cats are visiting this window.';
@@ -103,4 +123,21 @@ function button(label: string, title: string, action: () => void): HTMLButtonEle
   });
   b.addEventListener('click', action);
   return b;
+}
+
+// Whether the panel was left collapsed; storage may be missing or blocked, then it starts open.
+function readCollapsed(): boolean {
+  try {
+    return localStorage.getItem(COLLAPSED_KEY) === '1';
+  } catch (e) {
+    return false;
+  }
+}
+
+function writeCollapsed(collapsed: boolean): void {
+  try {
+    localStorage.setItem(COLLAPSED_KEY, collapsed ? '1' : '0');
+  } catch (e) {
+    // Not remembered: it starts open next time.
+  }
 }

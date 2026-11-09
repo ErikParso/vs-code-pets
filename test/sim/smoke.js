@@ -11,14 +11,12 @@
 //   node test/sim/smoke.js [--src <copy of src/>]
 'use strict';
 
-const fs = require('fs');
 const path = require('path');
-const { bundle, SRC } = require('../../scripts/bundle');
+const { bundle, loadWorld, SRC } = require('../../scripts/bundle');
 const { createBrowser } = require('./browser');
 const { FRAME_MS } = require('./session');
 const { layout } = require('./layouts');
 
-const ROOT = path.join(__dirname, '..', '..');
 const MINUTES = 30;
 const FISH_EVERY_MIN = 5;
 const START_MS = Date.UTC(2026, 0, 5, 9); // Monday 09:00 UTC
@@ -27,11 +25,11 @@ const SEED = 1;
 async function main() {
   const srcAt = process.argv.indexOf('--src');
   const srcDir = srcAt >= 0 ? path.resolve(process.argv[srcAt + 1]) : SRC;
-  const cats = JSON.parse(fs.readFileSync(path.join(ROOT, 'inject', 'cats.json'), 'utf8'));
-  // As buildScript in src/extension.ts puts it together (the config is set on the window).
+  const cats = (await loadWorld(srcDir)).FIRST_CATS; // the cats the script starts with
+  // As buildScript in src/extension.ts puts it together.
   const script = `'use strict';\n${await bundle(srcDir)}`;
   const storage = new Map();
-  const browser = createBrowser({ layout, seed: SEED, startMs: START_MS, storage, cats, script });
+  const browser = createBrowser({ layout, seed: SEED, startMs: START_MS, storage, script });
 
   const frames = Math.round((MINUTES * 60 * 1000) / FRAME_MS);
   const fishEvery = Math.round((FISH_EVERY_MIN * 60 * 1000) / FRAME_MS);
@@ -44,7 +42,7 @@ async function main() {
   // the panel is opened again a few minutes later and the same click lets it out.
   const boxesAt = Math.floor(frames / 4);
   const unpackAt = boxesAt + Math.floor(fishEvery * 0.7); // before the 🐈‍⬛ closes the panel again
-  const FIRST_BOX = { x: 72, y: 76 }; // the middle of the first box, CSS px on the panel (scale 2)
+  const FIRST_BOX = { x: 50, y: 76 }; // the middle of the first box's front, CSS px on the panel (scale 2)
   const first = cats[0].name;
   const packAt = boxesAt + 20;
   const settle = Math.ceil(1500 / FRAME_MS); // a poll (700 ms) and then some, for a click to show
@@ -79,10 +77,11 @@ async function main() {
     if (f > frames / 2 && f % fishEvery === Math.floor(fishEvery / 2)) for (const keys of DEBUG_CLICKS) browser.clickFish(keys);
   }
 
-  const saved = JSON.parse(storage.get('pixelCat.care') || '{}');
+  // Each cat's care, as saved in its record in the collection.
+  const saved = Object.fromEntries(JSON.parse(storage.get('pixelCat.cats') || '[]').map((r) => [r.id, r.care]));
   const problems = [...browser.errors];
   if (!browser.drawn.images) problems.push('Nothing was drawn: the cats never came out.');
-  for (const c of cats) if (!saved[c.name]) problems.push(`${c.name}'s hunger and trust were never saved.`);
+  for (const c of cats) if (!(saved[c.id] && typeof saved[c.id].trust === 'number')) problems.push(`${c.name}'s hunger and trust were never saved.`);
   if (!browser.drawn.fish) problems.push("The fish in the 🐈‍⬛'s menu never threw a fish.");
   if (menuClosedOnFish) problems.push("The 🐈‍⬛'s menu closed when its fish was clicked.");
   if (!boxesShown) problems.push("The box in the 🐈‍⬛'s menu did not open the cat boxes.");

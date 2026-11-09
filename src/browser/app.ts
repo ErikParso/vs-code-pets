@@ -6,9 +6,9 @@
 import { CarePanel } from './care-panel';
 import { CatBoxes } from './cat-boxes';
 import { FishMenu } from './fish-menu';
-import { localCareStore } from './care-store';
-import type { CatDef } from '../world/cat';
+import { localCatStore } from './cat-store';
 import { systemClock } from '../world/clock';
+import { Collection } from '../world/collection';
 import { Driver, POLL_MS } from '../world/driver';
 import { Random } from '../world/random';
 import { Renderer } from './renderer';
@@ -19,7 +19,6 @@ import { World } from '../world/world';
 declare global {
   interface Window {
     __pixelCatRunning?: boolean;
-    PixelCatConfig?: { cats?: CatDef[] };
   }
 }
 
@@ -30,12 +29,12 @@ export function startPixelCat(): void {
   if (window.__pixelCatRunning) return;
   window.__pixelCatRunning = true;
 
-  const config = window.PixelCatConfig || {};
-  // The cats, from inject/cats.json (passed in by the extension); which window each is in is
-  // settled by Web Locks (see roaming.ts).
-  const CATS = config.cats || [];
+  // Your cats: at first Jexit, Erik and Boris, then whoever they bring (see collection.ts). Which
+  // window each is in is settled by Web Locks (roaming.ts).
+  const collection = new Collection(localCatStore, new Random(), systemClock);
+  const stays = (id: string) => collection.cats().some((c) => c.id === id);
 
-  const world = new World({ random: new Random(), clock: systemClock, careStore: localCareStore });
+  const world = new World({ random: new Random(), clock: systemClock, careStore: collection.care });
   let renderer: Renderer;
   let carePanel: CarePanel;
   let catBoxes: CatBoxes;
@@ -43,9 +42,9 @@ export function startPixelCat(): void {
   let ink = '#888';
   const driver = new Driver({
     world,
-    cats: CATS,
+    cats: () => collection.cats(),
     layout: () => workbench.layout(renderer.width, renderer.height, world.catW, world.catH),
-    letIn: roam,
+    letIn: (w, defs) => roam(w, defs, stays),
   });
 
   function resize() {
@@ -77,10 +76,14 @@ export function startPixelCat(): void {
     }
     console.info('[pixel-cat] started');
     renderer = new Renderer(SCALE);
-    carePanel = new CarePanel();
+    // Its reset starts this window afresh, as on a first run.
+    carePanel = new CarePanel(() => {
+      collection.reset();
+      location.reload();
+    });
     // The cat boxes: every cat in its box, wherever it is roaming. Clicking a box shuts its cat
-    // in (or lets it out).
-    catBoxes = new CatBoxes(CATS, localCareStore, systemClock, () => renderer);
+    // in (or lets it out); the button beside it takes the cat's next step.
+    catBoxes = new CatBoxes(collection, systemClock, () => renderer);
     // The 🐈‍⬛'s menu: a fish or a ball of yarn to throw from the 🐈‍⬛, a box to open the cat boxes.
     menu = new FishMenu(() => renderer, {
       fish: (from) => world.throwFish(from.x, from.y),

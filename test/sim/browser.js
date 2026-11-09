@@ -69,7 +69,7 @@ function nullContext(drawn) {
  * Builds the window and runs `script` in it. `layout.parts` maps a workbench selector (as
  * app.ts queries it) to the rectangles of the elements it matches. `storage` is localStorage.
  */
-function createBrowser({ layout, seed, startMs, storage, cats, script }) {
+function createBrowser({ layout, seed, startMs, storage, script }) {
   const clock = new Clock(startMs);
   const errors = [];
   const onError = (e) => errors.push(e && e.stack ? e.stack : String(e));
@@ -130,7 +130,7 @@ function createBrowser({ layout, seed, startMs, storage, cats, script }) {
   // The 🐈‍⬛ the extension puts in the status bar while cats are out.
   const fishItem = new Element('div', layout.fishButton);
   fishItem.setAttribute('class', 'statusbar-item');
-  fishItem.setAttribute('aria-label', POLL_LABEL + cats.map((c) => c.name).join(', '));
+  fishItem.setAttribute('aria-label', POLL_LABEL + 'your cats');
   fishItem.textContent = '🐈‍⬛';
   // And the 📦 next to it, for the cat boxes.
 
@@ -195,8 +195,7 @@ function createBrowser({ layout, seed, startMs, storage, cats, script }) {
   context.__now = () => clock.now;
   vm.runInContext('Math.random = __random; Date.now = __now;', context);
 
-  // As the extension injects it: the config, then the bundle.
-  context.PixelCatConfig = { cats };
+  // As the extension injects it.
   vm.runInContext(script, context, { filename: 'pixel-cat.js' });
 
   return {
@@ -230,7 +229,7 @@ function createBrowser({ layout, seed, startMs, storage, cats, script }) {
     },
     /** Turns the extension's debug mode on or off (it says so in the 🐈‍⬛'s label). */
     setDebug(on) {
-      fishItem.setAttribute('aria-label', POLL_LABEL + cats.map((c) => c.name).join(', ') + (on ? ' (debug)' : ''));
+      fishItem.setAttribute('aria-label', POLL_LABEL + 'your cats' + (on ? ' (debug)' : ''));
     },
     /** Clicks the 🐈‍⬛ in the status bar, holding the modifier keys in `keys` ({ctrlKey, altKey, shiftKey}). */
     clickFish(keys = {}) {

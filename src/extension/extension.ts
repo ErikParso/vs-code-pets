@@ -7,29 +7,19 @@ import { rememberAppRoot } from './state';
 
 // The cat itself runs inside VS Code's window (see src/browser/app.ts and src/world/world.ts). This side installs
 // it, and owns the status bar item the cat watches (the 🐈‍⬛): while the item is shown the
-// cats are out, and its label says which ones.
+// cats are out. Which cats there are is the cat script's own business (src/world/collection.ts).
 
 // Debug mode, for developing Pixel Cat: floors, walls and meters drawn, the Cat Care panel shown.
 // Must be false in a release.
-const DEBUG = false;
+const DEBUG = true;
 
-interface CatDef {
-  name: string;
-}
-
-// The cats (names, coats, personalities) live in inject/cats.json, shared
-// with the cat script.
-function readCats(extensionPath: string): CatDef[] {
-  return JSON.parse(fs.readFileSync(path.join(extensionPath, 'inject', 'cats.json'), 'utf8'));
-}
-
-function buildScript(context: vscode.ExtensionContext, cats: CatDef[]): string {
+function buildScript(context: vscode.ExtensionContext): string {
   const version: string = context.extension.packageJSON.version;
   // The cat script, bundled from src/browser and src/world by esbuild (npm run compile).
   const bundle = fs.readFileSync(path.join(context.extensionPath, 'out', 'pixel-cat.js'), 'utf8');
   // The version stamp makes every release a new script, so each update reloads once. Strict
-  // mode has to be the script's first statement, before the config.
-  return `// Pixel Cat ${version}\n'use strict';\nwindow.PixelCatConfig = ${JSON.stringify({ cats })};\n${bundle}`;
+  // mode has to be the script's first statement.
+  return `// Pixel Cat ${version}\n'use strict';\n${bundle}`;
 }
 
 // The page only picks up the cat when the window loads, and the extension starts after
@@ -50,13 +40,12 @@ function reloadOnce(context: vscode.ExtensionContext, script: string): void {
 
 export function activate(context: vscode.ExtensionContext): void {
   const appRoot = vscode.env.appRoot;
-  const CATS = readCats(context.extensionPath);
 
   const ensureInstalled = (): void => {
     if (!context.globalState.get('consented', false)) return void askConsent();
     try {
       rememberAppRoot(context.extensionPath, appRoot);
-      const script = buildScript(context, CATS);
+      const script = buildScript(context);
       if (install(appRoot, script)) reloadOnce(context, script);
     } catch (err) {
       void vscode.window.showErrorMessage(
@@ -69,16 +58,16 @@ export function activate(context: vscode.ExtensionContext): void {
   // The fish button: the one status bar item. The cats' page catches the click itself (it
   // knows where the button is, and opens its menu there: a fish to feed them, a box to see
   // them), so the command only makes the item clickable. The page also
-  // reads which cats are out (and debug mode) from its accessibility label, which VS Code
-  // puts on the item as its aria-label; no item means no cats.
+  // reads whether the cats are out (and debug mode) from its accessibility label, which VS Code
+  // puts on the item as its aria-label; no item means no cats. Which cats there are is the
+  // page's to know (its collection).
   const fish = vscode.window.createStatusBarItem('pixelCat.fish', vscode.StatusBarAlignment.Right, -1001);
   fish.name = 'Pixel Cat';
   fish.text = '🐈‍⬛';
   fish.tooltip = 'Your cats: feed them, see them in their boxes';
   fish.command = 'pixelCat.fish';
   const render = (): void => {
-    const out = CATS.map((c) => c.name);
-    fish.accessibilityInformation = { label: `Pixel Cat: throw a fish to ${out.join(', ')}${DEBUG ? ' (debug)' : ''}` };
+    fish.accessibilityInformation = { label: `Pixel Cat: throw a fish to your cats${DEBUG ? ' (debug)' : ''}` };
     if (context.globalState.get('consented', false)) fish.show();
     else fish.hide();
   };

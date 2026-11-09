@@ -10,13 +10,21 @@ import type { ClimbMove } from './navigator';
 import type { AtIt, Thrown } from './thrown';
 import type { Yarn } from './yarn';
 
-/** A cat as configured in inject/cats.json. Energy (1 = an everyday cat): the more it has, the more it walks, trots and jumps, and the less often and less long it naps. */
+/**
+ * A cat in your collection (see collection.ts): the first ones are FIRST_CATS there,
+ * friends are made up when they come. Energy (1 = an everyday cat): the more it has, the more it
+ * walks, trots and jumps, and the less often and less long it naps.
+ */
 export interface CatDef {
+  id: string; // unique, never reused; its care is kept under it
   name: string;
-  coat: string;
+  coat: string; // a coat's id (coats.ts)
   energy: number;
-  collar: string; // its collar's colour, worn from two hearts of trust (see Care.wearsCollar)
+  step: Step; // its next step, the one its box's button offers (collection.ts): a new cat's is its collar
 }
+
+/** A cat's steps in the collection, in order: claim its collar, bring a friend, say goodbye. */
+export type Step = 'collar' | 'friend' | 'depart';
 
 /** A move through the air, landing on floor `onto`. */
 export interface Flight extends Arc {
@@ -69,13 +77,18 @@ export class Cat implements AtIt {
   packed = false; // shut in its box: not out, though this window still has it
 
   constructor(
-    readonly def: CatDef,
+    /** Kept up to date with the collection (World.sync): its collar may be claimed while it is out. */
+    public def: CatDef,
     readonly care: Care,
     /** Called when it walks out of the window, so another window can have it. */
     readonly done: () => void,
     /** Which time this cat has come into the window: each visit is a new Cat. */
     readonly visit: number
   ) {}
+
+  get id(): string {
+    return this.def.id;
+  }
 
   get name(): string {
     return this.def.name;

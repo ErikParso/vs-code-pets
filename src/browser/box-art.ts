@@ -1,8 +1,9 @@
 // The cat boxes panel, drawn in sprite pixels (pixel-art.ts): an open cardboard box per cat, its
 // name on a sticker slapped on by hand, the cat peeking out over the lip (blinking now and then),
-// and under it its trust in hearts and how full it is in fish; the boxes on shelves in a room
-// (room-art.ts).
-import { FISH, HEARTS, type CatBox } from '../world/boxes';
+// and under it its trust in hearts and how full it is in fish, and on the shelf beside it a
+// button for its next step; the boxes on shelves in a room (room-art.ts).
+import { FISH, HEARTS, type BoxButton, type CatBox } from '../world/boxes';
+import { coatOf } from '../world/coats';
 import { SP, type Dot } from '../world/sprites';
 import { paintRows, type Paint } from './pixel-art';
 import { eachTextPixel, FONT_5X7, fontText, textWidth } from './pixel-font';
@@ -149,7 +150,10 @@ const STICKER_BOTTOM = BOX_H - 3;
 
 // One cell (sprite px): the cat's ears at the top, then the box standing on the shelf, then, on a
 // dark strip under the shelf, its hearts and fish (hearts closer together than fish).
-const CELL_W = BOX_W + 8;
+const BOX_X = 3; // the box's left, from the cell's
+const BUTTON = 11; // a cat's button, square, standing on the shelf just right of its box's front
+const BUTTON_X = BOX_X + FRONT_R + 3; // its left, from the cell's
+const CELL_W = BOX_W + 12;
 const BOX_TOP = PEEK_RIM - LIP_Y; // the flap tips, from the top of the cell
 const SHELF_Y = BOX_TOP + BOX_H; // the shelf the boxes stand on: its top row, 4 rows thick
 const STRIP_Y = SHELF_Y + 5; // the hearts and fish's strip
@@ -202,7 +206,7 @@ function blinking(name: string, t: number): boolean {
 
 /** Changes whenever the panel would look different: when this is the same, there's no need to redraw. */
 export function lookKey(boxes: readonly CatBox[], cols: number, t: number): string {
-  return `${cols}|` + boxes.map((b) => `${b.name},${b.coat},${b.halfHearts},${b.fish},${b.packed},${b.collar},${blinking(b.name, t)}`).join('|');
+  return `${cols}|${JSON.stringify(boxes)}|${boxes.map((b) => +blinking(b.name, t)).join('')}`;
 }
 
 // The X that closes the panel, on its own sign at the top right, like the title's.
@@ -220,6 +224,13 @@ export function boxAt(x: number, y: number, cols: number): number {
   const col = Math.floor((x - PAD) / (CELL_W + GAP_X));
   const row = Math.floor((y - TOP) / (CELL_H + GAP_Y));
   return col >= 0 && col < cols && row >= 0 ? row * cols + col : -1;
+}
+
+/** Whether (x, y) in the panel (sprite px), in `cols` columns, is on box `i`'s button. */
+export function onButton(x: number, y: number, cols: number, i: number): boolean {
+  const bx = PAD + (i % cols) * (CELL_W + GAP_X) + BUTTON_X;
+  const by = TOP + Math.floor(i / cols) * (CELL_H + GAP_Y) + BOX_TOP + BOX_H - BUTTON;
+  return x >= bx && x < bx + BUTTON && y >= by && y < by + BUTTON;
 }
 
 /**
@@ -249,7 +260,7 @@ export function paintPanel(paint: Paint, boxes: readonly CatBox[], spare: number
 
 // A box: with `box`, its cat, sticker, hearts and fish; with null, an empty box, for a cat to come.
 function paintCell(paint: Paint, box: CatBox | null, x: number, y: number, t: number, fine: number): void {
-  const bx = x + Math.floor((CELL_W - BOX_W) / 2); // the box's left (the left flap's tip)
+  const bx = x + BOX_X; // the box's left (the left flap's tip)
   const by = y + BOX_TOP; // the box's top (the flap tips)
   const card = (ch: string) => CARD[ch];
   const slot = () => paint(bx + Math.floor((BOX_W - SLOT_W) / 2), by + SLOT_Y, SLOT_W, 2, PANEL.slot);
@@ -270,7 +281,7 @@ function paintCell(paint: Paint, box: CatBox | null, x: number, y: number, t: nu
     paintRows(paint, BOX.slice(0, LIP_Y), bx, by, card);
 
     // The cat, from the chin up (the rest of it is in the box).
-    const palette: Record<string, string> = { ...SP.palette, ...(SP.coats[box.coat] || {}) };
+    const palette: Record<string, string> = { ...SP.palette, ...coatOf(box.coat).palette };
     const peek = blinking(box.name, t) ? PEEK_BLINK : PEEK;
     paintRows(paint, peek.slice(0, PEEK_RIM), peekX, by + LIP_Y - PEEK_RIM, (ch) => palette[ch]);
 
@@ -291,10 +302,11 @@ function paintCell(paint: Paint, box: CatBox | null, x: number, y: number, t: nu
   }
 
   paintSticker(paint, box.name, bx + FRONT_L, bx + FRONT_R, by + STICKER_TOP, by + STICKER_BOTTOM, fine);
+  paintButton(paint, box.button, x + BUTTON_X, by + BOX_H - BUTTON);
 
   // Under the shelf, on a dark strip a little wider than the box: its trust in hearts (full ones,
   // maybe a half, then empty) over its food in fish (one for each fifth of a meal left, then empty).
-  const left = x + Math.floor((CELL_W - STRIP_W) / 2);
+  const left = bx + Math.floor((BOX_W - STRIP_W) / 2);
   const top = y + STRIP_Y;
   paint(left, top, STRIP_W, STRIP_H, PANEL.strip);
   const heartsX = left + Math.floor((STRIP_W - (HEARTS * HEART_PITCH - 1)) / 2);
@@ -327,4 +339,57 @@ function paintSticker(paint: Paint, catName: string, x1: number, x2: number, y1:
   dot(step, leftLow ? 0 : 1, w - step, h, PANEL.sticker);
   // The name goes on straight, where both parts have it: a step through it would break it.
   eachTextPixel(font, name, 2, 2, (fx, fy) => dot(fx, fy, 1, 1, PANEL.ink));
+}
+
+// ---- the buttons beside the boxes ----
+
+// The button's icons, 9x9: the next step for its cat. A collar (C) with its tag (G); a cat's face
+// with a green plus (E): it brings a friend; a suitcase (T, U its shade, G its clasp): it may go.
+// prettier-ignore
+const BUTTON_ART: Record<BoxButton['kind'], string[]> = {
+  collar: [
+    '.........',
+    '..CCCCC..',
+    '.CC...CC.',
+    'CC.....CC',
+    'C.......C',
+    'CC.....CC',
+    '.CCCGCCC.',
+    '...GGG...',
+    '....G....',
+  ],
+  friend: [
+    '.......E.',
+    '......EEE',
+    'K.....KE.',
+    'KOKKKOK..',
+    'KOOOOOK..',
+    'KOKOKOK..',
+    'KOOPOOK..',
+    '.KKKKK...',
+    '.........',
+  ],
+  depart: [
+    '...KKK...',
+    '...K.K...',
+    '.KKKKKKK.',
+    '.KTTTTTK.',
+    '.KUUUUUK.',
+    '.KTTGTTK.',
+    '.KTTTTTK.',
+    '.KKKKKKK.',
+    '.........',
+  ],
+};
+const BUTTON_COLORS: Record<string, string> = { ...SP.palette, C: '#3b6fd6', E: '#5cc46a', T: '#b07a44', U: '#7a4e28' };
+const BUTTON_FRAME = '#16111c';
+const BUTTON_INSIDE = { on: '#2b2235', off: '#1e1a24' };
+const BUTTON_OFF = { ink: '#111111', art: '#4a4250' }; // a disabled icon: its outline, the rest
+
+// A cat's button at (x, y): its icon in colour, or greyed out while it cannot be pressed.
+function paintButton(paint: Paint, button: BoxButton, x: number, y: number): void {
+  paint(x, y, BUTTON, BUTTON, BUTTON_FRAME);
+  paint(x + 1, y + 1, BUTTON - 2, BUTTON - 2, button.enabled ? BUTTON_INSIDE.on : BUTTON_INSIDE.off);
+  const off = (ch: string) => (ch === 'K' ? BUTTON_OFF.ink : BUTTON_OFF.art);
+  paintRows(paint, BUTTON_ART[button.kind], x + 1, y + 1, (ch) => (button.enabled ? BUTTON_COLORS[ch] : off(ch)));
 }

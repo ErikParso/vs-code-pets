@@ -57,4 +57,3 @@ export const TRUST_ON_TIME = 0.03;
 export const TRUST_LATE = 0.05;
 export const TRUST_PLAY = 0.02; // for a play, at most once every PLAY_REWARD_AFTER
 export const PLAY_REWARD_AFTER = 20 * HOUR;
-export const COLLAR_TRUST = 0.4; // two of the five hearts: from there up, the cat wears its collar
