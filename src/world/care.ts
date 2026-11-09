@@ -1,6 +1,6 @@
 // A cat's care: when it last ate, how far it trusts you and when it last played. A meal on
 // time earns trust, a late one costs it; a play earns some too, at most once every PLAY_REWARD_AFTER.
-import { ASK_AFTER, EAT_AFTER, HOUR, PLAY_REWARD_AFTER, STARVE_AFTER, TRUST_LATE, TRUST_ON_TIME, TRUST_PLAY, TRUST_START } from './config';
+import { ASK_AFTER, COLLAR_TRUST, EAT_AFTER, HOUR, PLAY_REWARD_AFTER, STARVE_AFTER, TRUST_LATE, TRUST_ON_TIME, TRUST_PLAY, TRUST_START } from './config';
 import type { Clock } from './clock';
 import { clamp } from './math';
 
@@ -44,6 +44,11 @@ export class Care {
 
   get playedAt(): number {
     return this.lastPlayed;
+  }
+
+  /** It trusts you enough to wear its collar (and loses it again if its trust drops). */
+  wearsCollar(): boolean {
+    return this.trustLevel >= COLLAR_TRUST - 1e-9; // the epsilon is for float noise, as with the hearts
   }
 
   saved(): SavedCare {

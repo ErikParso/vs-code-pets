@@ -27,6 +27,9 @@
 - **Trust:** from 0 to 1, starting at 0.1. It grows by 0.03 when a cat eats before it starves
   and drops by 0.05 when fed late; a play adds 0.02 once a day (see Play). Hunger continues while
   VS Code is closed; trust changes only when a cat eats or plays.
+- **Collar:** while a cat's trust is two hearts or more (`COLLAR_TRUST`, 0.4) it wears its
+  collar, roaming and in its box; below that it loses it again. Each cat's is in its own colour (`collar` in `inject/cats.json`). The collar's pixels for each frame are in
+  `SP.collars` (sprites.ts); the box's are `PEEK_COLLAR` (box-art.ts).
 - **Play:** a ball of yarn lying still on a cat's floor within reach makes `play` one of the
   things it picks from (weight `PLAY_WEIGHT`); fish still come first and starving cats don't play.
   One cat at a time bats at a ball for a few seconds, then swipes it away 100-250 px; once it

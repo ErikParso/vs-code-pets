@@ -1,5 +1,24 @@
 # Changelog
 
+## 0.1.97
+
+- Release build: debug mode off.
+
+## 0.1.96
+
+- Debug mode on, for testing collars.
+
+## 0.1.95
+
+- Collars are simpler: a cat wears its collar while its trust is two hearts or more, and loses
+  it again if its trust drops below that.
+
+## 0.1.94
+
+- Collars: a cat that reaches two hearts of trust earns its own collar (Jexit blue, Erik red,
+  Boris green), with a little gold tag, and keeps it even if its trust drops later. It shows on
+  the roaming cat and on the cat peeking out of its box.
+
 ## 0.1.93
 
 - Release build: debug mode off.

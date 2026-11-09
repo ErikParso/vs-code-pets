@@ -80,5 +80,5 @@ export class CatBoxes {
 }
 
 function describe(b: CatBox): string {
-  return `${b.name}${b.packed ? ' (packed)' : ''}: trust ${b.halfHearts / 2} of ${HEARTS} hearts, ${b.fish} of ${FISH} fish`;
+  return `${b.name}${b.packed ? ' (packed)' : ''}: trust ${b.halfHearts / 2} of ${HEARTS} hearts, ${b.fish} of ${FISH} fish${b.collar ? ', wearing its collar' : ''}`;
 }

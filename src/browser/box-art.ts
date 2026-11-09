@@ -3,7 +3,7 @@
 // and under it its trust in hearts and how full it is in fish; the boxes on shelves in a room
 // (room-art.ts).
 import { FISH, HEARTS, type CatBox } from '../world/boxes';
-import { SP } from '../world/sprites';
+import { SP, type Dot } from '../world/sprites';
 import { paintRows, type Paint } from './pixel-art';
 import { eachTextPixel, FONT_5X7, fontText, textWidth } from './pixel-font';
 import { paintFrame, paintShelf, paintSign, paintWall } from './room-art';
@@ -123,6 +123,14 @@ const PEEK = [
 const PEEK_BLINK = PEEK.map((row, y) => (y === 5 ? '.KOOOOOOOOOOOOK.' : row));
 const PEEK_EYES = [4, 10]; // the columns its eyes start at, each 2 wide
 const PEEK_RIM = 10; // the peek row level with the top of the box's lip
+// Its collar, while it trusts you enough to wear one, over the lip between its paws (just under the chin it
+// would read as a mouth), its tag hanging over the edge: [x, y, C band | G tag | K outline].
+const PEEK_COLLAR: Dot[] = [
+  ...[5, 6, 7, 8, 9, 10].map((x): Dot => [x, 10, 'C']),
+  ...[5, 6, 9, 10].map((x): Dot => [x, 11, 'K']),
+  [7, 11, 'G'], [8, 11, 'G'],
+  [7, 12, 'K'], [8, 12, 'K'],
+];
 
 // Small enough for five of each under a box: a heart, and a fish with a forked tail.
 const HEART = ['PP.PP', 'PPPPP', '.PPP.', '..P..'];
@@ -194,7 +202,7 @@ function blinking(name: string, t: number): boolean {
 
 /** Changes whenever the panel would look different: when this is the same, there's no need to redraw. */
 export function lookKey(boxes: readonly CatBox[], cols: number, t: number): string {
-  return `${cols}|` + boxes.map((b) => `${b.name},${b.coat},${b.halfHearts},${b.fish},${b.packed},${blinking(b.name, t)}`).join('|');
+  return `${cols}|` + boxes.map((b) => `${b.name},${b.coat},${b.halfHearts},${b.fish},${b.packed},${b.collar},${blinking(b.name, t)}`).join('|');
 }
 
 // The X that closes the panel, on its own sign at the top right, like the title's.
@@ -274,6 +282,12 @@ function paintCell(paint: Paint, box: CatBox | null, x: number, y: number, t: nu
 
     // Its paws over the lip.
     paintRows(paint, peek.slice(PEEK_RIM), peekX, by + LIP_Y, (ch) => palette[ch]);
+    const collar = box.collar;
+    if (collar) {
+      for (const [x, y, ch] of PEEK_COLLAR) {
+        paint(peekX + x, by + LIP_Y - PEEK_RIM + y, 1, 1, ch === 'C' ? collar : palette[ch]);
+      }
+    }
   }
 
   paintSticker(paint, box.name, bx + FRONT_L, bx + FRONT_R, by + STICKER_TOP, by + STICKER_BOTTOM, fine);

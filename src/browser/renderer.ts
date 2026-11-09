@@ -23,6 +23,7 @@ export class Renderer {
   private readonly canvas: HTMLCanvasElement;
   private readonly ctx: CanvasRenderingContext2D;
   private sprites: Record<string, Record<string, HTMLCanvasElement>> = {}; // sprites[coat][frame]
+  private collars: Record<string, Record<string, HTMLCanvasElement>> = {}; // collars[colour][frame], built as needed
   dpr = 1; // device pixels per CSS pixel
   px: number; // device pixels per sprite pixel
   width = 0; // the window's, CSS px
@@ -78,28 +79,45 @@ export class Renderer {
 
   // One set of frames per coat.
   private buildSprites(): void {
-    const { px } = this;
     this.sprites = {};
+    this.collars = {};
     for (const [coatName, coat] of Object.entries(SP.coats)) {
       const palette = { ...SP.palette, ...coat };
       const set: Record<string, HTMLCanvasElement> = {};
       for (const [name, rows] of Object.entries(SP.frames)) {
-        const c = document.createElement('canvas');
-        c.width = rows[0].length * px; // most frames are 24x16; climbing ones are 16x24
-        c.height = rows.length * px;
-        const g = c.getContext('2d') as CanvasRenderingContext2D;
-        rows.forEach((row, y) => {
-          for (let x = 0; x < row.length; x++) {
-            const color = palette[row[x]];
-            if (!color) continue;
-            g.fillStyle = color;
-            g.fillRect(x * px, y * px, px, px);
-          }
-        });
-        set[name] = c;
+        // Most frames are 24x16; climbing ones are 16x24.
+        set[name] = this.spriteCanvas(rows[0].length, rows.length, (dot) =>
+          rows.forEach((row, y) => [...row].forEach((ch, x) => dot(x, y, palette[ch])))
+        );
       }
       this.sprites[coatName] = set;
     }
+  }
+
+  /** A frame's collar in `colour`, the size of the frame so it goes on the same way; null if it shows none. */
+  private collarFor(colour: string, frame: string): HTMLCanvasElement | null {
+    const dots = SP.collars[frame];
+    if (!dots) return null;
+    const set = (this.collars[colour] ??= {});
+    const rows = SP.frames[frame];
+    return (set[frame] ??= this.spriteCanvas(rows[0].length, rows.length, (dot) => {
+      for (const [x, y, ch] of dots) dot(x, y, ch === 'C' ? colour : SP.palette[ch]);
+    }));
+  }
+
+  /** A w x h sprite, painted one sprite pixel at a time by `paint`. */
+  private spriteCanvas(w: number, h: number, paint: (dot: (x: number, y: number, color?: string) => void) => void): HTMLCanvasElement {
+    const { px } = this;
+    const c = document.createElement('canvas');
+    c.width = w * px;
+    c.height = h * px;
+    const g = c.getContext('2d') as CanvasRenderingContext2D;
+    paint((x, y, color) => {
+      if (!color) return;
+      g.fillStyle = color;
+      g.fillRect(x * px, y * px, px, px);
+    });
+    return c;
   }
 
   private frameName(cat: Cat): string {
@@ -232,7 +250,9 @@ export class Renderer {
 
   private drawCat(world: World, cat: Cat): void {
     const { ctx, dpr } = this;
-    const img = this.sprites[cat.coat][this.frameName(cat)];
+    const frame = this.frameName(cat);
+    const img = this.sprites[cat.coat][frame];
+    const collar = cat.care.wearsCollar() ? this.collarFor(cat.def.collar, frame) : null;
     const w = img.width;
     const h = img.height;
     // On a wall: seen from behind, hugging the border, centred on the wall line.
@@ -243,6 +263,7 @@ export class Renderer {
     ctx.translate(cx, cy);
     if (!hold && cat.dir < 0) ctx.scale(-1, 1);
     ctx.drawImage(img, -w / 2, -h / 2);
+    if (collar) ctx.drawImage(collar, -w / 2, -h / 2);
     ctx.restore();
   }
 

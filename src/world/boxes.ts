@@ -17,6 +17,7 @@ export interface CatBox {
   halfHearts: number; // 0..2*HEARTS
   fish: number; // 0..FISH; 0 only when starving
   packed: boolean; // shut in its box: it does not roam (its hunger and trust go on as ever)
+  collar: string | null; // its collar's colour, while it wears one
 }
 
 /** Packs `name` in its box if it is out, lets it out if it is packed. */
@@ -40,6 +41,7 @@ export function catBoxes(cats: readonly CatDef[], store: CareStore, clock: Clock
       // Any food left shows a fish; the last one goes when it starts starving.
       fish: clamp(Math.ceil(full * FISH - 1e-9), 0, FISH),
       packed: !!saved[def.name]?.packed,
+      collar: care.wearsCollar() ? def.collar : null,
     };
   });
 }

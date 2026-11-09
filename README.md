@@ -11,7 +11,8 @@ Meet **Jexit** (orange, sleepy), **Erik** (black, the everyday cat) and **Boris*
 Click the 🐈‍⬛ in the status bar:
 
 - **The bucket** throws a fish. Hungry cats ask for one with a little fish over their heads. Feed
-  them about once a day, and they'll trust you more.
+  them about once a day, and they'll trust you more. A cat that trusts you two hearts or more
+  wears its own collar.
 - **The yarn** throws a ball of yarn. The cats run over to bat at it, then swipe it away, until it
   rolls off an edge. A play earns a little trust too, once a day.
 - **The boxes** show all your cats, their trust in hearts and how full they are in fish. Click a

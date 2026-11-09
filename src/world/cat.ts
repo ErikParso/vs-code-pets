@@ -15,6 +15,7 @@ export interface CatDef {
   name: string;
   coat: string;
   energy: number;
+  collar: string; // its collar's colour, worn from two hearts of trust (see Care.wearsCollar)
 }
 
 /** A move through the air, landing on floor `onto`. */

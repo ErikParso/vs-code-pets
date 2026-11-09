@@ -1,6 +1,6 @@
 // Hand-drawn cat frames, 24x16 pixels, facing right.
 // One character per pixel: '.' transparent, K outline, O fur, D stripe, W cream, P pink,
-// B fish, L fish belly, R yarn, S yarn shade.
+// B fish, L fish belly, R yarn, S yarn shade, G a collar's tag.
 
 const palette = {
   K: '#2b1d14',
@@ -12,6 +12,7 @@ const palette = {
   L: '#cfe6f5',
   R: '#d9506e',
   S: '#9c2f4b',
+  G: '#f2d14b', // a collar's tag
 };
 
 // Standing body, shared by every on-four-legs frame (rows 0-12).
@@ -247,6 +248,41 @@ const frames = {
   }),
 };
 
+// Collars, drawn over a frame while the cat trusts you enough to wear one: [x, y, C the band in the cat's own
+// colour | G its tag], in the frame's pixels. Round the neck where the head meets the body;
+// sitting it slants down to the throat, curled up asleep only the bit under the chin shows,
+// eating it hugs the back of the lowered head, and from behind (climbing) there is no tag.
+export type Dot = [number, number, string];
+const collarStand: Dot[] = [[15, 7, 'C'], [16, 7, 'C'], [17, 7, 'C'], [17, 8, 'G']];
+const collarSit: Dot[] = [[14, 7, 'C'], [15, 7, 'C'], [16, 8, 'C'], [17, 8, 'C'], [18, 8, 'C'], [18, 9, 'G']];
+const collarSleep: Dot[] = [[16, 12, 'C'], [17, 13, 'C'], [18, 13, 'C'], [19, 13, 'C'], [20, 13, 'C'], [18, 14, 'G']];
+const collarClimb: Dot[] = [[6, 8, 'C'], [7, 8, 'C'], [8, 8, 'C'], [9, 8, 'C']];
+const collarEat: Dot[] = [[16, 10, 'C'], [16, 11, 'C'], [16, 12, 'C'], [16, 13, 'G']];
+const lower = (dots: Dot[]): Dot[] => dots.map(([x, y, c]) => [x, y + 1, c]);
+
+const collars: Record<string, Dot[]> = {
+  walkA: collarStand,
+  walkB: collarStand,
+  walkD: collarStand,
+  leap: collarStand,
+  crouch: lower(collarStand),
+  sit: collarSit,
+  sitBlink: collarSit,
+  sitTail: collarSit,
+  playUp: collarSit,
+  playSwipe: collarSit,
+  sleep1: collarSleep,
+  sleep2: collarSleep,
+  climbReach: collarClimb,
+  climbPush: collarClimb,
+  climbTail: collarClimb,
+  climbPull: collarClimb,
+  eatDown: collarEat,
+  eatChew: collarEat,
+  eatTail: collarEat,
+  eatTug: collarEat.map(([x, y, c]) => [x, y - 1, c]), // its head a pixel up
+};
+
 // Coats: the same art with different outline (K), fur (O), stripes (D) and chest (W).
 const coats = {
   orange: {}, // the palette as is
@@ -260,6 +296,7 @@ export interface Sprites {
   palette: Record<string, string>;
   coats: Record<string, Record<string, string>>;
   frames: Record<string, string[]>;
+  collars: Record<string, Dot[]>; // by frame; a frame without one shows no collar
 }
 
-export const SP: Sprites = { width: 24, height: 16, palette, coats, frames };
+export const SP: Sprites = { width: 24, height: 16, palette, coats, frames, collars };
