@@ -2,6 +2,8 @@
 
 ## 0.1.113
 
+- A cat's energy cannot be higher than 1.
+- Cats are more likely to give up climbing a wall and slide back down, so they make fewer very tall climbs.
 - Release build: debug mode off.
 
 ## 0.1.112

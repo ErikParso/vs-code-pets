@@ -19,7 +19,7 @@ import type { Random } from './random';
 export const BOXES = 15; // the most cats you can have
 export const COLLAR_HEARTS = 2; // the trust (in hearts) a cat claims its collar at
 export const FRIEND_HEARTS = 5; // ... and brings its friend at
-const ENERGY = [0.3, 1.2]; // a friend's, between Boris's (the laziest) and a bit livelier than Erik's
+const ENERGY = [0.3, 1]; // a friend's, between Boris's (the laziest) and Erik's (the liveliest)
 
 /** The cats a collection starts with. */
 export const FIRST_CATS: readonly Omit<CatDef, 'step'>[] = [

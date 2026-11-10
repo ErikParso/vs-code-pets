@@ -414,6 +414,7 @@ class Recorder {
       m['snuggled share of sleep %'] = asleep ? (100 * (st.time['nap snuggled'] || 0)) / asleep : null;
       for (const label of COUNT_LABELS) m[`per hour: ${label}`] = perHour(st.counts[label]);
       m['climb success %'] = st.counts.climb ? (100 * (st.counts['climb up'] || 0)) / st.counts.climb : null;
+      m['climb give-up %'] = st.counts.climb ? (100 * (st.counts['climb give-up'] || 0)) / st.counts.climb : null;
       for (const label of WALK_LABELS) m[`mean px: ${label}`] = mean(st.dist[label]);
       for (const label of WALK_LABELS) m[`max px: ${label}`] = st.dist[label] && st.dist[label].length ? Math.max(...st.dist[label]) : null;
       m['mean nap s'] = mean(st.naps);

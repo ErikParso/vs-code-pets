@@ -9,6 +9,7 @@ export const MAX_WALK_DISTANCE = 250; // furthest one stroll goes either way, an
 export const MAX_JUMP = 230; // furthest it jumps to another floor: up, down or across; further it climbs or slides down a wall
 export const EDGE = 3; // tolerance when matching edges, px
 export const WALL_LEAP = 80; // one leap up a wall
+export const CLIMB_GIVE_UP = 0.15; // chance after each leap for a cat with energy 1
 
 // Up the wall: the cat gathers itself (sinking a little), springs up easing out at the top,
 // then holds on a moment, swishing its tail.

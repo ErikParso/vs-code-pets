@@ -5,7 +5,7 @@ import { along, arc } from './arc';
 import { CatBrain } from './brain';
 import { Cat, CatDef, Flight } from './cat';
 import type { Clock } from './clock';
-import { EAT_TIME, HOP_TIME, PLAY_TIME, ROLL_DISTANCE, WALK_SPEED, WALL_LEAP, WIND_UP } from './config';
+import { CLIMB_GIVE_UP, EAT_TIME, HOP_TIME, PLAY_TIME, ROLL_DISTANCE, WALK_SPEED, WALL_LEAP, WIND_UP } from './config';
 import { Fish, FishPond } from './fish';
 import type { Pile, Thrown } from './thrown';
 import { type Yarn, YarnPile } from './yarn';
@@ -454,7 +454,7 @@ export class World {
         if (a.t >= a.dur) {
           // Now and then it thinks better of it and slides back down to where it started.
           // Lazier cats give up more often.
-          if (this.random.chance(0.05 / cat.energy)) cat.slide({ wall: a.wall, dest: a.origin, origin: a.origin });
+          if (this.random.chance(CLIMB_GIVE_UP / cat.energy)) cat.slide({ wall: a.wall, dest: a.origin, origin: a.origin });
           else this.wallStep(cat, { wall: a.wall, dest: a.dest, origin: a.origin });
         }
         break;
