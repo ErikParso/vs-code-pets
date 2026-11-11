@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.1.118
+
+- Tests: the behaviour reference is re-recorded with the energy cap and the easier slide-backs of
+  0.1.115. Nothing looks or works differently.
+
 ## 0.1.117
 
 - Tidier code: the cat boxes and the collection share one centred popup and one way of turning a
