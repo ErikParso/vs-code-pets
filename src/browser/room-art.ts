@@ -1,5 +1,6 @@
-// The room the cat boxes are kept in: a brick wall, signs hanging from wires (the title, and an X to
-// close it), thin shelves on iron brackets, and a near-black frame round it all.
+// The room the cat boxes and the collection are kept in: a brick wall, signs hanging from wires
+// (the title top left, and an X to close it top right), thin shelves on iron brackets, and a
+// near-black frame round it all.
 import type { Paint } from './pixel-art';
 import { eachTextPixel, FONT_5X7, textWidth } from './pixel-font';
 
@@ -17,6 +18,12 @@ const ROOM = {
   frame: '#111111',
   frameLight: '#454545',
 };
+/** The room's margin round what is in it, and where its title and X signs hang. */
+export const ROOM_PAD = 8;
+/** Where what is in the room starts, under the signs. */
+export const ROOM_TOP = ROOM_PAD + FONT_5X7.h + 8;
+const CLOSE = 'X';
+const closeX = (width: number) => width - ROOM_PAD - textWidth(FONT_5X7, CLOSE);
 const BRICK_W = 14;
 const BRICK_H = 6; // with the mortar under it
 
@@ -40,6 +47,18 @@ export function paintSign(paint: Paint, title: string, x: number, y: number): vo
   paint(x - 3, y - 3, w + 6, h + 6, ROOM.signEdge);
   paint(x - 2, y - 2, w + 4, h + 4, ROOM.sign);
   eachTextPixel(FONT_5X7, title, x, y, (px, py) => paint(px, py, 1, 1, ROOM.signText));
+}
+
+/** The room's `title` on a sign top left, and an X to close it top right, in a room `width` wide. */
+export function paintSigns(paint: Paint, title: string, width: number): void {
+  paintSign(paint, title, ROOM_PAD, ROOM_PAD);
+  paintSign(paint, CLOSE, closeX(width), ROOM_PAD);
+}
+
+/** Whether (x, y) in a room `width` wide (sprite px) is on its X sign. */
+export function closeAt(x: number, y: number, width: number): boolean {
+  const cx = closeX(width);
+  return x >= cx - 3 && x < cx + textWidth(FONT_5X7, CLOSE) + 3 && y < ROOM_PAD + FONT_5X7.h + 3;
 }
 
 /** A thin shelf across the room at `y` (its top), on iron brackets at `brackets` (their left edges). */

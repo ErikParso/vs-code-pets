@@ -9,11 +9,15 @@
   what a cat does next; `Cat`, `Care`, `Navigator`, `FishPond` (`fish.ts`) and `YarnPile`
   (`yarn.ts`) each own their part, the last two sharing what is thrown to the cats (`thrown.ts`:
   the throw, falling off a floor, the limit of `MAX_FISH`); `collection.ts` is your cats and their
-  steps, `coats.ts` the coats they come in, `boxes.ts` what the cat boxes show. `config.ts` holds
+  steps, `coats.ts` the coats they come in, `seen.ts` the coats ever had (for the collection of
+  coats), `boxes.ts` what the cat boxes show. `config.ts` holds
   every tuning number.
 - `src/browser/`: the cat script's browser side: reading VS Code's workbench, drawing, the debug
   care panel, the cat boxes (`cat-boxes.ts`: boxes from `box-art.ts` in a room from
-  `room-art.ts`), the 🐈‍⬛ menu (`fish-menu.ts`, buttons from `menu-art.ts`), Web Locks, and a
+  `room-art.ts`), the collection of coats (`collection-panel.ts`: cards from `collection-art.ts`,
+  in the same room; a coat is found if it is in `pixelCat.seen`, which every poll tops up with the
+  coats of the cats you have, or if a cat you have is in it), the 🐈‍⬛ menu (`fish-menu.ts`,
+  buttons from `menu-art.ts`), Web Locks, and a
   tooltip anything can use (`tooltip.ts`: `show(text, x, y)`, `hide()`). Pixel art is drawn
   through `pixel-art.ts`. Bundled with `src/world` by esbuild into
   `out/pixel-cat.js` (`scripts/bundle.js`).

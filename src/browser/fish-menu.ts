@@ -1,8 +1,9 @@
 // The 🐈‍⬛'s menu: clicking the 🐈‍⬛ in the status bar opens a little pixel menu just above it, with
-// three buttons, each its own canvas: a bucket of fish (throw the cats one, out of the bucket; the
-// menu stays, for the next), a pile of yarn (throw them a ball of yarn, the same way) and a pile
-// of boxes (see them all in their boxes; the menu closes).
-import { BUTTON_H, BUTTON_W, paintButton } from './menu-art';
+// four buttons, each its own canvas: a bucket of fish (throw the cats one, out of the bucket; the
+// menu stays, for the next), a pile of yarn (throw them a ball of yarn, the same way), a pile of
+// boxes (see them all in their boxes) and a fan of cards (the collection of coats); those two
+// close the menu.
+import { BUTTON_H, BUTTON_W, paintButton, type MenuButton } from './menu-art';
 import { paintCanvas, Popup } from './popup';
 
 const GAP = 4; // CSS px between the menu and the 🐈‍⬛, and between its buttons
@@ -12,21 +13,22 @@ export interface MenuActions {
   fish: (from: { x: number; y: number }) => void; // `from`: the bucket's middle and top, CSS px
   yarn: (from: { x: number; y: number }) => void; // `from`: the pile's middle and top, CSS px
   box: () => void;
+  cards: () => void;
 }
 
 export class FishMenu {
   readonly popup = new Popup('pixel-cat-menu', { zIndex: '1002', gap: `${GAP}px` }, 'flex');
-  private readonly buttons: [HTMLCanvasElement, 'fish' | 'yarn' | 'box'][];
+  private readonly buttons: [HTMLCanvasElement, MenuButton][];
 
   /** `pixels`: from the Renderer. */
   constructor(private readonly pixels: () => { px: number; dpr: number }, actions: MenuActions) {
-    this.buttons = (['fish', 'yarn', 'box'] as const).map((kind) => {
+    this.buttons = (['fish', 'yarn', 'box', 'cards'] as const).map((kind) => {
       const canvas = document.createElement('canvas');
       Object.assign(canvas.style, { cursor: 'pointer', boxShadow: '0 4px 12px rgba(0, 0, 0, 0.5)' });
       canvas.addEventListener('click', () => {
-        if (kind === 'box') {
+        if (kind === 'box' || kind === 'cards') {
           this.popup.close();
-          return actions.box();
+          return actions[kind]();
         }
         const r = canvas.getBoundingClientRect();
         actions[kind]({ x: r.left + r.width / 2, y: r.top });

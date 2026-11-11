@@ -6,11 +6,13 @@
 import { CarePanel } from './care-panel';
 import { CatBoxes } from './cat-boxes';
 import { FishMenu } from './fish-menu';
-import { localCatStore } from './cat-store';
+import { localCatStore, localSeenStore } from './cat-store';
+import { CollectionPanel } from './collection-panel';
 import { systemClock } from '../world/clock';
 import { Collection } from '../world/collection';
 import { Driver, POLL_MS } from '../world/driver';
 import { Random } from '../world/random';
+import { withCoatsOf } from '../world/seen';
 import { Renderer } from './renderer';
 import { roam } from './roaming';
 import { Tooltip } from './tooltip';
@@ -39,6 +41,7 @@ export function startPixelCat(): void {
   let renderer: Renderer;
   let carePanel: CarePanel;
   let catBoxes: CatBoxes;
+  let cards: CollectionPanel;
   let menu: FishMenu;
   let ink = '#888';
   const driver = new Driver({
@@ -55,18 +58,22 @@ export function startPixelCat(): void {
   }
 
   function poll() {
+    // Every coat among your cats is seen, for the collection, for good (seen.ts).
+    const seen = withCoatsOf(localSeenStore.load(), collection.cats());
+    if (seen) localSeenStore.save(seen);
     const wasShown = driver.shown;
     driver.poll(workbench.statusLabel());
     if (driver.shown !== wasShown) console.info(`[pixel-cat] ${driver.shown ? 'showing' : 'hiding'} the cats`);
     if (driver.shown && !wasShown) ink = workbench.ink();
     carePanel.render(world, driver.shown && driver.debug);
-    if (!driver.shown) for (const p of [catBoxes.popup, menu.popup]) p.close();
+    if (!driver.shown) for (const p of [catBoxes.popup, cards.popup, menu.popup]) p.close();
   }
 
   function frame(now: number) {
     driver.frame(now);
     renderer.draw(world, driver.shown, { debug: driver.debug, ink });
     catBoxes.frame(now);
+    cards.frame(now);
     requestAnimationFrame(frame);
   }
 
@@ -81,14 +88,24 @@ export function startPixelCat(): void {
     // The cat boxes: every cat in its box, wherever it is roaming. Clicking a box shuts its cat
     // in (or lets it out); the button beside it takes the cat's next step.
     catBoxes = new CatBoxes(collection, systemClock, () => renderer, new Tooltip());
-    // The 🐈‍⬛'s menu: a fish or a ball of yarn to throw from the 🐈‍⬛, a box to open the cat boxes.
+    // The collection: a card for every coat, found or still to find.
+    cards = new CollectionPanel(localSeenStore, () => collection.cats(), () => renderer);
+    // The 🐈‍⬛'s menu: a fish or a ball of yarn to throw from the 🐈‍⬛, a box to open the cat boxes,
+    // the cards to open the collection.
     menu = new FishMenu(() => renderer, {
       fish: (from) => world.throwFish(from.x, from.y),
       yarn: (from) => world.throwYarn(from.x, from.y),
-      box: () => catBoxes.show(),
+      box: () => {
+        cards.popup.close();
+        catBoxes.show();
+      },
+      cards: () => {
+        catBoxes.popup.close();
+        cards.show();
+      },
     });
     workbench.onOtherClick((target) => {
-      for (const p of [catBoxes.popup, menu.popup]) p.clickedAt(target);
+      for (const p of [catBoxes.popup, cards.popup, menu.popup]) p.clickedAt(target);
     });
     resize();
     window.addEventListener('resize', resize);
@@ -105,6 +122,7 @@ export function startPixelCat(): void {
         return;
       }
       catBoxes.popup.close();
+      cards.popup.close();
       menu.toggle(click.x, click.y);
     });
     setInterval(poll, POLL_MS);

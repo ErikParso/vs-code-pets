@@ -8,7 +8,7 @@ import { coatOf } from '../world/coats';
 import { SP, type Dot } from '../world/sprites';
 import { paintRows, type Paint } from './pixel-art';
 import { eachTextPixel, FONT_5X7, fontText, textWidth } from './pixel-font';
-import { paintFrame, paintShelf, paintSign, paintWall } from './room-art';
+import { paintFrame, paintShelf, paintSigns, paintWall, ROOM_PAD, ROOM_TOP } from './room-art';
 
 const MAX_NAME = 8; // characters that fit on a sticker
 
@@ -165,9 +165,9 @@ const STRIP_H = 1 + HEART.length + 1 + FISH_ICON.length + 1;
 const CELL_H = STRIP_Y + STRIP_H + 2;
 const GAP_X = 8;
 const GAP_Y = 8;
-const PAD = 8;
+const PAD = ROOM_PAD;
 const TITLE = 'YOUR CATS';
-const TOP = PAD + FONT_5X7.h + 8; // where the first row of boxes starts
+const TOP = ROOM_TOP; // where the first row of boxes starts
 
 /** The panel's size in sprite pixels, for `count` boxes in `cols` columns. */
 export function panelSize(count: number, cols: number): { width: number; height: number } {
@@ -210,16 +210,6 @@ export function lookKey(boxes: readonly CatBox[], cols: number, t: number): stri
   return `${cols}|${JSON.stringify(boxes)}|${boxes.map((b) => +blinking(b.name, t)).join('')}`;
 }
 
-// The X that closes the panel, on its own sign at the top right, like the title's.
-const CLOSE = 'X';
-const closeX = (width: number) => width - PAD - textWidth(FONT_5X7, CLOSE);
-
-/** Whether (x, y) in a panel `width` wide (sprite px) is on its close sign. */
-export function closeAt(x: number, y: number, width: number): boolean {
-  const cx = closeX(width);
-  return x >= cx - 3 && x < cx + textWidth(FONT_5X7, CLOSE) + 3 && y < PAD + FONT_5X7.h + 3;
-}
-
 /** Which box's tile (with its hearts and fish) is at (x, y) in the panel (sprite px), in `cols` columns; -1 for none. */
 export function boxAt(x: number, y: number, cols: number): number {
   const col = Math.floor((x - PAD) / (CELL_W + GAP_X));
@@ -245,8 +235,7 @@ export function paintPanel(paint: Paint, boxes: readonly CatBox[], spare: number
   const count = boxes.length + spare;
   const { width, height } = panelSize(count, cols);
   paintWall(paint, width, height);
-  paintSign(paint, TITLE, PAD, PAD);
-  paintSign(paint, CLOSE, closeX(width), PAD);
+  paintSigns(paint, TITLE, width);
   // A shelf under each row of boxes, a bracket under every other box.
   const brackets: number[] = [];
   for (let c = 0; c <= cols; c += 2) brackets.push(Math.min(PAD + c * (CELL_W + GAP_X) + 2, width - 10));

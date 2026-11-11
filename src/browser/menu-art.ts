@@ -1,6 +1,7 @@
 // The 🐈‍⬛'s menu buttons, each a tile in a dark frame. The fish button: a metal bucket with a fish
 // lying across the top. The box button: a pile of closed boxes, a cat's eyes and name sticker on
-// two, the third still empty. The yarn button: a wicker basket of balls of yarn.
+// two, the third still empty. The yarn button: a wicker basket of balls of yarn. The cards button: a
+// fan of collectible cards.
 import { SP } from '../world/sprites';
 import { CLOSED_CARD, PANEL } from './box-art';
 import { paintRows, type Paint } from './pixel-art';
@@ -52,13 +53,39 @@ const YARN = [
   '...KKKKKKKKKKKKKK...',
 ];
 
-const ICONS = { fish: [BUCKET, BUCKET_COLORS], yarn: [YARN, YARN_COLORS], box: [PILE, PILE_COLORS] } as const;
+// The cards: two collectible cards, a rare one (blue) behind an uncommon one (green) with a cat's
+// face and its name plate.
+const CARDS_COLORS: Record<string, string> = { ...SP.palette, k: '#000000', G: '#5cc46a', B: '#4f9bd9', w: '#f6f0dc' };
+// prettier-ignore
+const CARDS = [
+  '....kkkkkkkk........',
+  '...kBBBBBBBBk.......',
+  '...kBkkkkkkBk.......',
+  '...kBk..kkkkkkkk....',
+  '...kBk.kGGGGGGGGk...',
+  '...kBk.kGkkkkkkGk...',
+  '...kBk.kGkK..KkGk...',
+  '...kBk.kGkKOOKkGk...',
+  '...kBk.kGkOKKOkGk...',
+  '...kBBBkGkOPPOkGk...',
+  '...kkkkkGkkkkkkGk...',
+  '.......kGwwwwwwGk...',
+  '.......kGwkkkkwGk...',
+  '.......kGwwwwwwGk...',
+  '.......kGGGGGGGGk...',
+  '........kkkkkkkk....',
+];
+
+/** The 🐈‍⬛'s menu buttons, in order. */
+export type MenuButton = 'fish' | 'yarn' | 'box' | 'cards';
+
+const ICONS = { fish: [BUCKET, BUCKET_COLORS], yarn: [YARN, YARN_COLORS], box: [PILE, PILE_COLORS], cards: [CARDS, CARDS_COLORS] } as const;
 
 export const BUTTON_W = BUCKET[0].length + 8;
 export const BUTTON_H = BUCKET.length + 8;
 
 /** Paints one of the 🐈‍⬛'s menu buttons, BUTTON_W x BUTTON_H sprite px. */
-export function paintButton(paint: Paint, button: 'fish' | 'yarn' | 'box'): void {
+export function paintButton(paint: Paint, button: MenuButton): void {
   paint(0, 0, BUTTON_W, BUTTON_H, MENU.frameDark);
   paint(1, 1, BUTTON_W - 2, BUTTON_H - 2, MENU.frameLight);
   paint(2, 2, BUTTON_W - 4, BUTTON_H - 4, MENU.inside);

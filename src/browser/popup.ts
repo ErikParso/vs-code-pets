@@ -34,6 +34,23 @@ export class Popup {
   }
 }
 
+/** How much of the window's width a popup in the middle of it may take (more scrolls). */
+export const MAX_WIDTH = 0.9;
+const MAX_HEIGHT = 0.85; // ... and of its height
+
+/** A popup in the middle of the window (the cat boxes, the collection), scrolling if it is too big for it. */
+export function centredPopup(className: string): Popup {
+  return new Popup(className, {
+    left: '50%', top: '50%', transform: 'translate(-50%, -50%)', zIndex: '1001', maxWidth: `${MAX_WIDTH * 100}vw`,
+    maxHeight: `${MAX_HEIGHT * 100}vh`, overflow: 'auto', boxShadow: '0 6px 24px rgba(0, 0, 0, 0.5)',
+  });
+}
+
+/** Where mouse event `e` is on its canvas, in sprite px (`pixels`: from the Renderer). */
+export function spritePoint(e: MouseEvent, { px, dpr }: { px: number; dpr: number }): { x: number; y: number } {
+  return { x: (e.offsetX * dpr) / px, y: (e.offsetY * dpr) / px };
+}
+
 /** Sizes `canvas` to `w` x `h` sprite px, `px` device px each (`dpr` device px per CSS px), and paints it with `draw`. */
 export function paintCanvas(canvas: HTMLCanvasElement, w: number, h: number, { px, dpr }: { px: number; dpr: number }, draw: (paint: Paint) => void): void {
   if (canvas.width !== w * px || canvas.height !== h * px) {

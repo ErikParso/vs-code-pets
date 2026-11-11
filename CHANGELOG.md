@@ -1,5 +1,17 @@
 # Changelog
 
+## 0.1.117
+
+- Tidier code: the cat boxes and the collection share one centred popup and one way of turning a
+  click into sprite pixels. Nothing looks or works differently.
+
+## 0.1.116
+
+- The collection: a fourth button in the 🐈‍⬛'s menu opens a card for each of the 20 coats. A coat
+  you've had a cat in shows the cat, its number and its name; one still to find is dark, with a
+  cat's shadow and "???". Every card's frame and gems (one to three) show its rarity. A coat stays
+  found after its cat leaves.
+
 ## 0.1.115
 
 - A cat's energy cannot be higher than 1.

@@ -8,20 +8,16 @@
 import { catBoxes, FISH, HEARTS, type CatBox } from '../world/boxes';
 import type { Clock } from '../world/clock';
 import { BOXES, type Collection } from '../world/collection';
-import { boxAt, closeAt, columnsFor, lookKey, onButton, onGoodbyeYes, paintGoodbye, paintPanel, panelSize } from './box-art';
-import { paintCanvas, Popup } from './popup';
+import { closeAt } from './room-art';
+import { boxAt, columnsFor, lookKey, onButton, onGoodbyeYes, paintGoodbye, paintPanel, panelSize } from './box-art';
+import { centredPopup, MAX_WIDTH, paintCanvas, spritePoint } from './popup';
 import type { Tooltip } from './tooltip';
 
 const REREAD_MS = 1000; // how often it reads the collection again while open
 const MAX_COLS = 5;
-const MAX_WIDTH = 0.9; // of the window
-const MAX_HEIGHT = 0.85;
 
 export class CatBoxes {
-  readonly popup = new Popup('pixel-cat-boxes', {
-    left: '50%', top: '50%', transform: 'translate(-50%, -50%)', zIndex: '1001', maxWidth: `${MAX_WIDTH * 100}vw`,
-    maxHeight: `${MAX_HEIGHT * 100}vh`, overflow: 'auto', boxShadow: '0 6px 24px rgba(0, 0, 0, 0.5)',
-  });
+  readonly popup = centredPopup('pixel-cat-boxes');
   private readonly canvas = document.createElement('canvas');
   private boxes: CatBox[] = [];
   private readAt = -Infinity;
@@ -40,13 +36,13 @@ export class CatBoxes {
     this.canvas.setAttribute('role', 'img');
     this.popup.el.appendChild(this.canvas);
     this.canvas.addEventListener('click', (e) => {
-      const { px, dpr } = this.pixels();
-      this.clickAt((e.offsetX * dpr) / px, (e.offsetY * dpr) / px, this.canvas.width / px, this.canvas.height / px);
+      const { x, y } = spritePoint(e, this.pixels());
+      const { px } = this.pixels();
+      this.clickAt(x, y, this.canvas.width / px, this.canvas.height / px);
       this.readAt = -Infinity; // show it at once
     });
     this.canvas.addEventListener('mousemove', (e) => {
-      const { px, dpr } = this.pixels();
-      this.mouse = { x: (e.offsetX * dpr) / px, y: (e.offsetY * dpr) / px, clientX: e.clientX, clientY: e.clientY };
+      this.mouse = { ...spritePoint(e, this.pixels()), clientX: e.clientX, clientY: e.clientY };
       this.updateTooltip();
     });
     this.canvas.addEventListener('mouseleave', () => {

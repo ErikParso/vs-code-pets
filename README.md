@@ -23,6 +23,8 @@ Click the 🐈‍⬛ in the status bar:
   - at **five hearts** it brings a friend, a new cat in a random coat, if there's a box free
     (there are 15);
   - once it has brought its friend, it can **leave**, to make room.
+- **The cards** open your collection: a card for each of the 20 coats a cat can have. The ones
+  you've had show the cat and its name; the rest are dark, with only their rarity to go on.
 
 With more than one VS Code window open, the cats wander between them.
 
