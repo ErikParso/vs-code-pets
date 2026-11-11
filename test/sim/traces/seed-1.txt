@@ -1,4 +1,4 @@
-# Pixel Cat event log: 2 days, open weekdays 9-13, feeder attentive, seed 1. Recorded from 8f7787b (v0.1.113).
+# Pixel Cat event log: 2 days, open weekdays 9-13, feeder attentive, seed 1. Recorded from 715b77b (v0.1.117).
 # Each line: seconds since Monday 00:00, then what happened. See test/sim/trace.js.
 32400.000 open
 32400.700 Jexit arrive state=walk x=1560.00 y=794.00 tx=1468.92 dur=Infinity
