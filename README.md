@@ -43,6 +43,10 @@ again the next time VS Code starts).
 
 Developing Pixel Cat: see [docs/development.md](docs/development.md).
 
+## Feedback and ideas
+
+Found a bug, have an idea, or want to share your cats? [Open an issue on GitHub](https://github.com/ErikParso/vs-code-pets/issues) — feedback and ideas are always welcome.
+
 All art and code are original, drawn from scratch.
 
 Like the cats? [Sponsor their keeper](https://github.com/sponsors/ErikParso) 💖
