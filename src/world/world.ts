@@ -5,7 +5,7 @@ import { along, arc } from './arc';
 import { CatBrain } from './brain';
 import { Cat, CatDef, Flight } from './cat';
 import type { Clock } from './clock';
-import { CLIMB_GIVE_UP, EAT_TIME, HOP_TIME, PLAY_TIME, ROLL_DISTANCE, WALK_SPEED, WALL_LEAP, WIND_UP } from './config';
+import { CLIMB_GIVE_UP, EAT_TIME, HOP_TIME, PLAY_TIME, ROLL_DISTANCE, STALK_TIME, WALK_SPEED, WALL_LEAP, WIND_UP } from './config';
 import { Fish, FishPond } from './fish';
 import type { Pile, Thrown } from './thrown';
 import { type Yarn, YarnPile } from './yarn';
@@ -365,7 +365,7 @@ export class World {
 
   play(cat: Cat, ball: Yarn): void {
     this.settleAt(cat, ball);
-    cat.play(ball, this.random.between(PLAY_TIME[0], PLAY_TIME[1]));
+    cat.stalk(ball, this.random.between(STALK_TIME[0], STALK_TIME[1]));
   }
 
   // At a fish or a ball: it is this cat's now, and the cat faces it.
@@ -379,7 +379,7 @@ export class World {
   // whatever it was walking over for is forgotten.
   private interrupt(cat: Cat): void {
     if (cat.activity.kind === 'eat') cat.activity.meal.cat = null;
-    if (cat.activity.kind === 'play') cat.activity.ball.cat = null;
+    if (cat.activity.kind === 'stalk' || cat.activity.kind === 'play') cat.activity.ball.cat = null;
     cat.heading = null;
   }
 
@@ -407,6 +407,9 @@ export class World {
           if (onTime) this.spawnEmotion('heart', cat);
           cat.sit(this.random.between(2, 5));
         }
+        break;
+      case 'stalk':
+        if (a.t >= a.dur) cat.play(a.ball, this.random.between(PLAY_TIME[0], PLAY_TIME[1]));
         break;
       case 'play':
         // Done: one last swipe sends the ball rolling away, and it sits back.

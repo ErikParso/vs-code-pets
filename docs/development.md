@@ -58,7 +58,8 @@
   rare 10%, then any coat of that rarity.
 - **Play:** a ball of yarn lying still on a cat's floor within reach makes `play` one of the
   things it picks from (weight `PLAY_WEIGHT`); fish still come first and starving cats don't play.
-  One cat at a time bats at a ball for a few seconds, then swipes it away 100-250 px; once it
+  On reaching it, a cat crouches in the sleep pose for 0.7-1.2 seconds. It then bats at the ball
+  for a few seconds, making it shake with each swipe, before swiping it away 100-250 px; once it
   stops it is up for play again, and one that rolls off the end of its floor is gone. Up to
   `MAX_FISH` balls are out, like fish. A play earns 0.02 trust (and a heart floats up), at most
   once every 20 hours (`playedAt`, `PLAY_REWARD_AFTER`).

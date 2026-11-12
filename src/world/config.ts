@@ -39,6 +39,7 @@ export const FISH_GRAVITY = 1000; // floatier than the cats
 // more than MAX_FISH balls out, the oldest fades away.
 
 export const PLAY_WEIGHT = 40; // more than sit 22 and walk 32: a ball does not lie still for long
+export const STALK_TIME = [0.7, 1.2]; // s crouched watching the ball before the first bat
 export const PLAY_TIME = [3, 6]; // s of batting at it
 export const ROLL_DISTANCE = [100, 250]; // px the swipe at the end sends it
 export const ROLL_FRICTION = 150; // px/s² it slows down by

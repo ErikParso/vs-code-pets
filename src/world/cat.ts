@@ -43,6 +43,7 @@ export type Activity =
   | { kind: 'sit'; t: number; dur: number }
   | { kind: 'sleep'; t: number; dur: number }
   | { kind: 'eat'; t: number; dur: number; meal: Fish }
+  | { kind: 'stalk'; t: number; dur: number; ball: Yarn } // crouched at a ball of yarn before batting it
   | { kind: 'play'; t: number; dur: number; ball: Yarn } // batting at a ball of yarn
   | { kind: 'walk'; t: number; tx: number; speed: number }
   // Gathering itself before a jump (`flight` is the jump) or after landing (no flight).
@@ -134,6 +135,10 @@ export class Cat implements AtIt {
 
   eat(meal: Fish, dur: number): void {
     this.activity = { kind: 'eat', t: 0, dur, meal };
+  }
+
+  stalk(ball: Yarn, dur: number): void {
+    this.activity = { kind: 'stalk', t: 0, dur, ball };
   }
 
   play(ball: Yarn, dur: number): void {

@@ -142,6 +142,8 @@ export class Renderer {
         return 'climbPull'; // paws gathered in, braking
       case 'sleep':
         return cycle(['sleep1', 'sleep2'], 1.1);
+      case 'stalk':
+        return 'sleep1';
       case 'crouch':
         return 'crouch';
       case 'eat': {
@@ -200,7 +202,8 @@ export class Renderer {
     const { ctx, dpr, px } = this;
     for (const g of world.yarn.items) {
       const tumbling = !g.landed || g.falling;
-      const swiper = g.cat && swiping(g.cat.t) ? g.cat : null;
+      const player = g.cat as Cat | null;
+      const swiper = player?.activity.kind === 'play' && swiping(player.t) ? player : null;
       const img = this.spriteFor(PLAIN, swiper ? 'yarnB' : 'yarnA');
       const nudge = swiper ? swiper.dir * (px / dpr) : 0;
       const turn = tumbling ? (Math.floor(g.t * 8) % 4) * (g.vx < 0 ? -1 : 1) : Math.floor((g.x * dpr) / (5.5 * px));
