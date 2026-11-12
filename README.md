@@ -49,6 +49,10 @@ Developing Pixel Cat: see [docs/development.md](docs/development.md).
 
 Found a bug, have an idea, or want to share your cats? [Open an issue on GitHub](https://github.com/ErikParso/vs-code-pets/issues) — feedback and ideas are always welcome.
 
+## Donate a Cat Coat 🐈‍⬛
+
+Help a new coat join the collection. [Donate a Cat Coat](https://github.com/sponsors/ErikParso/sponsorships?sponsor=ErikParso&tier_id=681255). You will receive a welcome email with a donation code and a link to submit the coat's description. Selected coats become pixel art for the shared collection, with a **Gifted by** badge on their card. Everyone can discover them normally.
+
 All art and code are original, drawn from scratch.
 
 Like the cats? [Sponsor their keeper](https://github.com/sponsors/ErikParso) 💖
