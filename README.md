@@ -8,6 +8,8 @@ Meet **Jexit** (a sleepy red tabby), **Erik** (a tuxedo, the everyday cat) and *
 brown tabby). Look after them well and they'll bring friends: 20 coats to find, some rarer than
 others.
 
+![Pixel cats roaming across VS Code](images/pixel-cats-screenshot.png)
+
 ## Looking after them
 
 Click the 🐈‍⬛ in the status bar:
