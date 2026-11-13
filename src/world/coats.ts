@@ -62,10 +62,10 @@ const ENTRIES: readonly CoatEntry[] = [
   { id: 'cream-tabby',           name: 'Cream Tabby',           rarity: 'uncommon', fur: 'cream',     stripes: true,  white: false, collar: 'purple' },
   { id: 'cream-and-white',       name: 'Cream and White',       rarity: 'uncommon', fur: 'cream',     stripes: false, white: true,  collar: 'purple' },
   { id: 'silver-tabby',          name: 'Silver Tabby',          rarity: 'uncommon', fur: 'silver',    stripes: true,  white: false, collar: 'purple' },
-  { id: 'snow-white',            name: 'Snow White',            rarity: 'uncommon', fur: 'white',     stripes: false, white: false, collar: 'red', lockedByDonation: 'https://buymeacoffee.com/sealhunter' },
+  { id: 'snow-white',            name: 'Snow White',            rarity: 'uncommon', fur: 'white',     stripes: false, white: false, collar: 'red', lockedByDonation: 'https://buymeacoffee.com/sealhunter/e/597946' },
   { id: 'chocolate-and-white',   name: 'Chocolate and White',   rarity: 'rare',     fur: 'chocolate', stripes: false, white: true,  collar: 'teal' },
   { id: 'chocolate',             name: 'Chocolate',             rarity: 'rare',     fur: 'chocolate', stripes: false, white: false, collar: 'teal' },
-  { id: 'lilac-tabby-and-white', name: 'Lilac Tabby and White', rarity: 'rare',     fur: 'lilac',     stripes: true,  white: true,  collar: 'teal' },
+  { id: 'lilac-tabby-and-white', name: 'Lilac Tabby and White', rarity: 'rare',     fur: 'lilac',     stripes: true,  white: true,  collar: 'teal', lockedByDonation: 'https://buymeacoffee.com/sealhunter/e/597950' },
   { id: 'lilac',                 name: 'Lilac',                 rarity: 'rare',     fur: 'lilac',     stripes: false, white: false, collar: 'teal' },
   { id: 'cinnamon-tabby',        name: 'Cinnamon Tabby',        rarity: 'rare',     fur: 'cinnamon',  stripes: true,  white: false, collar: 'blue' },
 ];

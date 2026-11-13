@@ -51,6 +51,6 @@ Found a bug, have an idea, or want to share your cats? [Open an issue on GitHub]
 
 All art and code are original, drawn from scratch.
 
-## Donate a Cat Coat 🐈‍⬛
+## Sponsor a Cat Coat 🐈‍⬛
 
-Like the cats? Sponsor their keeper and help a new coat join the collection. [Donate a Cat Coat](https://github.com/sponsors/ErikParso) 💖.
+Like the cats? Sponsor their keeper and help a new coat join the collection. [See coats looking for a sponsor](https://buymeacoffee.com/sealhunter/extras) 💖.
