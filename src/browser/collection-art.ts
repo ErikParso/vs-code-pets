@@ -49,12 +49,12 @@ export function paintCollection(paint: Paint, coats: readonly Coat[], found: (co
   coats.forEach((coat, i) => {
     const x = ROOM_PAD + (i % COLS) * (CARD_W + GAP);
     const y = ROOM_TOP + Math.floor(i / COLS) * (CARD_H + GAP);
-    paintCard(paint, coat, found(coat), x, y, fine);
+    paintCard(paint, coat, i + 1, found(coat), x, y, fine);
   });
   paintFrame(paint, width, height);
 }
 
-function paintCard(paint: Paint, coat: Coat, found: boolean, x: number, y: number, fine: number): void {
+function paintCard(paint: Paint, coat: Coat, number: number, found: boolean, x: number, y: number, fine: number): void {
   const r = RARITY[coat.rarity];
   // The card, framed in its rarity's colour, its bottom edge shaded.
   paint(x, y, CARD_W, CARD_H, CARD.edge);
@@ -72,7 +72,7 @@ function paintCard(paint: Paint, coat: Coat, found: boolean, x: number, y: numbe
   const shadow = (ch: string) => (ch === 'K' ? UNSEEN.shade : UNSEEN.cat);
   paintRows(paint, sit, wx + Math.floor((ww - sit[0].length) / 2), wy + PICTURE_H - sit.length, (ch) => (found ? palette[ch] : shadow(ch)));
   const ink = found ? CARD.ink : UNSEEN.ink;
-  text(paint, String(coat.no).padStart(2, '0'), wx + 1, wy + 1, fine, ink);
+  text(paint, String(number).padStart(2, '0'), wx + 1, wy + 1, fine, ink);
   if (coat.sponsor) paintHeart(paint, x + SPONSOR_HEART.x, y + SPONSOR_HEART.y);
   // Its rarity's gems, top right, over the picture's edge.
   for (let g = 0; g < r.gems; g++) paint(x + CARD_W - 6 - g * 3, y + 1, 2, 2, found ? CARD.gem : CARD.gemDim);

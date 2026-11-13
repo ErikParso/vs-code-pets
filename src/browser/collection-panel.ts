@@ -65,7 +65,7 @@ export class CollectionPanel {
     const { width, height } = collectionSize(COATS.length);
     paintCanvas(this.canvas, width, height, { px, dpr }, (paint) => paintCollection(paint, COATS, (c) => this.found.has(c.id), px));
     const count = COATS.filter((c) => this.found.has(c.id)).length;
-    const names = COATS.map((c) => (this.found.has(c.id) ? `${c.no}. ${c.name} (${c.rarity})` : `${c.no}. not found yet (${c.rarity})`));
+    const names = COATS.map((c, i) => (this.found.has(c.id) ? `${i + 1}. ${c.name} (${c.rarity})` : `${i + 1}. not found yet (${c.rarity})`));
     this.canvas.setAttribute('aria-label', `Collection: ${count} of ${COATS.length} coats found. ${names.join('; ')}`);
   }
 }
