@@ -13,6 +13,7 @@ export interface Coat {
   name: string;
   rarity: Rarity;
   sponsor?: string; // the person who sponsored this coat's addition to the collection
+  lockedByDonation?: string; // public URL where this planned coat can be sponsored
   palette: Record<'K' | 'O' | 'D' | 'W', string>;
   collar: string; // the collar a cat in it wears, unless the cat has its own
 }
@@ -38,6 +39,7 @@ interface CoatEntry {
   name: string;
   rarity: Rarity;
   sponsor?: string;
+  lockedByDonation?: string;
   fur: keyof typeof FUR;
   stripes: boolean;
   white: boolean;
@@ -60,7 +62,7 @@ const ENTRIES: readonly CoatEntry[] = [
   { id: 'cream-tabby',           name: 'Cream Tabby',           rarity: 'uncommon', fur: 'cream',     stripes: true,  white: false, collar: 'purple' },
   { id: 'cream-and-white',       name: 'Cream and White',       rarity: 'uncommon', fur: 'cream',     stripes: false, white: true,  collar: 'purple' },
   { id: 'silver-tabby',          name: 'Silver Tabby',          rarity: 'uncommon', fur: 'silver',    stripes: true,  white: false, collar: 'purple' },
-  { id: 'white',                 name: 'White',                 rarity: 'uncommon', fur: 'white',     stripes: false, white: false, collar: 'red' },
+  { id: 'white',                 name: 'White',                 rarity: 'uncommon', fur: 'white',     stripes: false, white: false, collar: 'red', lockedByDonation: 'https://buymeacoffee.com/sealhunter' },
   { id: 'chocolate-and-white',   name: 'Chocolate and White',   rarity: 'rare',     fur: 'chocolate', stripes: false, white: true,  collar: 'teal' },
   { id: 'chocolate',             name: 'Chocolate',             rarity: 'rare',     fur: 'chocolate', stripes: false, white: false, collar: 'teal' },
   { id: 'lilac-tabby-and-white', name: 'Lilac Tabby and White', rarity: 'rare',     fur: 'lilac',     stripes: true,  white: true,  collar: 'teal' },
@@ -93,5 +95,5 @@ const RARITY_WEIGHTS: readonly (readonly [Rarity, number])[] = [
 /** A coat for a friend: its rarity by RARITY_WEIGHTS, then any coat of that rarity. */
 export function rollCoat(random: Random): Coat {
   const rarity = random.pick(RARITY_WEIGHTS);
-  return random.oneOf(COATS.filter((c) => c.rarity === rarity));
+  return random.oneOf(COATS.filter((c) => c.rarity === rarity && !c.lockedByDonation));
 }

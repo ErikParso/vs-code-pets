@@ -5,7 +5,7 @@
 import type { CatDef } from '../world/cat';
 import { COATS } from '../world/coats';
 import type { SeenStore } from '../world/seen';
-import { collectionSize, paintCollection, sponsorAt } from './collection-art';
+import { collectionSize, paintCollection, specialCoatAt } from './collection-art';
 import { centredPopup, paintCanvas, spritePoint } from './popup';
 import { closeAt } from './room-art';
 import { Tooltip } from './tooltip';
@@ -33,12 +33,16 @@ export class CollectionPanel {
       if (closeAt(x, y, this.canvas.width / this.pixels().px)) {
         this.popup.close();
         this.tooltip.hide();
+        return;
       }
+      const coat = specialCoatAt(COATS, x, y);
+      if (coat?.lockedByDonation) window.open(coat.lockedByDonation, '_blank', 'noopener,noreferrer');
     });
     this.canvas.addEventListener('mousemove', (e) => {
       const { x, y } = spritePoint(e, this.pixels());
-      const coat = sponsorAt(COATS, x, y);
-      if (coat?.sponsor) this.tooltip.show(`Sponsored by ${coat.sponsor}`, e.clientX, e.clientY);
+      const coat = specialCoatAt(COATS, x, y);
+      if (coat?.lockedByDonation) this.tooltip.show('Sponsor this coat', e.clientX, e.clientY);
+      else if (coat?.sponsor) this.tooltip.show(`Sponsored by ${coat.sponsor}`, e.clientX, e.clientY);
       else this.tooltip.hide();
     });
     this.canvas.addEventListener('mouseleave', () => this.tooltip.hide());

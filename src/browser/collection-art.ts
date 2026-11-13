@@ -25,6 +25,7 @@ const RARITY: Record<Rarity, { frame: string; shade: string; window: string; dim
 };
 const CARD = { edge: '#000000', ink: '#2b1d14', plate: '#f6f0dc', gem: '#f2d14b', gemDim: '#7a6a2c' };
 const SPONSOR_HEART = { color: SP.palette.P, x: 4, y: 9 };
+const DONATION_HEART = { color: '#5a5961', x: 4, y: 9 };
 // A card still to find: dark, the cat only a shadow.
 const UNSEEN = { shade: '#2a2530', window: '#1e1a24', plate: '#2a2530', cat: '#2f2a36', ink: '#6a6278' };
 
@@ -73,7 +74,8 @@ function paintCard(paint: Paint, coat: Coat, number: number, found: boolean, x: 
   paintRows(paint, sit, wx + Math.floor((ww - sit[0].length) / 2), wy + PICTURE_H - sit.length, (ch) => (found ? palette[ch] : shadow(ch)));
   const ink = found ? CARD.ink : UNSEEN.ink;
   text(paint, String(number).padStart(2, '0'), wx + 1, wy + 1, fine, ink);
-  if (coat.sponsor) paintHeart(paint, x + SPONSOR_HEART.x, y + SPONSOR_HEART.y);
+  if (coat.sponsor) paintHeart(paint, x + SPONSOR_HEART.x, y + SPONSOR_HEART.y, SPONSOR_HEART.color);
+  if (coat.lockedByDonation) paintHeart(paint, x + DONATION_HEART.x, y + DONATION_HEART.y, DONATION_HEART.color);
   // Its rarity's gems, top right, over the picture's edge.
   for (let g = 0; g < r.gems; g++) paint(x + CARD_W - 6 - g * 3, y + 1, 2, 2, found ? CARD.gem : CARD.gemDim);
 
@@ -82,7 +84,7 @@ function paintCard(paint: Paint, coat: Coat, number: number, found: boolean, x: 
   const ph = CARD_H - (PICTURE_H + 2) - 7;
   paint(wx - 1, py - 1, ww + 2, ph + 2, CARD.edge);
   paint(wx, py, ww, ph, found ? CARD.plate : UNSEEN.plate);
-  const lines = found ? wrap(coat.name, NAME_LINE) : ['???'];
+  const lines = found ? wrap(coat.name, NAME_LINE) : coat.lockedByDonation ? ['SPONSOR'] : ['???'];
   const top = py + Math.floor((ph - lines.length * LINE_H + 0.5) / 2);
   lines.forEach((line, i) => {
     const t = fontText(FONT_5X7, line, NAME_LINE);
@@ -90,19 +92,19 @@ function paintCard(paint: Paint, coat: Coat, number: number, found: boolean, x: 
   });
 }
 
-/** The sponsored coat under (x, y) in the collection, or null outside its heart icon. */
-export function sponsorAt(coats: readonly Coat[], x: number, y: number): Coat | null {
+/** The special coat card under (x, y), or null when it is neither sponsored nor donation-locked. */
+export function specialCoatAt(coats: readonly Coat[], x: number, y: number): Coat | null {
   const column = Math.floor((x - ROOM_PAD) / (CARD_W + GAP));
   const row = Math.floor((y - ROOM_TOP) / (CARD_H + GAP));
   if (column < 0 || column >= COLS || row < 0) return null;
   const coat = coats[row * COLS + column];
   const cardX = ROOM_PAD + column * (CARD_W + GAP);
   const cardY = ROOM_TOP + row * (CARD_H + GAP);
-  return coat?.sponsor && x >= cardX && x < cardX + CARD_W && y >= cardY && y < cardY + CARD_H ? coat : null;
+  return (coat?.sponsor || coat?.lockedByDonation) && x >= cardX && x < cardX + CARD_W && y >= cardY && y < cardY + CARD_H ? coat : null;
 }
 
-function paintHeart(paint: Paint, x: number, y: number): void {
-  paintRows(paint, HEART, x, y, (ch) => (ch === 'P' ? SPONSOR_HEART.color : undefined));
+function paintHeart(paint: Paint, x: number, y: number, color: string): void {
+  paintRows(paint, HEART, x, y, (ch) => (ch === 'P' ? color : undefined));
 }
 
 // `t` (already passed through fontText) at (x, y), in pixels `fine` sprite px each.
