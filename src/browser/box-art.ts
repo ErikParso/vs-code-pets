@@ -135,7 +135,7 @@ const PEEK_COLLAR: Dot[] = [
 ];
 
 // Small enough for five of each under a box: a heart, and a fish with a forked tail.
-const HEART = ['PP.PP', 'PPPPP', '.PPP.', '..P..'];
+export const HEART = ['PP.PP', 'PPPPP', '.PPP.', '..P..'];
 const FISH_ICON = ['B.BBBB.', '.BBBBKB', 'B.LLLL.'];
 
 const BOX_W = BOX[0].length;

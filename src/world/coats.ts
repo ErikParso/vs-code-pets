@@ -13,6 +13,7 @@ export interface Coat {
   id: string; // fixed for good: saved with every cat in it
   name: string;
   rarity: Rarity;
+  sponsor?: string; // the person who sponsored this coat's addition to the collection
   palette: Record<'K' | 'O' | 'D' | 'W', string>;
   collar: string; // the collar a cat in it wears, unless the cat has its own
 }
@@ -38,6 +39,7 @@ interface CoatEntry {
   id: string;
   name: string;
   rarity: Rarity;
+  sponsor?: string;
   fur: keyof typeof FUR;
   stripes: boolean;
   white: boolean;
@@ -46,13 +48,13 @@ interface CoatEntry {
 
 // prettier-ignore
 const ENTRIES: readonly CoatEntry[] = [
-  { no: 1,  id: 'red-tabby-and-white',   name: 'Red Tabby and White',   rarity: 'common',   fur: 'red',       stripes: true,  white: true,  collar: 'blue' },
+  { no: 1,  id: 'red-tabby-and-white',   name: 'Red Tabby and White',   rarity: 'common',   sponsor: 'Jexit', fur: 'red',       stripes: true,  white: true,  collar: 'blue' },
   { no: 2,  id: 'red-tabby',             name: 'Red Tabby',             rarity: 'common',   fur: 'red',       stripes: true,  white: false, collar: 'blue' },
   { no: 3,  id: 'brown-tabby-and-white', name: 'Brown Tabby and White', rarity: 'common',   fur: 'brown',     stripes: true,  white: true,  collar: 'green' },
   { no: 4,  id: 'brown-tabby',           name: 'Brown Tabby',           rarity: 'common',   fur: 'brown',     stripes: true,  white: false, collar: 'green' },
   { no: 5,  id: 'blue-tabby',            name: 'Blue Tabby',            rarity: 'common',   fur: 'blue',      stripes: true,  white: false, collar: 'red' },
   { no: 6,  id: 'blue-and-white',        name: 'Blue and White',        rarity: 'common',   fur: 'blue',      stripes: false, white: true,  collar: 'red' },
-  { no: 7,  id: 'tuxedo',                name: 'Tuxedo',                rarity: 'common',   fur: 'black',     stripes: true,  white: true,  collar: 'red' },
+  { no: 7,  id: 'tuxedo',                name: 'Tuxedo',                rarity: 'common',   sponsor: 'Erik', fur: 'black',     stripes: true,  white: true,  collar: 'red' },
   { no: 8,  id: 'black',                 name: 'Black',                 rarity: 'common',   fur: 'black',     stripes: true,  white: false, collar: 'red' },
   { no: 9,  id: 'red-and-white',         name: 'Red and White',         rarity: 'uncommon', fur: 'red',       stripes: false, white: true,  collar: 'blue' },
   { no: 10, id: 'red',                   name: 'Red',                   rarity: 'uncommon', fur: 'red',       stripes: false, white: false, collar: 'blue' },

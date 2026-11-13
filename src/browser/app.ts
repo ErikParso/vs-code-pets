@@ -89,7 +89,7 @@ export function startPixelCat(): void {
     // in (or lets it out); the button beside it takes the cat's next step.
     catBoxes = new CatBoxes(collection, systemClock, () => renderer, new Tooltip());
     // The collection: a card for every coat, found or still to find.
-    cards = new CollectionPanel(localSeenStore, () => collection.cats(), () => renderer);
+    cards = new CollectionPanel(localSeenStore, () => collection.cats(), () => renderer, new Tooltip());
     // The 🐈‍⬛'s menu: a fish or a ball of yarn to throw from the 🐈‍⬛, a box to open the cat boxes,
     // the cards to open the collection.
     menu = new FishMenu(() => renderer, {

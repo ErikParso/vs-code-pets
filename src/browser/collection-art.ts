@@ -5,6 +5,7 @@
 // to find) with one to three gems, so you can see how rare what is missing is.
 import type { Coat, Rarity } from '../world/coats';
 import { SP } from '../world/sprites';
+import { HEART } from './box-art';
 import { paintRows, type Paint } from './pixel-art';
 import { eachTextPixel, FONT_5X7, fontText, textWidth } from './pixel-font';
 import { paintFrame, paintSigns, paintWall, ROOM_PAD, ROOM_TOP } from './room-art';
@@ -23,6 +24,7 @@ const RARITY: Record<Rarity, { frame: string; shade: string; window: string; dim
   rare: { frame: '#4f9bd9', shade: '#2b5d8f', window: '#d6e5f4', dim: '#2a4c70', gems: 3 },
 };
 const CARD = { edge: '#000000', ink: '#2b1d14', plate: '#f6f0dc', gem: '#f2d14b', gemDim: '#7a6a2c' };
+const SPONSOR_HEART = { color: SP.palette.P, x: 4, y: 9 };
 // A card still to find: dark, the cat only a shadow.
 const UNSEEN = { shade: '#2a2530', window: '#1e1a24', plate: '#2a2530', cat: '#2f2a36', ink: '#6a6278' };
 
@@ -71,6 +73,7 @@ function paintCard(paint: Paint, coat: Coat, found: boolean, x: number, y: numbe
   paintRows(paint, sit, wx + Math.floor((ww - sit[0].length) / 2), wy + PICTURE_H - sit.length, (ch) => (found ? palette[ch] : shadow(ch)));
   const ink = found ? CARD.ink : UNSEEN.ink;
   text(paint, String(coat.no).padStart(2, '0'), wx + 1, wy + 1, fine, ink);
+  if (coat.sponsor) paintHeart(paint, x + SPONSOR_HEART.x, y + SPONSOR_HEART.y);
   // Its rarity's gems, top right, over the picture's edge.
   for (let g = 0; g < r.gems; g++) paint(x + CARD_W - 6 - g * 3, y + 1, 2, 2, found ? CARD.gem : CARD.gemDim);
 
@@ -85,6 +88,21 @@ function paintCard(paint: Paint, coat: Coat, found: boolean, x: number, y: numbe
     const t = fontText(FONT_5X7, line, NAME_LINE);
     text(paint, t, wx + (ww - textWidth(FONT_5X7, t) * fine) / 2, top + i * LINE_H, fine, ink);
   });
+}
+
+/** The sponsored coat under (x, y) in the collection, or null outside its heart icon. */
+export function sponsorAt(coats: readonly Coat[], x: number, y: number): Coat | null {
+  const column = Math.floor((x - ROOM_PAD) / (CARD_W + GAP));
+  const row = Math.floor((y - ROOM_TOP) / (CARD_H + GAP));
+  if (column < 0 || column >= COLS || row < 0) return null;
+  const coat = coats[row * COLS + column];
+  const cardX = ROOM_PAD + column * (CARD_W + GAP);
+  const cardY = ROOM_TOP + row * (CARD_H + GAP);
+  return coat?.sponsor && x >= cardX && x < cardX + CARD_W && y >= cardY && y < cardY + CARD_H ? coat : null;
+}
+
+function paintHeart(paint: Paint, x: number, y: number): void {
+  paintRows(paint, HEART, x, y, (ch) => (ch === 'P' ? SPONSOR_HEART.color : undefined));
 }
 
 // `t` (already passed through fontText) at (x, y), in pixels `fine` sprite px each.

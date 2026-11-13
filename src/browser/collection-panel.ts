@@ -5,9 +5,10 @@
 import type { CatDef } from '../world/cat';
 import { COATS } from '../world/coats';
 import type { SeenStore } from '../world/seen';
-import { collectionSize, paintCollection } from './collection-art';
+import { collectionSize, paintCollection, sponsorAt } from './collection-art';
 import { centredPopup, paintCanvas, spritePoint } from './popup';
 import { closeAt } from './room-art';
+import { Tooltip } from './tooltip';
 
 const REREAD_MS = 1000; // how often it looks again at what has been found while open
 
@@ -22,14 +23,25 @@ export class CollectionPanel {
   constructor(
     private readonly seen: SeenStore,
     private readonly cats: () => readonly CatDef[],
-    private readonly pixels: () => { px: number; dpr: number }
+    private readonly pixels: () => { px: number; dpr: number },
+    private readonly tooltip: Tooltip
   ) {
     this.canvas.setAttribute('role', 'img');
     this.popup.el.appendChild(this.canvas);
     this.canvas.addEventListener('click', (e) => {
       const { x, y } = spritePoint(e, this.pixels());
-      if (closeAt(x, y, this.canvas.width / this.pixels().px)) this.popup.close();
+      if (closeAt(x, y, this.canvas.width / this.pixels().px)) {
+        this.popup.close();
+        this.tooltip.hide();
+      }
     });
+    this.canvas.addEventListener('mousemove', (e) => {
+      const { x, y } = spritePoint(e, this.pixels());
+      const coat = sponsorAt(COATS, x, y);
+      if (coat?.sponsor) this.tooltip.show(`Sponsored by ${coat.sponsor}`, e.clientX, e.clientY);
+      else this.tooltip.hide();
+    });
+    this.canvas.addEventListener('mouseleave', () => this.tooltip.hide());
   }
 
   /** Opens it, reading and drawing everything afresh. */
