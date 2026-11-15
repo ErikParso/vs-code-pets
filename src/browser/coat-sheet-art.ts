@@ -1,7 +1,7 @@
 // The coat sheet (debug mode): a row per coat, its name, then every cat frame and the cat in its
 // box, eyes open and blinking. Drawn by the same code the game draws them with.
 import { COATS } from '../world/coats';
-import { SP } from '../world/sprites';
+import { CAT_FRAMES } from '../world/sprites';
 import { OPEN_BOX_H, OPEN_BOX_W, paintOpenBox } from './box-art';
 import { paintCatFrame, paintCollar } from './cat-art';
 import { text, wrap } from './collection-art';
@@ -16,11 +16,10 @@ const NAME_W = 48; // names are in half pixels
 const NAME_LINE = 14; // characters of a name on one line
 const LINE_H = 4;
 const ROW_H = Math.max(CELL, OPEN_BOX_H);
-const FRAMES = Object.keys(SP.frames).filter((f) => f in SP.collars); // the cat's, not fish or yarn
 
 /** The sheet's size in sprite pixels. */
 export function sheetSize(): { width: number; height: number } {
-  return { width: NAME_W + FRAMES.length * (CELL + GAP) + 2 * (OPEN_BOX_W + GAP), height: GAP + COATS.length * (ROW_H + GAP) };
+  return { width: NAME_W + CAT_FRAMES.length * (CELL + GAP) + 2 * (OPEN_BOX_W + GAP), height: GAP + COATS.length * (ROW_H + GAP) };
 }
 
 /** Paints the sheet, with or without the coats' collars. `px`: device pixels per sprite pixel. */
@@ -32,12 +31,12 @@ export function paintSheet(paint: Paint, collars: boolean, px: number): void {
     const y = GAP + i * (ROW_H + GAP);
     wrap(coat.name, NAME_LINE).forEach((line, l) => text(paint, fontText(FONT_5X7, line, NAME_LINE), GAP, y + l * LINE_H, fine, INK));
     let x = NAME_W;
-    for (const frame of FRAMES) {
-      const rows = SP.frames[frame];
+    for (const frame of CAT_FRAMES) {
+      const rows = coat.look.sprite.frame(frame);
       const fx = x + Math.floor((CELL - rows[0].length) / 2);
       const fy = y + ROW_H - rows.length;
       paintCatFrame(paint, coat.id, frame, fx, fy);
-      if (collars) paintCollar(paint, coat.collar, frame, fx, fy);
+      if (collars) paintCollar(paint, coat.id, coat.collar, frame, fx, fy);
       x += CELL + GAP;
     }
     for (const blink of [false, true]) {

@@ -20,7 +20,6 @@ const esbuild = require('esbuild');
 const ROOT = path.join(__dirname, '..', '..');
 const SNAPSHOTS = path.join(__dirname, 'snapshots');
 const PROPS_FILE = '_props';
-const PROPS = ['fishA', 'fishB', 'yarnA', 'yarnB'];
 // The legend's letters, one per colour in an image ('.' is see-through).
 const LETTERS = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!#$%&*+-/:;<=>?@^_~|';
 // The box panel's blink is about 0.15 s in a period of 3-5 s; stepping at a hundredth catches it.
@@ -32,7 +31,7 @@ export { Renderer } from './renderer';
 export { paintPanel, panelSize, lookKey } from './box-art';
 export { paintCollection, collectionSize } from './collection-art';
 export { COATS } from '../world/coats';
-export { SP } from '../world/sprites';
+export { CAT_FRAMES, PROPS } from '../world/sprites';
 `;
 
 /** The drawing code, bundled from src as the extension bundles it, loaded as a module. */
@@ -137,11 +136,10 @@ function collectionImage(art, coat, found) {
 /** Every image of `coat`, by name. */
 function coatImages(art, renderer, coat) {
   const images = {};
-  for (const frame of Object.keys(art.SP.frames)) {
-    if (PROPS.includes(frame)) continue;
+  for (const frame of art.CAT_FRAMES) {
     const cat = imageOf(renderer.spriteFor(coat.id, frame));
     images[`frame ${frame}`] = cat;
-    const collar = renderer.collarFor(coat.collar, frame);
+    const collar = renderer.collarFor(coat.id, coat.collar, frame);
     if (collar) images[`frame ${frame} + collar`] = over(cat, imageOf(collar));
   }
   for (const collar of [null, coat.collar]) {
@@ -156,8 +154,7 @@ function coatImages(art, renderer, coat) {
 }
 
 function propImages(art, renderer) {
-  const plain = art.COATS[0].id; // as the renderer draws them
-  return Object.fromEntries(PROPS.map((p) => [`frame ${p}`, imageOf(renderer.spriteFor(plain, p))]));
+  return Object.fromEntries(Object.keys(art.PROPS).map((p) => [`frame ${p}`, imageOf(renderer.propFor(p))]));
 }
 
 // A snapshot file: a legend of letters for its colours, then each image as rows of letters.

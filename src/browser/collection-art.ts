@@ -4,7 +4,7 @@
 // with a cat's shadow and "???". Either way its frame is in its rarity's colour (dark while still
 // to find) with one to three gems, so you can see how rare what is missing is.
 import type { Coat, Rarity } from '../world/coats';
-import { SP } from '../world/sprites';
+import { PALETTE } from '../world/sprites';
 import { HEART } from './box-art';
 import { paintRows, type Paint } from './pixel-art';
 import { eachTextPixel, FONT_5X7, fontText, textWidth } from './pixel-font';
@@ -24,7 +24,7 @@ const RARITY: Record<Rarity, { frame: string; shade: string; window: string; dim
   rare: { frame: '#4f9bd9', shade: '#2b5d8f', window: '#d6e5f4', dim: '#2a4c70', gems: 3 },
 };
 const CARD = { edge: '#000000', ink: '#2b1d14', plate: '#f6f0dc', gem: '#f2d14b', gemDim: '#7a6a2c' };
-const SPONSOR_HEART = { color: SP.palette.P, x: 4, y: 9 };
+const SPONSOR_HEART = { color: PALETTE.P, x: 4, y: 9 };
 const DONATION_HEART = { color: '#5a5961', x: 4, y: 9 };
 // A card still to find: dark, the cat only a shadow.
 const UNSEEN = { shade: '#2a2530', window: '#1e1a24', plate: '#2a2530', cat: '#2f2a36', ink: '#6a6278' };
@@ -68,8 +68,8 @@ function paintCard(paint: Paint, coat: Coat, number: number, found: boolean, x: 
   const ww = CARD_W - 6;
   paint(wx - 1, wy - 1, ww + 2, PICTURE_H + 2, CARD.edge);
   paint(wx, wy, ww, PICTURE_H, found ? r.window : UNSEEN.window);
-  const sit = SP.frames.sit;
-  const palette: Record<string, string> = { ...SP.palette, ...coat.palette };
+  const sit = coat.look.sprite.frame('sit');
+  const palette = coat.look.letters;
   const shadow = (ch: string) => (ch === 'K' ? UNSEEN.shade : UNSEEN.cat);
   paintRows(paint, sit, wx + Math.floor((ww - sit[0].length) / 2), wy + PICTURE_H - sit.length, (ch) => (found ? palette[ch] : shadow(ch)));
   const ink = found ? CARD.ink : UNSEEN.ink;

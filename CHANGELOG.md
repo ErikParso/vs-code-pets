@@ -1,5 +1,25 @@
 # Changelog
 
+## 0.1.125
+
+- `BasicStriped` lays its stripe pixels over `Basic`'s frames again (as in 0.1.123), instead of
+  a full copy of the cat. Every coat looks as before.
+
+## 0.1.124
+
+- `BasicStriped` is drawn in full (the cat with its stripes) instead of laying stripe pixels over
+  `Basic` by coordinates. Every coat looks as before.
+
+## 0.1.123
+
+- A coat keeps its look apart: `look(sprite, colors)`, with colours named by the sprite's slots
+  (`outline`, `fur`, `stripes`, `chest`) and checked by TypeScript. Every coat looks as before.
+
+## 0.1.122
+
+- Cat art is now a tree of sprite classes (`src/world/sprites/`): `Basic`, and `BasicStriped`
+  extending it with stripes. Each coat names its sprite. Every coat looks exactly as before.
+
 ## 0.1.121
 
 - Debug mode: the coat sheet is plain now: a row of frames per coat; click it to toggle collars.

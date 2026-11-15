@@ -1,19 +1,6 @@
-// Hand-drawn cat frames, 24x16 pixels, facing right.
-// One character per pixel: '.' transparent, K outline, O fur, D stripe, W cream, P pink,
-// B fish, L fish belly, R yarn, S yarn shade, G a collar's tag.
-
-const palette = {
-  K: '#2b1d14',
-  O: '#e8913a',
-  D: '#c46a22',
-  W: '#fbe3c0',
-  P: '#f29bb0',
-  B: '#4f9bd9',
-  L: '#cfe6f5',
-  R: '#d9506e',
-  S: '#9c2f4b',
-  G: '#f2d14b', // a collar's tag
-};
+// Basic, the root of the sprite tree: a short-haired cat in one fur, no markings (see
+// cat-sprite.ts). Hand drawn, facing right; most frames 24x16, climbing ones 16x24.
+import { CatSprite, patch, type CatFrame, type Dot } from '../cat-sprite';
 
 // Standing body, shared by every on-four-legs frame (rows 0-12).
 const body = [
@@ -24,9 +11,9 @@ const body = [
   '.KOK...........KOKOOKOK.',
   '..KOK..........KWOPPOWK.',
   '...KOKKKKKKKKKKKWWWWWWK.',
-  '....KOOODOOODOOOWWKKKK..',
-  '....KOOODOOODOOOWWK.....',
-  '....KOOODOOODOOOWWK.....',
+  '....KOOOOOOOOOOOWWKKKK..',
+  '....KOOOOOOOOOOOWWK.....',
+  '....KOOOOOOOOOOOWWK.....',
   '....KOOOOOOOOOOOWWK.....',
   '....KWWWWWWWWWWWWWK.....',
   '....KOOKKKKKKKKOOK......',
@@ -67,12 +54,12 @@ const sit = [
   '...............KWOPPOWK.',
   '..............KOWWWWWWK.',
   '.............KOOWWKKKK..',
-  '.............KODOWWK....',
-  '............KOODOWWK....',
-  '............KOODOOWWK...',
-  '..........KOOOODOOWWK...',
+  '.............KOOOWWK....',
+  '............KOOOOWWK....',
+  '............KOOOOOWWK...',
+  '..........KOOOOOOOWWK...',
   '..KK.....KOOOOOOOOKWWK..',
-  '.KOK....KOOOODOOOOKWWK..',
+  '.KOK....KOOOOOOOOOKWWK..',
   '.KOKKKKKOOOOOOOOOOKWWK..',
   '..KOOOOOKKKKKKKKKKKKKK..',
 ];
@@ -81,10 +68,10 @@ const sleep = [
   blank, blank, blank, blank, blank, blank,
   '.................K...K..',
   '........KKKKKKK.KPK.KPK.',
-  '......KKOOODOOOKKOOOOOK.',
-  '.....KOOOODOOOOKOOOOOOK.',
-  '....KOOOODOOOOOOOKOOKOK.',
-  '....KOOOODOOOOOOWOPPOWK.',
+  '......KKOOOOOOOKKOOOOOK.',
+  '.....KOOOOOOOOOKOOOOOOK.',
+  '....KOOOOOOOOOOOOKOOKOK.',
+  '....KOOOOOOOOOOOWOPPOWK.',
   '...KOOOOOOOOOOOOKWWWWWK.',
   '...KOOOOOOOOOOOOOKKKKK..',
   '..KOOOOOOOOOOOOWWWWK....',
@@ -100,15 +87,15 @@ const climbReach = [
   '....K.KOOK.K....',
   '....KKKOOKKK....',
   '....KOOOOOOK....',
-  '....KOODDOOK....',
+  '....KOOOOOOK....',
   '....KOOOOOOK....',
   '....KKOOOOKK....',
   '.....KOOOOK.....',
   '....KOOOOOOK....',
-  '....KODDDDOK....',
   '....KOOOOOOK....',
   '....KOOOOOOK....',
-  '....KODDDDOK....',
+  '....KOOOOOOK....',
+  '....KOOOOOOK....',
   '....KOOOOOOK....',
   '..K.KOOOOOOK....',
   '.KOK.KOOOOK.....',
@@ -129,15 +116,15 @@ const climbPull = [
   '....K.KKKK.K....',
   '....KKKWWKKK....',
   '....KOKOOKOK....',
-  '....KOODDOOK....',
+  '....KOOOOOOK....',
   '....KOOOOOOK....',
   '....KKOOOOKK....',
   '.....KOOOOK.....',
   '....KOOOOOOK....',
-  '....KODDDDOK....',
   '....KOOOOOOK....',
   '....KOOOOOOK....',
-  '..K.KODDDDOK....',
+  '....KOOOOOOK....',
+  '..K.KOOOOOOK....',
   '.KOKKOOOOOOK....',
   '.KOKKOKOOKOK....',
   '..KOKOKOOKOK....',
@@ -159,35 +146,29 @@ const eatDown = [
   blank,
   '.........KKKKK..........',
   '.......KKOOOOOKK........',
-  '......KOODOOODOOK.......',
-  '.....KOODOOODOOOOK....K.',
-  '....KOOODOOODOOOKPK..KPK',
-  '...KOOOODOOODOOOKOOOOOOK',
-  '...KOOOODOOOKOOKKOOOOOOK',
+  '......KOOOOOOOOOK.......',
+  '.....KOOOOOOOOOOOK....K.',
+  '....KOOOOOOOOOOOKPK..KPK',
+  '...KOOOOOOOOOOOOKOOOOOOK',
+  '...KOOOOOOOOKOOKKOOOOOOK',
   '..KOOOOOOOOOKOOKKOKOOKOK',
   '.KKOOOOOOOOOKOOKKWOPPOWK',
   'KOOKOOOOOKWWKWWKKWWWWWWK',
   '.KKKKKKKKKKKKKKK.KKKKKK.',
 ];
 
-function patch(rows: string[], changes: Record<number, string>): string[] {
-  const out = rows.slice();
-  for (const [i, row] of Object.entries(changes)) out[Number(i)] = row;
-  return out;
-}
-
-const frames = {
+const FRAMES: Record<CatFrame, string[]> = {
   walkA: body.concat(legs.stand),
   walkB: body.concat(legs.strideOut),
   walkD: body.concat(legs.strideIn),
   leap: body.concat(legs.leap),
   crouch: [blank].concat(body, legs.stand.slice(1)),
   sit,
-  sitBlink: patch(sit, { 4: '...............KODOODOK.' }),
+  sitBlink: patch(sit, { 4: '...............KOOOOOOK.' }),
   sitTail: patch(sit, {
-    11: '.KK.......KOOOODOOWWK...',
+    11: '.KK.......KOOOOOOOWWK...',
     12: 'KOK......KOOOOOOOOKWWK..',
-    13: 'KOK.....KOOOODOOOOKWWK..',
+    13: 'KOK.....KOOOOOOOOOKWWK..',
   }),
   climbReach,
   // Springing up: hind legs pushed out straight below.
@@ -209,11 +190,11 @@ const frames = {
   eatChew: patch(eatDown, { 12: '..KOOOOOOOOOKOOKKKKOOKKK' }),
   // Tugging a bite off: head up a pixel.
   eatTug: patch(eatDown, {
-    7: '......KOODOOODOOKK....K.',
-    8: '.....KOODOOODOOOKPK..KPK',
-    9: '....KOOODOOODOOOKOOOOOOK',
-    10: '...KOOOODOOODOOOKOOOOOOK',
-    11: '...KOOOODOOOKOOKKKKOOKKK',
+    7: '......KOOOOOOOOOKK....K.',
+    8: '.....KOOOOOOOOOOKPK..KPK',
+    9: '....KOOOOOOOOOOOKOOOOOOK',
+    10: '...KOOOOOOOOOOOOKOOOOOOK',
+    11: '...KOOOOOOOOKOOKKKKOOKKK',
     12: '..KOOOOOOOOOKOOKKWOPPOWK',
     13: '.KKOOOOOOOOOKOOKKWWWWWWK',
     14: 'KOOKOOOOOKWWKWWK.KKKKKK.',
@@ -224,23 +205,17 @@ const frames = {
     12: 'KKKOOOOOOOOOKOOKKKKOOKKK',
     13: 'KOKOOOOOOOOOKOOKKWOPPOWK',
   }),
-  // A fish for the cats, 10x5, head to the right; the second frame flips its tail.
-  fishA: ['....KKKK..', 'K..KBBBBK.', 'KKKBBBBKBK', 'K..KLLLLK.', '....KKKK..'],
-  fishB: ['K...KKKK..', '.K.KBBBBK.', '..KBBBBKBK', '.K.KLLLLK.', 'K...KKKK..'],
   // Playing: sat up, a front paw raised at the ball, then swiping out and down at it.
   playUp: patch(sit, {
-    8: '.............KODOWWKKKK.',
-    9: '............KOODOWWWWWWK',
-    10: '............KOODOOWWKKKK',
+    8: '.............KOOOWWKKKK.',
+    9: '............KOOOOWWWWWWK',
+    10: '............KOOOOOWWKKKK',
   }),
   playSwipe: patch(sit, {
-    11: '..........KOOOODOOWWKKK.',
+    11: '..........KOOOOOOOWWKKK.',
     12: '..KK.....KOOOOOOOOKWWWWK',
-    13: '.KOK....KOOOODOOOOKWWKKK',
+    13: '.KOK....KOOOOOOOOOKWWKKK',
   }),
-  // A ball of yarn, 10x7, its loose end trailing; the second frame is it a little turned.
-  yarnA: ['...KKK....', '..KRRSK...', '.KRSSRRK..', '.KSRRSRK..', '.KRRSSRK..', '..KSRRK...', '...KKKRR..'],
-  yarnB: ['...KKK....', '..KSRRK...', '.KRRSSRK..', '.KRSRRSK..', '.KSRRSRK..', '..KRRSK...', '...KKKRR..'],
   sleep1: sleep,
   sleep2: patch(sleep, {
     6: '........KKKKKKK..K...K..',
@@ -252,7 +227,6 @@ const frames = {
 // colour | G its tag], in the frame's pixels. Round the neck where the head meets the body;
 // sitting it slants down to the throat, curled up asleep only the bit under the chin shows,
 // eating it hugs the back of the lowered head, and from behind (climbing) there is no tag.
-export type Dot = [number, number, string];
 const collarStand: Dot[] = [[15, 7, 'C'], [16, 7, 'C'], [17, 7, 'C'], [17, 8, 'G']];
 const collarSit: Dot[] = [[14, 7, 'C'], [15, 7, 'C'], [16, 8, 'C'], [17, 8, 'C'], [18, 8, 'C'], [18, 9, 'G']];
 const collarSleep: Dot[] = [[16, 12, 'C'], [17, 13, 'C'], [18, 13, 'C'], [19, 13, 'C'], [20, 13, 'C'], [18, 14, 'G']];
@@ -260,7 +234,7 @@ const collarClimb: Dot[] = [[6, 8, 'C'], [7, 8, 'C'], [8, 8, 'C'], [9, 8, 'C']];
 const collarEat: Dot[] = [[16, 10, 'C'], [16, 11, 'C'], [16, 12, 'C'], [16, 13, 'G']];
 const lower = (dots: Dot[]): Dot[] => dots.map(([x, y, c]) => [x, y + 1, c]);
 
-const collars: Record<string, Dot[]> = {
+const COLLARS: Record<CatFrame, Dot[]> = {
   walkA: collarStand,
   walkB: collarStand,
   walkD: collarStand,
@@ -283,12 +257,41 @@ const collars: Record<string, Dot[]> = {
   eatTug: collarEat.map(([x, y, c]) => [x, y - 1, c]), // its head a pixel up
 };
 
-export interface Sprites {
-  width: number;
-  height: number;
-  palette: Record<string, string>; // a coat (coats.ts) recolours its outline, fur, stripes and chest
-  frames: Record<string, string[]>;
-  collars: Record<string, Dot[]>; // by frame; a frame without one shows no collar
-}
 
-export const SP: Sprites = { width: 24, height: 16, palette, frames, collars };
+// Peeking over a box's lip (box-art.ts), 16x13: ears, face, chin, and its front paws hooked over
+// the edge. Blinking, its eyes are fur.
+const PEEK = [
+  '.KK..........KK.',
+  '.KPK........KPK.',
+  '.KPOKKKKKKKKOPK.',
+  '.KOOOOOOOOOOOOK.',
+  '.KOOOOOOOOOOOOK.',
+  '.KOOKKOOOOKKOOK.',
+  '.KOOKKOOOOKKOOK.',
+  '.KWOOOOPPOOOOWK.',
+  '.KWWWWKWWKWWWWK.',
+  '.KKWWWWWWWWWWKK.',
+  'KWWWK......KWWWK',
+  'KWKWK......KWKWK',
+  '.KKK........KKK.',
+];
+const PEEK_BLINK = patch(PEEK, { 5: '.KOOOOOOOOOOOOK.' });
+
+/** Basic's colours: its outline, its fur, and its chest and paws (white, or the fur's colour). */
+export const BASIC_SLOTS = { outline: 'K', fur: 'O', chest: 'W' } as const;
+
+export class Basic extends CatSprite {
+  readonly slots = BASIC_SLOTS;
+
+  frame(frame: CatFrame): readonly string[] {
+    return FRAMES[frame];
+  }
+
+  peek(blink: boolean): readonly string[] {
+    return blink ? PEEK_BLINK : PEEK;
+  }
+
+  collar(frame: CatFrame): readonly Dot[] {
+    return COLLARS[frame];
+  }
+}

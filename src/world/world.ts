@@ -14,7 +14,7 @@ import type { Floor, Layout, Wall } from './layout';
 import { clamp } from './math';
 import { ClimbMove, JumpMove, Move, Navigator } from './navigator';
 import type { Random } from './random';
-import { SP } from './sprites';
+import { CAT_H, CAT_W, CLIMB_H } from './sprites';
 
 export type EmotionKind = 'z' | 'heart' | 'fish';
 
@@ -134,11 +134,11 @@ export class World {
 
   /** The cat's size on screen, CSS px. */
   get catW(): number {
-    return (SP.width * this.px) / this.dpr;
+    return (CAT_W * this.px) / this.dpr;
   }
 
   get catH(): number {
-    return (SP.height * this.px) / this.dpr;
+    return (CAT_H * this.px) / this.dpr;
   }
 
   /** The window is `width` CSS px wide, drawn `px` device pixels per sprite pixel at `dpr` device pixels per CSS pixel. */
@@ -340,7 +340,7 @@ export class World {
 
   private wallStep(cat: Cat, on: OnWall): void {
     // If another leap would take its front paws past the floor's edge, it jumps up instead.
-    const paws = SP.frames.climbReach.length * (this.px / this.dpr);
+    const paws = CLIMB_H * (this.px / this.dpr);
     if (cat.y - WALL_LEAP - paws <= on.dest.y) return this.jumpOnto(cat, on.dest, on.wall);
     cat.wallhop(on, WALL_LEAP, WIND_UP + HOP_TIME + this.random.between(0.4, 0.7));
   }

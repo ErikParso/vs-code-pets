@@ -5,7 +5,7 @@
 // asks before a cat goes for good.
 import { FISH, HEARTS, type BoxButton, type CatBox } from '../world/boxes';
 import { coatOf } from '../world/coats';
-import { SP, type Dot } from '../world/sprites';
+import { PALETTE, PEEK_W, type Dot } from '../world/sprites';
 import { paintRows, type Paint } from './pixel-art';
 import { eachTextPixel, FONT_5X7, fontText, textWidth } from './pixel-font';
 import { paintFrame, paintShelf, paintSigns, paintWall, ROOM_PAD, ROOM_TOP } from './room-art';
@@ -105,24 +105,8 @@ const CLOSED = CLOSED_ART.flatMap((r, y) => Array(y === CLOSED_PLAIN_ROW ? TALLE
   (r) => r.slice(0, 10) + r[10].repeat(WIDEN + 1) + r.slice(11)
 );
 
-// A cat peeking over the lip, 16x13: ears, face, chin, and its front paws hooked over the
-// edge. Rows 0-9 are above the lip; the paws (rows 10-12) hang over it.
-const PEEK = [
-  '.KK..........KK.',
-  '.KPK........KPK.',
-  '.KPOKKKKKKKKOPK.',
-  '.KOOOODOODOOOOK.',
-  '.KOOOOOOOOOOOOK.',
-  '.KOOKKOOOOKKOOK.',
-  '.KOOKKOOOOKKOOK.',
-  '.KWOOOOPPOOOOWK.',
-  '.KWWWWKWWKWWWWK.',
-  '.KKWWWWWWWWWWKK.',
-  'KWWWK......KWWWK',
-  'KWKWK......KWKWK',
-  '.KKK........KKK.',
-];
-const PEEK_BLINK = PEEK.map((row, y) => (y === 5 ? '.KOOOOOOOOOOOOK.' : row));
+// The cat peeking over the lip is its sprite's (sprites/), PEEK_W wide: rows 0-9 are above the
+// lip; its paws (rows 10-12) hang over it.
 const PEEK_EYES = [4, 10]; // the columns its eyes start at, each 2 wide
 const PEEK_RIM = 10; // the peek row level with the top of the box's lip
 // Its collar, while it trusts you enough to wear one, over the lip between its paws (just under the chin it
@@ -261,14 +245,14 @@ export function paintOpenBox(paint: Paint, coatId: string, collar: string | null
   const card = (ch: string) => CARD[ch];
   const bx = x;
   const by = y + BOX_TOP;
-  const peekX = bx + Math.floor((BOX_W - PEEK[0].length) / 2);
+  const peekX = bx + Math.floor((BOX_W - PEEK_W) / 2);
 
   // Behind the cat: the flaps, the back edge and the dark inside.
   paintRows(paint, BOX.slice(0, LIP_Y), bx, by, card);
 
   // The cat, from the chin up (the rest of it is in the box).
-  const palette: Record<string, string> = { ...SP.palette, ...coatOf(coatId).palette };
-  const peek = blink ? PEEK_BLINK : PEEK;
+  const { sprite, letters: palette } = coatOf(coatId).look;
+  const peek = sprite.peek(blink);
   paintRows(paint, peek.slice(0, PEEK_RIM), peekX, by + LIP_Y - PEEK_RIM, (ch) => palette[ch]);
 
   // In front of it: the lip and the front.
@@ -296,7 +280,7 @@ function paintCell(paint: Paint, box: CatBox | null, x: number, y: number, t: nu
   const bx = x + BOX_X; // the box's left (the left flap's tip)
   const by = y + BOX_TOP; // the box's top (the flap tips)
 
-  const peekX = bx + Math.floor((BOX_W - PEEK[0].length) / 2);
+  const peekX = bx + Math.floor((BOX_W - PEEK_W) / 2);
   if (!box || box.packed) {
     // Closed, standing where an open box would: same bottom, centred.
     const cx = bx + Math.floor((BOX_W - CLOSED[0].length) / 2);
@@ -322,9 +306,9 @@ function paintCell(paint: Paint, box: CatBox | null, x: number, y: number, t: nu
   const heartsX = left + Math.floor((STRIP_W - (HEARTS * HEART_PITCH - 1)) / 2);
   for (let i = 0; i < HEARTS; i++) {
     const filled = box.halfHearts - 2 * i; // >= 2 full, 1 half, <= 0 empty
-    paintRows(paint, HEART, heartsX + i * HEART_PITCH, top + 1, (ch, col) => (filled >= 2 || (filled === 1 && col <= 2) ? SP.palette[ch] : PANEL.empty));
+    paintRows(paint, HEART, heartsX + i * HEART_PITCH, top + 1, (ch, col) => (filled >= 2 || (filled === 1 && col <= 2) ? PALETTE[ch] : PANEL.empty));
   }
-  for (let i = 0; i < FISH; i++) paintRows(paint, FISH_ICON, left + 2 + i * FISH_PITCH, top + 2 + HEART.length, (ch) => (i < box.fish ? SP.palette[ch] : PANEL.empty));
+  for (let i = 0; i < FISH; i++) paintRows(paint, FISH_ICON, left + 2 + i * FISH_PITCH, top + 2 + HEART.length, (ch) => (i < box.fish ? PALETTE[ch] : PANEL.empty));
 }
 
 // The name sticker: a slip of paper just big enough for the name, slapped on by hand somewhere in
@@ -391,7 +375,7 @@ const BUTTON_ART: Record<BoxButton['kind'], string[]> = {
     '.........',
   ],
 };
-const BUTTON_COLORS: Record<string, string> = { ...SP.palette, C: '#3b6fd6', E: '#5cc46a', T: '#b07a44', U: '#7a4e28' };
+const BUTTON_COLORS: Record<string, string> = { ...PALETTE, C: '#3b6fd6', E: '#5cc46a', T: '#b07a44', U: '#7a4e28' };
 const BUTTON_FRAME = '#16111c';
 const BUTTON_INSIDE = { on: '#2b2235', off: '#1e1a24' };
 const BUTTON_OFF = { ink: '#111111', art: '#4a4250' }; // a disabled icon: its outline, the rest

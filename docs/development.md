@@ -11,7 +11,7 @@
   the throw, falling off a floor, the limit of `MAX_FISH`); `collection.ts` is your cats and their
   steps, `coats.ts` the coats they come in, `seen.ts` the coats ever had (for the collection of
   coats), `boxes.ts` what the cat boxes show. `config.ts` holds
-  every tuning number.
+  every tuning number. `sprites/` is the cat art, below.
 - `src/browser/`: the cat script's browser side: reading VS Code's workbench, drawing, the debug
   care panel, the cat boxes (`cat-boxes.ts`: boxes from `box-art.ts` in a room from
   `room-art.ts`), the collection of coats (`collection-panel.ts`: cards from `collection-art.ts`,
@@ -23,6 +23,40 @@
   `out/pixel-cat.js` (`scripts/bundle.js`).
 - `test/sim/`: the simulation tests, below.
 - `test/art/`: the coat snapshots, below.
+
+## Sprites and coats
+
+A coat (`src/world/coats.ts`) keeps its game properties (id, name, rarity, collar, sponsor) apart
+from its `look`: a sprite and a colour for each of the sprite's slots, by name.
+
+```ts
+look: look(basicStriped, { outline: '#2b1d14', fur: '#e8913a', stripes: '#c46a22', chest: '#fbe3c0' })
+```
+
+`look()` is typed by the sprite: a missing colour, or one the sprite has no slot for, does not
+compile. The coats use `colors(fur, 'white chest'?)` to fill these from the `FUR` table.
+
+The sprites are a class tree in `src/world/sprites/`, one folder per base sprite:
+
+- `cat-sprite.ts`: what every sprite gives (`slots`, `frame(name)`, `peek(blink)` for the box
+  panel, `collar(frame)`), the frame names and sizes, and `withDots`, which lays pixels over a
+  parent's frame.
+- `basic/basic.ts`: `Basic`, the root: a short-haired cat in one fur, no markings. Slots
+  `outline` (K), `fur` (O), `chest` (W: chest and paws).
+- `basic/striped.ts`: `BasicStriped extends Basic`: adds the slot `stripes` (D) and lays tabby
+  stripes over `Basic`'s frames.
+- `palette.ts`: `SHARED`, the colours no coat sets (P pink, G a collar's tag, fish, yarn), and
+  `PALETTE` for art in no coat (menu icons). `props.ts`: fish and yarn.
+- `index.ts`: one instance of each sprite, for coats to name. Each is checked when loaded: every
+  frame the right size, and every letter in its art one of its slots or shared.
+
+Pixel art is rows of letters, one per pixel ('.' see-through). The slots map readable names to
+those letters, so coats never deal in letters.
+
+A new pattern on the same body extends its parent, adds its slots, and overrides `frame` and
+`peek` with `withDots(super.frame(f), DOTS[f])`. A new body (a long-haired cat) gets its own
+folder and redraws every frame. Add it to `index.ts`, name it in a coat, check it in the coat
+sheet (debug mode), then record the coat snapshots.
 
 ## Rules of the game
 
@@ -41,8 +75,8 @@
   takes three steps, one at a time, from the button
   beside its box (`step`, the one it is at: `collar`, `friend`, `depart`):
   1. **Collar,** from 2 hearts (`COLLAR_HEARTS`): from then on it wears its collar, roaming and
-     in its box, in its coat's colour. The collar's pixels for each frame are in `SP.collars`
-     (sprites.ts); the box's are `PEEK_COLLAR`.
+     in its box, in its coat's colour. The collar's pixels for each frame come from its sprite's
+     `collar(frame)` (`src/world/sprites/`); the box's are `PEEK_COLLAR`.
   2. **Friend,** at 5 hearts (`FRIEND_HEARTS`) with a box free: a new cat joins, made up there and
      then: a name not taken, a coat by rarity, energy 0.3-1.2. It starts out roaming.
   3. **Goodbye,** once it has brought its friend: its record leaves the collection, care and all;

@@ -2,17 +2,17 @@
 // lying across the top. The box button: a pile of closed boxes, a cat's eyes and name sticker on
 // two, the third still empty. The yarn button: a wicker basket of balls of yarn. The cards button: a
 // fan of collectible cards. The sheet button (debug mode): a cat sitting.
-import { SP } from '../world/sprites';
+import { basicStriped, PALETTE, PROPS } from '../world/sprites';
 import { CLOSED_CARD, PANEL } from './box-art';
 import { paintRows, type Paint } from './pixel-art';
 
 const MENU = { frameDark: '#16111c', frameLight: '#4a3d5a', inside: '#2b2235' };
 
 // The bucket: H light, G metal, D shade; the fish in the game's colours.
-const BUCKET_COLORS: Record<string, string> = { ...SP.palette, H: '#c9d1d9', G: '#9aa3ad', D: '#5f6770' };
+const BUCKET_COLORS: Record<string, string> = { ...PALETTE, H: '#c9d1d9', G: '#9aa3ad', D: '#5f6770' };
 // prettier-ignore
 const BUCKET = [
-  ...SP.frames.fishA.map((r) => `.....${r}.....`),
+  ...PROPS.fishA.map((r) => `.....${r}.....`),
   '.KKKKKKKKKKKKKKKKKK.',
   '.KHHHHHHHHHHHHHHHHK.',
   '.KKKKKKKKKKKKKKKKKK.',
@@ -34,7 +34,7 @@ const PILE = [...CAT_BOX.map((r) => `.....${r}.....`), ...EMPTY_BOX.map((r, y) =
 
 // The basket: T wicker, U its shade; balls of yarn in it, blue (B, N), the game's red (R, S) and
 // green (E, F), the red one's loose end hanging over the front.
-const YARN_COLORS: Record<string, string> = { ...SP.palette, N: '#2d6aa3', E: '#5fb35a', F: '#3a7d37', T: '#c99457', U: '#8a5a2e' };
+const YARN_COLORS: Record<string, string> = { ...PALETTE, N: '#2d6aa3', E: '#5fb35a', F: '#3a7d37', T: '#c99457', U: '#8a5a2e' };
 // prettier-ignore
 const YARN = [
   '........KKK.........',
@@ -55,7 +55,7 @@ const YARN = [
 
 // The cards: two collectible cards, a rare one (blue) behind an uncommon one (green) with a cat's
 // face and its name plate.
-const CARDS_COLORS: Record<string, string> = { ...SP.palette, k: '#000000', G: '#5cc46a', B: '#4f9bd9', w: '#f6f0dc' };
+const CARDS_COLORS: Record<string, string> = { ...PALETTE, k: '#000000', G: '#5cc46a', B: '#4f9bd9', w: '#f6f0dc' };
 // prettier-ignore
 const CARDS = [
   '....kkkkkkkk........',
@@ -84,7 +84,7 @@ const ICONS = {
   yarn: [YARN, YARN_COLORS],
   box: [PILE, PILE_COLORS],
   cards: [CARDS, CARDS_COLORS],
-  sheet: [SP.frames.sit, SP.palette], // just a cat
+  sheet: [basicStriped.frame('sit'), PALETTE], // just a cat
 } as const;
 
 export const BUTTON_W = BUCKET[0].length + 8;

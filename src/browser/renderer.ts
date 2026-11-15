@@ -3,13 +3,13 @@
 // cats stay crisp at any zoom level.
 import type { Cat } from '../world/cat';
 import { BITES, CHEW, FADE_TIME, GRAVITY, HOP_TIME, SNIFF, WALK_SPEED, WIND_UP } from '../world/config';
-import { COATS } from '../world/coats';
+import { coatOf } from '../world/coats';
 import { collarOf } from '../world/collection';
 import { clamp } from '../world/math';
-import { SP } from '../world/sprites';
+import { PALETTE, PROPS, type CatFrame, type Prop } from '../world/sprites';
 import { EMOTION_TIME, World } from '../world/world';
 import { paintCatFrame, paintCollar } from './cat-art';
-import type { Paint } from './pixel-art';
+import { paintRows, type Paint } from './pixel-art';
 
 /** How to draw: debug mode adds the floors, walls and meters; `ink` is VS Code's text colour. */
 export interface Look {
@@ -22,13 +22,13 @@ const swiping = (t: number) => (t * 3) % 1 >= 0.5;
 
 const Z = ['KKKK', '..K.', '.K..', 'KKKK'];
 const HEART = ['KK.KK', 'KKKKK', '.KKK.', '..K..'];
-const PLAIN = COATS[0].id; // fish and yarn are drawn in the palette as it is, which this coat keeps
 
 export class Renderer {
   private readonly canvas: HTMLCanvasElement;
   private readonly ctx: CanvasRenderingContext2D;
-  private sprites: Record<string, Record<string, HTMLCanvasElement>> = {}; // sprites[coat][frame], built as needed
-  private collars: Record<string, Record<string, HTMLCanvasElement>> = {}; // collars[colour][frame], built as needed
+  private sprites: Record<string, Partial<Record<CatFrame, HTMLCanvasElement>>> = {}; // sprites[coat][frame], built as needed
+  private collars: Record<string, Partial<Record<CatFrame, HTMLCanvasElement>>> = {}; // collars[coat|colour][frame], built as needed
+  private props: Partial<Record<Prop, HTMLCanvasElement>> = {}; // fish and yarn, built as needed
   private built = false; // sized for this pixel ratio yet
   dpr = 1; // device pixels per CSS pixel
   px: number; // device pixels per sprite pixel
@@ -87,23 +87,31 @@ export class Renderer {
   private buildSprites(): void {
     this.sprites = {};
     this.collars = {};
+    this.props = {};
     this.built = true;
   }
 
   /** A frame in coat `coatId` (coats.ts). */
-  private spriteFor(coatId: string, frame: string): HTMLCanvasElement {
+  private spriteFor(coatId: string, frame: CatFrame): HTMLCanvasElement {
     const set = (this.sprites[coatId] ??= {});
-    const rows = SP.frames[frame];
+    const rows = coatOf(coatId).look.sprite.frame(frame);
     // Most frames are 24x16; climbing ones are 16x24.
     return (set[frame] ??= this.spriteCanvas(rows[0].length, rows.length, (paint) => paintCatFrame(paint, coatId, frame, 0, 0)));
   }
 
-  /** A frame's collar in `colour`, the size of the frame so it goes on the same way; null if it shows none. */
-  private collarFor(colour: string, frame: string): HTMLCanvasElement | null {
-    if (!SP.collars[frame]) return null;
-    const set = (this.collars[colour] ??= {});
-    const rows = SP.frames[frame];
-    return (set[frame] ??= this.spriteCanvas(rows[0].length, rows.length, (paint) => paintCollar(paint, colour, frame, 0, 0)));
+  /** Coat `coatId`'s collar in `frame`, in `colour`, the size of the frame so it goes on the same way; null if it shows none. */
+  private collarFor(coatId: string, colour: string, frame: CatFrame): HTMLCanvasElement | null {
+    const sprite = coatOf(coatId).look.sprite;
+    if (!sprite.collar(frame).length) return null;
+    const set = (this.collars[`${coatId}|${colour}`] ??= {});
+    const rows = sprite.frame(frame);
+    return (set[frame] ??= this.spriteCanvas(rows[0].length, rows.length, (paint) => paintCollar(paint, coatId, colour, frame, 0, 0)));
+  }
+
+  /** A fish or a ball of yarn. */
+  private propFor(prop: Prop): HTMLCanvasElement {
+    const rows = PROPS[prop];
+    return (this.props[prop] ??= this.spriteCanvas(rows[0].length, rows.length, (paint) => paintRows(paint, rows, 0, 0, (ch) => PALETTE[ch])));
   }
 
   /** A w x h sprite (sprite px), painted by `draw`. */
@@ -120,9 +128,9 @@ export class Renderer {
     return c;
   }
 
-  private frameName(cat: Cat): string {
+  private frameName(cat: Cat): CatFrame {
     const a = cat.activity;
-    const cycle = (frames: string[], fps: number) => frames[Math.floor(a.t * fps) % frames.length];
+    const cycle = (frames: CatFrame[], fps: number) => frames[Math.floor(a.t * fps) % frames.length];
     switch (a.kind) {
       case 'walk':
         // Legs move faster when trotting.
@@ -169,7 +177,7 @@ export class Renderer {
       const flopping = g.landed && !g.cat && !g.falling && since < g.flopTime;
       const tumbling = !g.landed || g.falling;
       const wiggle = tumbling || flopping ? Math.floor(g.t * 12) % 2 : 0;
-      const img = this.spriteFor(PLAIN, wiggle ? 'fishB' : 'fishA');
+      const img = this.propFor(wiggle ? 'fishB' : 'fishA');
       const bites = g.cat ? clamp(Math.floor((g.cat.t - SNIFF) / CHEW + 0.4), 0, BITES) : 0;
       const cols = img.width / px;
       const cut = Math.min(cols - 1, Math.round((cols * bites) / BITES)) * px;
@@ -199,7 +207,7 @@ export class Renderer {
       const tumbling = !g.landed || g.falling;
       const player = g.cat as Cat | null;
       const swiper = player?.activity.kind === 'play' && swiping(player.t) ? player : null;
-      const img = this.spriteFor(PLAIN, swiper ? 'yarnB' : 'yarnA');
+      const img = this.propFor(swiper ? 'yarnB' : 'yarnA');
       const nudge = swiper ? swiper.dir * (px / dpr) : 0;
       const turn = tumbling ? (Math.floor(g.t * 8) % 4) * (g.vx < 0 ? -1 : 1) : Math.floor((g.x * dpr) / (5.5 * px));
       ctx.globalAlpha = g.fade ? 1 - g.fade / FADE_TIME : 1;
@@ -238,7 +246,7 @@ export class Renderer {
     const y = Math.round((cat.y + 3) * dpr);
     const bars: [number, string][] = [
       [cat.care.level(), cat.care.asking() ? '#e63946' : cat.care.canEat() ? '#ff9f1c' : '#2ec4b6'],
-      [cat.care.trust, SP.palette.P],
+      [cat.care.trust, PALETTE.P],
     ];
     bars.forEach(([value, color], i) => {
       const by = y + i * 2 * t;
@@ -256,7 +264,7 @@ export class Renderer {
     const frame = this.frameName(cat);
     const img = this.spriteFor(cat.coat, frame);
     const colour = collarOf(cat.def);
-    const collar = colour ? this.collarFor(colour, frame) : null;
+    const collar = colour ? this.collarFor(cat.coat, colour, frame) : null;
     const w = img.width;
     const h = img.height;
     // On a wall: seen from behind, hugging the border, centred on the wall line.
@@ -276,16 +284,16 @@ export class Renderer {
     const { ctx, dpr, px } = this;
     const zp = Math.max(1, px - Math.round(dpr));
     for (const z of world.emotions) {
-      ctx.fillStyle = z.kind === 'heart' ? SP.palette.P : ink;
+      ctx.fillStyle = z.kind === 'heart' ? PALETTE.P : ink;
       ctx.globalAlpha = 0.8 * (1 - z.t / EMOTION_TIME);
       const zx = Math.round((z.x + Math.sin(z.t * 3) * 3) * dpr) - (z.kind === 'fish' ? 5 * zp : 0); // centred
       const zy = Math.round(z.y * dpr);
-      const rows = z.kind === 'fish' ? SP.frames.fishA : z.kind === 'heart' ? HEART : Z;
+      const rows = z.kind === 'fish' ? PROPS.fishA : z.kind === 'heart' ? HEART : Z;
       rows.forEach((row, y) => {
         for (let x = 0; x < row.length; x++) {
           const c = z.dir < 0 ? row[row.length - 1 - x] : row[x];
           if (c === '.') continue;
-          if (z.kind === 'fish') ctx.fillStyle = SP.palette[c];
+          if (z.kind === 'fish') ctx.fillStyle = PALETTE[c];
           ctx.fillRect(zx + x * zp, zy + y * zp, zp, zp);
         }
       });
