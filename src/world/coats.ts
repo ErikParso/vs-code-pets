@@ -4,6 +4,9 @@
 // colour that stands out on it. And its look: the sprite it is drawn with (sprites/) and a colour
 // for each of that sprite's slots, by name: { outline, fur, chest } for basic, plus stripes for
 // basicStriped, spots for basicSpotted.
+//
+// Every coat must look unlike every other, locked or not. A coat taken out: a cat saved in it wears
+// the first coat (coatOf), and its card leaves the collection. Its id stays taken for good.
 import type { Random } from './random';
 import { basic, basicSpotted, basicStriped, SHARED, type CatSprite } from './sprites';
 
@@ -78,14 +81,11 @@ const ENTRIES: readonly CoatEntry[] = [
   { id: 'red-tabby',             name: 'Red Tabby',             rarity: 'common',   collar: 'blue',   look: look(basicStriped, colors('red')) },
   { id: 'brown-tabby-and-white', name: 'Brown Tabby and White', rarity: 'common',   collar: 'green',  look: look(basicStriped, colors('brown', 'white chest')) },
   { id: 'brown-tabby',           name: 'Brown Tabby',           rarity: 'common',   collar: 'green',  look: look(basicStriped, colors('brown')) },
-  { id: 'blue-tabby',            name: 'Blue Tabby',            rarity: 'common',   collar: 'red',    look: look(basicStriped, colors('blue')) },
   { id: 'blue-and-white',        name: 'Blue and White',        rarity: 'common',   collar: 'red',    look: look(basic,        colors('blue', 'white chest')) },
   { id: 'tuxedo',                name: 'Tuxedo',                rarity: 'common',   collar: 'red',    look: look(basicStriped, colors('black', 'white chest')), sponsor: 'Erik' },
   { id: 'black',                 name: 'Black',                 rarity: 'common',   collar: 'red',    look: look(basicStriped, colors('black')) },
   { id: 'spotted-smoke',         name: 'Spotted Smoke',         rarity: 'common',   collar: 'teal',   look: look(basicSpotted, { outline: '#141418', fur: '#5e5e66', spots: '#9a9aa3', chest: '#5e5e66' }) },
   { id: 'spotted-fawn',          name: 'Spotted Fawn',          rarity: 'common',   collar: 'green',  look: look(basicSpotted, { outline: '#2e241c', fur: '#c4a98c', spots: '#7a5a40', chest: '#c4a98c' }) },
-  { id: 'red-and-white',         name: 'Red and White',         rarity: 'uncommon', collar: 'blue',   look: look(basic,        colors('red', 'white chest')) },
-  { id: 'red',                   name: 'Red',                   rarity: 'uncommon', collar: 'blue',   look: look(basic,        colors('red')) },
   { id: 'blue',                  name: 'Blue',                  rarity: 'uncommon', collar: 'red',    look: look(basic,        colors('blue')) },
   { id: 'cream-tabby',           name: 'Cream Tabby',           rarity: 'uncommon', collar: 'purple', look: look(basicStriped, colors('cream')) },
   { id: 'cream-and-white',       name: 'Cream and White',       rarity: 'uncommon', collar: 'purple', look: look(basic,        colors('cream', 'white chest')) },
@@ -96,7 +96,6 @@ const ENTRIES: readonly CoatEntry[] = [
   { id: 'chocolate-and-white',   name: 'Chocolate and White',   rarity: 'rare',     collar: 'teal',   look: look(basic,        colors('chocolate', 'white chest')) },
   { id: 'chocolate',             name: 'Chocolate',             rarity: 'rare',     collar: 'teal',   look: look(basic,        colors('chocolate')) },
   { id: 'lilac-tabby-and-white', name: 'Lilac Tabby and White', rarity: 'rare',     collar: 'teal',   look: look(basicStriped, colors('lilac', 'white chest')), lockedByDonation: 'https://buymeacoffee.com/sealhunter/e/597950' },
-  { id: 'lilac',                 name: 'Lilac',                 rarity: 'rare',     collar: 'teal',   look: look(basic,        colors('lilac')) },
   { id: 'cinnamon-tabby',        name: 'Cinnamon Tabby',        rarity: 'rare',     collar: 'blue',   look: look(basicStriped, colors('cinnamon')) },
   { id: 'ladybug',               name: 'Ladybug',               rarity: 'rare',     collar: 'green',  look: look(basicSpotted, { outline: '#1a1210', fur: '#c2482c', spots: '#1d1513', chest: '#c2482c' }) },
   // A rusty red with white flecks, like a toadstool's cap.
@@ -112,7 +111,7 @@ if (BY_ID.size !== COATS.length) {
   throw new Error('coats.ts: every coat needs its own id');
 }
 
-/** The coat with `id`; the first one for an id that is not one. */
+/** The coat with `id`; the first one for an id that is not one (a coat taken out). */
 export function coatOf(id: string): Coat {
   return BY_ID.get(id) ?? COATS[0];
 }

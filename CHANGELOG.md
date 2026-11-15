@@ -1,6 +1,6 @@
 # Changelog
 
-## 0.1.119 - 0.1.136
+## 0.1.119 - 0.1.138
 
 - Planned coats can be sponsored: their card in the collection links to a donation page, and a
   sponsored coat's card shows a heart. The "White" coat is now called "Snow White".
@@ -9,6 +9,8 @@
 - Two new rarities: epic (purple card, four gems), with **Amanita** (rusty red with white flecks)
   and **Dalmatian** (white with black spots), and legendary (orange card, five gems), ready for its
   first coat.
+- Coats that looked like twins of others are taken out: Red, Red and White, Blue Tabby and Lilac.
+  A cat you have in one now wears Red Tabby and White.
 - A friend's coat is rolled from all coats, each weighted by its rarity (common 6, uncommon 4,
   rare 3, epic 2, legendary 1), so a rarer coat is always less likely than a commoner one.
 - Debug mode: a coat sheet, opened from a new button in the 🐈‍⬛ menu, shows every coat in every
