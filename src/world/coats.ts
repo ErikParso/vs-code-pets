@@ -3,11 +3,11 @@
 // name (as cat fanciers name it), how rare it is for a friend to turn up in it, and a collar
 // colour that stands out on it. And its look: the sprite it is drawn with (sprites/) and a colour
 // for each of that sprite's slots, by name: { outline, fur, chest } for basic, plus stripes for
-// basicStriped.
+// basicStriped, spots for basicSpotted.
 import type { Random } from './random';
-import { basic, basicStriped, SHARED, type CatSprite } from './sprites';
+import { basic, basicSpotted, basicStriped, SHARED, type CatSprite } from './sprites';
 
-export type Rarity = 'common' | 'uncommon' | 'rare';
+export type Rarity = 'common' | 'uncommon' | 'rare' | 'epic' | 'legendary';
 
 /** How a coat looks: a sprite, and a colour for each of its slots. */
 export interface Look {
@@ -94,6 +94,8 @@ const ENTRIES: readonly CoatEntry[] = [
   { id: 'lilac-tabby-and-white', name: 'Lilac Tabby and White', rarity: 'rare',     collar: 'teal',   look: look(basicStriped, colors('lilac', 'white chest')), lockedByDonation: 'https://buymeacoffee.com/sealhunter/e/597950' },
   { id: 'lilac',                 name: 'Lilac',                 rarity: 'rare',     collar: 'teal',   look: look(basic,        colors('lilac')) },
   { id: 'cinnamon-tabby',        name: 'Cinnamon Tabby',        rarity: 'rare',     collar: 'blue',   look: look(basicStriped, colors('cinnamon')) },
+  // A rusty red with white flecks, like a toadstool's cap.
+  { id: 'amanita',               name: 'Amanita',               rarity: 'epic',     collar: 'teal',   look: look(basicSpotted, { outline: '#2a1410', fur: '#b0452e', spots: '#f2ebdf', chest: '#f2ebdf' }) },
 ];
 
 export const COATS: readonly Coat[] = ENTRIES.map(({ collar, ...e }) => ({ ...e, collar: COLLAR[collar] }));
@@ -108,15 +110,12 @@ export function coatOf(id: string): Coat {
   return BY_ID.get(id) ?? COATS[0];
 }
 
-// How likely a friend's coat is of each rarity; within one, every coat is as likely.
-const RARITY_WEIGHTS: readonly (readonly [Rarity, number])[] = [
-  ['common', 60],
-  ['uncommon', 30],
-  ['rare', 10],
-];
+// How likely a friend is to come in each coat, by its rarity: every coat is rolled for directly,
+// so a rarer coat is always less likely than a commoner one, however many coats each rarity has
+// (and a rarity with no coats yet is simply never rolled).
+const WEIGHT: Record<Rarity, number> = { common: 6, uncommon: 4, rare: 3, epic: 2, legendary: 1 };
 
-/** A coat for a friend: its rarity by RARITY_WEIGHTS, then any coat of that rarity. */
+/** A coat for a friend: any coat not locked for sponsoring, as likely as its rarity's WEIGHT. */
 export function rollCoat(random: Random): Coat {
-  const rarity = random.pick(RARITY_WEIGHTS);
-  return random.oneOf(COATS.filter((c) => c.rarity === rarity && !c.lockedByDonation));
+  return random.pick(COATS.filter((c) => !c.lockedByDonation).map((c) => [c, WEIGHT[c.rarity]] as const));
 }

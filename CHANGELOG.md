@@ -1,5 +1,21 @@
 # Changelog
 
+## 0.1.128
+
+- A friend's coat is rolled from all coats, each weighted by its rarity (common 6, uncommon 4,
+  rare 3, epic 2, legendary 1), so a rarer coat is always less likely than a commoner one.
+- A new rarity, legendary (orange card, five gems), ready for its first coat.
+
+## 0.1.127
+
+- A friend's coat is common 60%, uncommon 27%, rare 10%, epic 3%.
+
+## 0.1.126
+
+- A new rarity, epic (purple card, four gems), and its first coat: **Amanita**, a rusty red cat
+  with white flecks like a toadstool's cap. Friends come epic about 3% of the time.
+- A new sprite, `BasicSpotted`: Basic with spots.
+
 ## 0.1.125
 
 - `BasicStriped` lays its stripe pixels over `Basic`'s frames again (as in 0.1.123), instead of

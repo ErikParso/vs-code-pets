@@ -2,7 +2,7 @@
 // on the brick wall of the room the boxes are kept in (room-art.ts), in the coats' order. A card
 // found shows the cat sitting in its coat, its number and its name; one still to find, a dark card
 // with a cat's shadow and "???". Either way its frame is in its rarity's colour (dark while still
-// to find) with one to three gems, so you can see how rare what is missing is.
+// to find) with one to five gems, so you can see how rare what is missing is.
 import type { Coat, Rarity } from '../world/coats';
 import { PALETTE } from '../world/sprites';
 import { HEART } from './box-art';
@@ -22,6 +22,8 @@ const RARITY: Record<Rarity, { frame: string; shade: string; window: string; dim
   common: { frame: '#a9a6b4', shade: '#6e6b7a', window: '#e6e1d6', dim: '#55525e', gems: 1 },
   uncommon: { frame: '#5cc46a', shade: '#2f7d3b', window: '#d9eed6', dim: '#2f5e36', gems: 2 },
   rare: { frame: '#4f9bd9', shade: '#2b5d8f', window: '#d6e5f4', dim: '#2a4c70', gems: 3 },
+  epic: { frame: '#a65fd6', shade: '#6a3896', window: '#ece0f5', dim: '#4a3363', gems: 4 },
+  legendary: { frame: '#e08a2e', shade: '#9a5512', window: '#f8e6d0', dim: '#5e3a1c', gems: 5 },
 };
 const CARD = { edge: '#000000', ink: '#2b1d14', plate: '#f6f0dc', gem: '#f2d14b', gemDim: '#7a6a2c' };
 const SPONSOR_HEART = { color: PALETTE.P, x: 4, y: 9 };

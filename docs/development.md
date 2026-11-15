@@ -45,6 +45,8 @@ The sprites are a class tree in `src/world/sprites/`, one folder per base sprite
   `outline` (K), `fur` (O), `chest` (W: chest and paws).
 - `basic/striped.ts`: `BasicStriped extends Basic`: adds the slot `stripes` (D) and lays tabby
   stripes over `Basic`'s frames.
+- `basic/spotted.ts`: `BasicSpotted extends Basic`: adds the slot `spots` (D) and lays spots
+  over `Basic`'s frames (the epic Amanita).
 - `palette.ts`: `SHARED`, the colours no coat sets (P pink, G a collar's tag, fish, yarn), and
   `PALETTE` for art in no coat (menu icons). `props.ts`: fish and yarn.
 - `index.ts`: one instance of each sprite, for coats to name. Each is checked when loaded: every
@@ -88,9 +90,10 @@ sheet (debug mode), then record the coat snapshots.
   No progress can be lost: a cat only goes once it has brought its friend, so there are always
   as many cats still to bring theirs as there were at the start, and with every box full all the
   others may go.
-- **Coats** (`coats.ts`): 20, named as cat fanciers name them, each the same art in its own
-  outline, fur, stripes and white, with its collar colour. A friend's is common 60%, uncommon 30%,
-  rare 10%, then any coat of that rarity.
+- **Coats** (`coats.ts`): 21, each a sprite in its own colours (see Sprites and coats), with its
+  collar colour. A friend's coat is rolled from every coat not locked for sponsoring, each weighted
+  by its rarity: common 6, uncommon 4, rare 3, epic 2, legendary 1. So a rarer coat is always
+  less likely than a commoner one, and a rarity with no coats is never rolled.
 - **Play:** a ball of yarn lying still on a cat's floor within reach makes `play` one of the
   things it picks from (weight `PLAY_WEIGHT`); fish still come first and starving cats don't play.
   On reaching it, a cat crouches in the sleep pose for 0.7-1.2 seconds. It then bats at the ball
