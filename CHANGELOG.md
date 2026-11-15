@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.1.129
+
+- A new epic coat: **Dalmatian**, white with black spots.
+
 ## 0.1.128
 
 - A friend's coat is rolled from all coats, each weighted by its rarity (common 6, uncommon 4,

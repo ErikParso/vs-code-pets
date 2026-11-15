@@ -96,6 +96,8 @@ const ENTRIES: readonly CoatEntry[] = [
   { id: 'cinnamon-tabby',        name: 'Cinnamon Tabby',        rarity: 'rare',     collar: 'blue',   look: look(basicStriped, colors('cinnamon')) },
   // A rusty red with white flecks, like a toadstool's cap.
   { id: 'amanita',               name: 'Amanita',               rarity: 'epic',     collar: 'teal',   look: look(basicSpotted, { outline: '#2a1410', fur: '#b0452e', spots: '#f2ebdf', chest: '#f2ebdf' }) },
+  // White with black spots, like the dog.
+  { id: 'dalmatian',             name: 'Dalmatian',             rarity: 'epic',     collar: 'red',    look: look(basicSpotted, { outline: '#2a2a2e', fur: '#f4f2ee', spots: '#26262b', chest: '#f4f2ee' }) },
 ];
 
 export const COATS: readonly Coat[] = ENTRIES.map(({ collar, ...e }) => ({ ...e, collar: COLLAR[collar] }));

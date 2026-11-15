@@ -5,7 +5,7 @@ edges of the sidebar, editor and panels, jump between them, climb up and slide d
 wherever they like.
 
 Meet **Jexit** (a sleepy red tabby), **Erik** (a tuxedo, the everyday cat) and **Boris** (a lazy
-brown tabby). Look after them well and they'll bring friends: 21 coats to find, some rarer than
+brown tabby). Look after them well and they'll bring friends: 22 coats to find, some rarer than
 others.
 
 ![Pixel cats roaming across VS Code](images/pixel-cats-screenshot.png)
