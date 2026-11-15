@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.1.121
+
+- Debug mode: the coat sheet is plain now: a row of frames per coat; click it to toggle collars.
+
+## 0.1.120
+
+- Debug mode: a coat sheet, opened from a new button in the 🐈‍⬛ menu, shows every coat in every
+  frame, with the collars on or off.
+- Coat snapshot tests (`test/art/`) check every coat in every frame, pixel for pixel.
+
 ## 0.1.119
 
 - Coats in the collection can now be sponsored: each coat links to a donation page.

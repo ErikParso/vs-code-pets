@@ -107,13 +107,13 @@ function paintHeart(paint: Paint, x: number, y: number, color: string): void {
   paintRows(paint, HEART, x, y, (ch) => (ch === 'P' ? color : undefined));
 }
 
-// `t` (already passed through fontText) at (x, y), in pixels `fine` sprite px each.
-function text(paint: Paint, t: string, x: number, y: number, fine: number, color: string): void {
+/** `t` (already passed through fontText) at (x, y), in pixels `fine` sprite px each. */
+export function text(paint: Paint, t: string, x: number, y: number, fine: number, color: string): void {
   eachTextPixel(FONT_5X7, t, 0, 0, (fx, fy) => paint(x + fx * fine, y + fy * fine, fine, fine, color));
 }
 
-// `name`'s words in lines of at most `max` characters (a longer word on its own line).
-function wrap(name: string, max: number): string[] {
+/** `name`'s words in lines of at most `max` characters (a longer word on its own line). */
+export function wrap(name: string, max: number): string[] {
   const lines: string[] = [];
   for (const word of name.split(' ')) {
     const last = lines[lines.length - 1];

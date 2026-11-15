@@ -3,11 +3,13 @@
 // cats stay crisp at any zoom level.
 import type { Cat } from '../world/cat';
 import { BITES, CHEW, FADE_TIME, GRAVITY, HOP_TIME, SNIFF, WALK_SPEED, WIND_UP } from '../world/config';
-import { COATS, coatOf } from '../world/coats';
+import { COATS } from '../world/coats';
 import { collarOf } from '../world/collection';
 import { clamp } from '../world/math';
 import { SP } from '../world/sprites';
 import { EMOTION_TIME, World } from '../world/world';
+import { paintCatFrame, paintCollar } from './cat-art';
+import type { Paint } from './pixel-art';
 
 /** How to draw: debug mode adds the floors, walls and meters; `ink` is VS Code's text colour. */
 export interface Look {
@@ -92,35 +94,28 @@ export class Renderer {
   private spriteFor(coatId: string, frame: string): HTMLCanvasElement {
     const set = (this.sprites[coatId] ??= {});
     const rows = SP.frames[frame];
-    const palette: Record<string, string> = { ...SP.palette, ...coatOf(coatId).palette };
     // Most frames are 24x16; climbing ones are 16x24.
-    return (set[frame] ??= this.spriteCanvas(rows[0].length, rows.length, (dot) =>
-      rows.forEach((row, y) => [...row].forEach((ch, x) => dot(x, y, palette[ch])))
-    ));
+    return (set[frame] ??= this.spriteCanvas(rows[0].length, rows.length, (paint) => paintCatFrame(paint, coatId, frame, 0, 0)));
   }
 
   /** A frame's collar in `colour`, the size of the frame so it goes on the same way; null if it shows none. */
   private collarFor(colour: string, frame: string): HTMLCanvasElement | null {
-    const dots = SP.collars[frame];
-    if (!dots) return null;
+    if (!SP.collars[frame]) return null;
     const set = (this.collars[colour] ??= {});
     const rows = SP.frames[frame];
-    return (set[frame] ??= this.spriteCanvas(rows[0].length, rows.length, (dot) => {
-      for (const [x, y, ch] of dots) dot(x, y, ch === 'C' ? colour : SP.palette[ch]);
-    }));
+    return (set[frame] ??= this.spriteCanvas(rows[0].length, rows.length, (paint) => paintCollar(paint, colour, frame, 0, 0)));
   }
 
-  /** A w x h sprite, painted one sprite pixel at a time by `paint`. */
-  private spriteCanvas(w: number, h: number, paint: (dot: (x: number, y: number, color?: string) => void) => void): HTMLCanvasElement {
+  /** A w x h sprite (sprite px), painted by `draw`. */
+  private spriteCanvas(w: number, h: number, draw: (paint: Paint) => void): HTMLCanvasElement {
     const { px } = this;
     const c = document.createElement('canvas');
     c.width = w * px;
     c.height = h * px;
     const g = c.getContext('2d') as CanvasRenderingContext2D;
-    paint((x, y, color) => {
-      if (!color) return;
+    draw((x, y, pw, ph, color) => {
       g.fillStyle = color;
-      g.fillRect(x * px, y * px, px, px);
+      g.fillRect(x * px, y * px, pw * px, ph * px);
     });
     return c;
   }

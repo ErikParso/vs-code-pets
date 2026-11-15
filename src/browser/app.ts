@@ -5,6 +5,7 @@
 // VS Code's timers and animation frames, drawn by the Renderer.
 import { CarePanel } from './care-panel';
 import { CatBoxes } from './cat-boxes';
+import { CoatSheet } from './coat-sheet';
 import { FishMenu } from './fish-menu';
 import { localCatStore, localSeenStore } from './cat-store';
 import { CollectionPanel } from './collection-panel';
@@ -42,6 +43,7 @@ export function startPixelCat(): void {
   let carePanel: CarePanel;
   let catBoxes: CatBoxes;
   let cards: CollectionPanel;
+  let sheet: CoatSheet;
   let menu: FishMenu;
   let ink = '#888';
   const driver = new Driver({
@@ -66,7 +68,7 @@ export function startPixelCat(): void {
     if (driver.shown !== wasShown) console.info(`[pixel-cat] ${driver.shown ? 'showing' : 'hiding'} the cats`);
     if (driver.shown && !wasShown) ink = workbench.ink();
     carePanel.render(world, driver.shown && driver.debug);
-    if (!driver.shown) for (const p of [catBoxes.popup, cards.popup, menu.popup]) p.close();
+    if (!driver.shown) for (const p of [catBoxes.popup, cards.popup, sheet.popup, menu.popup]) p.close();
   }
 
   function frame(now: number) {
@@ -74,6 +76,7 @@ export function startPixelCat(): void {
     renderer.draw(world, driver.shown, { debug: driver.debug, ink });
     catBoxes.frame(now);
     cards.frame(now);
+    sheet.frame();
     requestAnimationFrame(frame);
   }
 
@@ -90,22 +93,31 @@ export function startPixelCat(): void {
     catBoxes = new CatBoxes(collection, systemClock, () => renderer, new Tooltip());
     // The collection: a card for every coat, found or still to find.
     cards = new CollectionPanel(localSeenStore, () => collection.cats(), () => renderer, new Tooltip());
+    // The coat sheet (debug mode): every coat in every frame.
+    sheet = new CoatSheet(() => renderer);
     // The 🐈‍⬛'s menu: a fish or a ball of yarn to throw from the 🐈‍⬛, a box to open the cat boxes,
-    // the cards to open the collection.
-    menu = new FishMenu(() => renderer, {
+    // the cards to open the collection, and in debug mode a sheet to open the coat sheet.
+    const closeOthers = (keep: unknown) => {
+      for (const p of [catBoxes, cards, sheet]) if (p !== keep) p.popup.close();
+    };
+    menu = new FishMenu(() => renderer, () => driver.debug, {
       fish: (from) => world.throwFish(from.x, from.y),
       yarn: (from) => world.throwYarn(from.x, from.y),
       box: () => {
-        cards.popup.close();
+        closeOthers(catBoxes);
         catBoxes.show();
       },
       cards: () => {
-        catBoxes.popup.close();
+        closeOthers(cards);
         cards.show();
+      },
+      sheet: () => {
+        closeOthers(sheet);
+        sheet.show();
       },
     });
     workbench.onOtherClick((target) => {
-      for (const p of [catBoxes.popup, cards.popup, menu.popup]) p.clickedAt(target);
+      for (const p of [catBoxes.popup, cards.popup, sheet.popup, menu.popup]) p.clickedAt(target);
     });
     resize();
     window.addEventListener('resize', resize);
@@ -121,8 +133,7 @@ export function startPixelCat(): void {
         world.save();
         return;
       }
-      catBoxes.popup.close();
-      cards.popup.close();
+      closeOthers(null);
       menu.toggle(click.x, click.y);
     });
     setInterval(poll, POLL_MS);

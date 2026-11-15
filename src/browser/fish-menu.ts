@@ -2,7 +2,7 @@
 // four buttons, each its own canvas: a bucket of fish (throw the cats one, out of the bucket; the
 // menu stays, for the next), a pile of yarn (throw them a ball of yarn, the same way), a pile of
 // boxes (see them all in their boxes) and a fan of cards (the collection of coats); those two
-// close the menu.
+// close the menu. In debug mode a fifth, a cat sitting, opens the coat sheet.
 import { BUTTON_H, BUTTON_W, paintButton, type MenuButton } from './menu-art';
 import { paintCanvas, Popup } from './popup';
 
@@ -14,19 +14,24 @@ export interface MenuActions {
   yarn: (from: { x: number; y: number }) => void; // `from`: the pile's middle and top, CSS px
   box: () => void;
   cards: () => void;
+  sheet: () => void;
 }
 
 export class FishMenu {
   readonly popup = new Popup('pixel-cat-menu', { zIndex: '1002', gap: `${GAP}px` }, 'flex');
   private readonly buttons: [HTMLCanvasElement, MenuButton][];
 
-  /** `pixels`: from the Renderer. */
-  constructor(private readonly pixels: () => { px: number; dpr: number }, actions: MenuActions) {
-    this.buttons = (['fish', 'yarn', 'box', 'cards'] as const).map((kind) => {
+  /** `pixels`: from the Renderer; `debug`: whether debug mode is on (it shows the sheet button). */
+  constructor(
+    private readonly pixels: () => { px: number; dpr: number },
+    private readonly debug: () => boolean,
+    actions: MenuActions
+  ) {
+    this.buttons = (['fish', 'yarn', 'box', 'cards', 'sheet'] as const).map((kind) => {
       const canvas = document.createElement('canvas');
       Object.assign(canvas.style, { cursor: 'pointer', boxShadow: '0 4px 12px rgba(0, 0, 0, 0.5)' });
       canvas.addEventListener('click', () => {
-        if (kind === 'box' || kind === 'cards') {
+        if (kind === 'box' || kind === 'cards' || kind === 'sheet') {
           this.popup.close();
           return actions[kind]();
         }
@@ -44,7 +49,10 @@ export class FishMenu {
     // About BUTTON_TALL CSS px tall, in whole device pixels per sprite pixel (so still crisp).
     const { dpr } = this.pixels();
     const size = { px: Math.max(1, Math.round((BUTTON_TALL * dpr) / BUTTON_H)), dpr };
-    for (const [canvas, kind] of this.buttons) paintCanvas(canvas, BUTTON_W, BUTTON_H, size, (paint) => paintButton(paint, kind));
+    for (const [canvas, kind] of this.buttons) {
+      canvas.style.display = kind === 'sheet' && !this.debug() ? 'none' : '';
+      paintCanvas(canvas, BUTTON_W, BUTTON_H, size, (paint) => paintButton(paint, kind));
+    }
     this.popup.show();
     const { width, height } = this.popup.el.getBoundingClientRect();
     const left = Math.min(Math.max(GAP, x - width / 2), window.innerWidth - width - GAP);

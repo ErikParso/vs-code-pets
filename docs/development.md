@@ -80,6 +80,10 @@ when it last played for trust (happy for 20 hours after), and its trust, each wi
 buttons. Alt+click the 🐈‍⬛ to make the cats hungrier, Shift+click to make them fuller; Ctrl+click
 adds trust, Ctrl+Shift+click takes it away.
 
+The 🐈‍⬛'s menu gets a fifth button, a cat sitting, that opens the coat sheet (`coat-sheet.ts`):
+every coat in every frame, then in its box, drawn by the same code as the game (`cat-art.ts`,
+`paintOpenBox` in `box-art.ts`). Click it to put the collars on or take them off.
+
 ## Simulation tests
 
 The simulations run the cats' `World` (`src/world/world.ts`) the way the cat script drives it

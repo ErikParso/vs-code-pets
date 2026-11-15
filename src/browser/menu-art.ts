@@ -1,7 +1,7 @@
 // The 🐈‍⬛'s menu buttons, each a tile in a dark frame. The fish button: a metal bucket with a fish
 // lying across the top. The box button: a pile of closed boxes, a cat's eyes and name sticker on
 // two, the third still empty. The yarn button: a wicker basket of balls of yarn. The cards button: a
-// fan of collectible cards.
+// fan of collectible cards. The sheet button (debug mode): a cat sitting.
 import { SP } from '../world/sprites';
 import { CLOSED_CARD, PANEL } from './box-art';
 import { paintRows, type Paint } from './pixel-art';
@@ -76,10 +76,16 @@ const CARDS = [
   '........kkkkkkkk....',
 ];
 
-/** The 🐈‍⬛'s menu buttons, in order. */
-export type MenuButton = 'fish' | 'yarn' | 'box' | 'cards';
+/** The 🐈‍⬛'s menu buttons, in order. The sheet shows only in debug mode. */
+export type MenuButton = 'fish' | 'yarn' | 'box' | 'cards' | 'sheet';
 
-const ICONS = { fish: [BUCKET, BUCKET_COLORS], yarn: [YARN, YARN_COLORS], box: [PILE, PILE_COLORS], cards: [CARDS, CARDS_COLORS] } as const;
+const ICONS = {
+  fish: [BUCKET, BUCKET_COLORS],
+  yarn: [YARN, YARN_COLORS],
+  box: [PILE, PILE_COLORS],
+  cards: [CARDS, CARDS_COLORS],
+  sheet: [SP.frames.sit, SP.palette], // just a cat
+} as const;
 
 export const BUTTON_W = BUCKET[0].length + 8;
 export const BUTTON_H = BUCKET.length + 8;
