@@ -67,8 +67,8 @@ sheet (debug mode), then record the coat snapshots.
   It ignores fish for the first three hours, then will eat again; after 20
   hours it asks for food now and then with a little fish floating over its head. After 26 it
   starves, and only walks or meows for food until it eats.
-- **Trust:** from 0 to 1, starting at 0.1. It grows by 0.03 when a cat eats before it starves
-  and drops by 0.05 when fed late; a play adds 0.02 once a day (see Play). Hunger continues while
+- **Trust:** from 0 to 1, starting at 0.1. It grows by 0.05 when a cat eats before it starves
+  and drops by 0.05 when fed late; a play adds 0.05 once a day (see Play). Hunger continues while
   VS Code is closed; trust changes only when a cat eats or plays.
 - **The collection** (`collection.ts`, kept in `localStorage` as `pixelCat.cats`): your cats, at
   most `BOXES` (15). It starts as `FIRST_CATS`. Each cat is one record: a unique `id`, a
@@ -101,7 +101,7 @@ sheet (debug mode), then record the coat snapshots.
   On reaching it, a cat crouches in the sleep pose for 0.7-1.2 seconds. It then bats at the ball
   for a few seconds, making it shake with each swipe, before swiping it away 100-250 px; once it
   stops it is up for play again, and one that rolls off the end of its floor is gone. Up to
-  `MAX_FISH` balls are out, like fish. A play earns 0.02 trust (and a heart floats up), at most
+  `MAX_FISH` balls are out, like fish. A play earns 0.05 trust (and a heart floats up), at most
   once every 20 hours (`playedAt`, `PLAY_REWARD_AFTER`).
 - **The cat boxes** show trust as 5 hearts (half a heart is 0.1) and food as 5 fish (each about
   5 hours of the 26). A packed cat stays in its box (its window keeps its Web Lock); its hunger

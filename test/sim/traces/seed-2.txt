@@ -1,4 +1,4 @@
-# Pixel Cat event log: 2 days, open weekdays 9-13, feeder attentive, seed 2. Recorded from 715b77b (v0.1.117).
+# Pixel Cat event log: 2 days, open weekdays 9-13, feeder attentive, seed 2. Recorded from 3ce513c (v0.1.138).
 # Each line: seconds since Monday 00:00, then what happened. See test/sim/trace.js.
 32400.000 open
 32400.700 Jexit arrive state=walk x=1560.00 y=794.00 tx=1316.12 dur=Infinity
@@ -18024,6 +18024,6 @@
 133186.854 Boris to friend state=walk x=796.55 y=794.00 tx=796.55 dur=Infinity
 133186.870 Boris nap snuggled state=sleep x=796.55 y=794.00 tx=- dur=57.89
 133200.070 close
-133200.070 Jexit care deadline=1767784822756 trust=0.1300
-133200.070 Erik care deadline=1767784225786 trust=0.1300
-133200.070 Boris care deadline=1767786006378 trust=0.1300
+133200.070 Jexit care deadline=1767784822756 trust=0.1500
+133200.070 Erik care deadline=1767784225786 trust=0.1500
+133200.070 Boris care deadline=1767786006378 trust=0.1500

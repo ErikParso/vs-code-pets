@@ -1,6 +1,6 @@
 # Changelog
 
-## 0.1.119 - 0.1.138
+## 0.1.119 - 0.1.139
 
 - Planned coats can be sponsored: their card in the collection links to a donation page, and a
   sponsored coat's card shows a heart. The "White" coat is now called "Snow White".
@@ -11,6 +11,8 @@
   first coat.
 - Coats that looked like twins of others are taken out: Red, Red and White, Blue Tabby and Lilac.
   A cat you have in one now wears Red Tabby and White.
+- Cats come to trust you faster: a fish on time and a play each add 0.05 (was 0.03 and 0.02); a
+  late fish still takes 0.05. Fed and played with daily, a cat brings its friend in about 2 weeks.
 - A friend's coat is rolled from all coats, each weighted by its rarity (common 6, uncommon 4,
   rare 3, epic 2, legendary 1), so a rarer coat is always less likely than a commoner one.
 - Debug mode: a coat sheet, opened from a new button in the 🐈‍⬛ menu, shows every coat in every
