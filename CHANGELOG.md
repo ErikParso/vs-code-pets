@@ -1,6 +1,6 @@
 # Changelog
 
-## 0.1.119 - 0.1.135
+## 0.1.119 - 0.1.136
 
 - Planned coats can be sponsored: their card in the collection links to a donation page, and a
   sponsored coat's card shows a heart. The "White" coat is now called "Snow White".
