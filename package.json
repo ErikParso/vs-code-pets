@@ -47,10 +47,11 @@
     "compile": "tsc -p ./ && npm run build:inject",
     "build:inject": "tsc -p tsconfig.world.json && tsc -p tsconfig.browser.json && node scripts/bundle.js",
     "watch": "tsc -watch -p ./",
-    "test": "node test/sim/smoke.js && node test/sim/trace.js",
+    "test": "node test/sim/smoke.js && node test/sim/trace.js && node test/art/coats.js",
     "sim": "node test/sim/run.js",
     "sim:compare": "node test/sim/compare.js",
     "sim:trace:record": "node test/sim/trace.js --record",
+    "art:record": "node test/art/coats.js --record",
     "vscode:prepublish": "npm run compile",
     "vscode:uninstall": "node ./out/uninstall.js"
   },

@@ -1,0 +1,43 @@
+{
+ "legend": {
+  "a": "#2b1d14",
+  "b": "#4f9bd9",
+  "c": "#cfe6f5",
+  "d": "#d9506e",
+  "e": "#9c2f4b"
+ },
+ "images": {
+  "frame fishA": [
+   "....aaaa..",
+   "a..abbbba.",
+   "aaabbbbaba",
+   "a..acccca.",
+   "....aaaa.."
+  ],
+  "frame fishB": [
+   "a...aaaa..",
+   ".a.abbbba.",
+   "..abbbbaba",
+   ".a.acccca.",
+   "a...aaaa.."
+  ],
+  "frame yarnA": [
+   "...aaa....",
+   "..addea...",
+   ".adeedda..",
+   ".aeddeda..",
+   ".addeeda..",
+   "..aedda...",
+   "...aaadd.."
+  ],
+  "frame yarnB": [
+   "...aaa....",
+   "..aedda...",
+   ".addeeda..",
+   ".adeddea..",
+   ".aeddeda..",
+   "..addea...",
+   "...aaadd.."
+  ]
+ }
+}

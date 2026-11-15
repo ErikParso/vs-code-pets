@@ -22,6 +22,7 @@
   through `pixel-art.ts`. Bundled with `src/world` by esbuild into
   `out/pixel-cat.js` (`scripts/bundle.js`).
 - `test/sim/`: the simulation tests, below.
+- `test/art/`: the coat snapshots, below.
 
 ## Rules of the game
 
@@ -97,7 +98,7 @@ Every run fails if a cat breaks a rule of its world: it walks further than
 its hunger or trust changes without a meal or is not kept while VS Code is closed, or the
 script throws.
 
-**`npm test`: the smoke test, then the exact check (about 10 s).** Two short working days (9-13),
+**`npm test`: the smoke test, the exact check, then the coat snapshots (about 10 s).** Two short working days (9-13),
 two seeds. Every action a cat starts, every meal and every fish is a line in an event log,
 compared line by line with the reference in `test/sim/traces/`. A change meant to leave
 behaviour alone (a refactor) must keep it identical; otherwise it shows the first line that
@@ -125,3 +126,15 @@ statistics are printed only with it).
 Other options of `node test/sim/run.js`: `--hours 4` (one 4-hour session, about 20 s),
 `--days 10 --open 8-18`, `--seeds 3`, `--serial`, `--name my-try`, `--no-snapshot`. Both tools
 take `--src <copy of src/>` to try a change without touching the real files.
+
+## Coat snapshots
+
+`node test/art/coats.js` (part of `npm test`) draws every coat through the real drawing code and
+compares every pixel's colour with `test/art/snapshots/<coat id>.json`. For each coat it covers
+every cat frame as the renderer builds it, with and without its collar; its cat peeking out of a
+box in the cat boxes panel, eyes open and blinking, with and without a collar; and its card in
+the collection, found and unseen. Fish and yarn don't depend on the coat and are checked once,
+in `_props.json`. It compares final colours, not the art's letters, so the art can be reorganised
+freely as long as every cat still looks the same. A failure names the coat, the image and the
+first pixel that differs. After a change to a coat's look that you meant, or after adding a coat,
+record new snapshots with `npm run art:record`.
