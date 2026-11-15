@@ -1,81 +1,22 @@
 # Changelog
 
-## 0.1.135
+## 0.1.119 - 0.1.135
 
-- A new rare coat: **Ladybug**, deep red with black spots.
-
-## 0.1.134
-
-- A new uncommon coat: **Snow Bengal**, ivory with soft tan spots.
-
-## 0.1.133
-
-- Blue Tortie is taken out.
-
-## 0.1.132
-
-- Two new spotted common coats in natural colours, **Spotted Smoke** (charcoal with grey flecks)
-  and **Spotted Fawn** (soft beige with brown spots), in place of Tortoiseshell, which was taken out.
-
-## 0.1.130
-
-- Three new spotted coats: **Tortoiseshell** (common, near black with ginger flecks), **Bengal**
-  (uncommon, golden with dark brown spots) and **Blue Tortie** (rare, blue-grey with cream flecks).
-
-## 0.1.129
-
-- A new epic coat: **Dalmatian**, white with black spots.
-
-## 0.1.128
-
+- Planned coats can be sponsored: their card in the collection links to a donation page, and a
+  sponsored coat's card shows a heart. The "White" coat is now called "Snow White".
+- New spotted coats: **Spotted Smoke** and **Spotted Fawn** (common), **Bengal** and **Snow
+  Bengal** (uncommon) and **Ladybug** (rare).
+- Two new rarities: epic (purple card, four gems), with **Amanita** (rusty red with white flecks)
+  and **Dalmatian** (white with black spots), and legendary (orange card, five gems), ready for its
+  first coat.
 - A friend's coat is rolled from all coats, each weighted by its rarity (common 6, uncommon 4,
   rare 3, epic 2, legendary 1), so a rarer coat is always less likely than a commoner one.
-- A new rarity, legendary (orange card, five gems), ready for its first coat.
-
-## 0.1.127
-
-- A friend's coat is common 60%, uncommon 27%, rare 10%, epic 3%.
-
-## 0.1.126
-
-- A new rarity, epic (purple card, four gems), and its first coat: **Amanita**, a rusty red cat
-  with white flecks like a toadstool's cap. Friends come epic about 3% of the time.
-- A new sprite, `BasicSpotted`: Basic with spots.
-
-## 0.1.125
-
-- `BasicStriped` lays its stripe pixels over `Basic`'s frames again (as in 0.1.123), instead of
-  a full copy of the cat. Every coat looks as before.
-
-## 0.1.124
-
-- `BasicStriped` is drawn in full (the cat with its stripes) instead of laying stripe pixels over
-  `Basic` by coordinates. Every coat looks as before.
-
-## 0.1.123
-
-- A coat keeps its look apart: `look(sprite, colors)`, with colours named by the sprite's slots
-  (`outline`, `fur`, `stripes`, `chest`) and checked by TypeScript. Every coat looks as before.
-
-## 0.1.122
-
-- Cat art is now a tree of sprite classes (`src/world/sprites/`): `Basic`, and `BasicStriped`
-  extending it with stripes. Each coat names its sprite. Every coat looks exactly as before.
-
-## 0.1.121
-
-- Debug mode: the coat sheet is plain now: a row of frames per coat; click it to toggle collars.
-
-## 0.1.120
-
 - Debug mode: a coat sheet, opened from a new button in the 🐈‍⬛ menu, shows every coat in every
-  frame, with the collars on or off.
-- Coat snapshot tests (`test/art/`) check every coat in every frame, pixel for pixel.
-
-## 0.1.119
-
-- Coats in the collection can now be sponsored: each coat links to a donation page.
-- The "White" coat is now called "Snow White".
+  frame; click it to put the collars on or take them off.
+- Under the hood: cat art is a tree of sprite classes (`src/world/sprites/`: `Basic`, and
+  `BasicStriped` and `BasicSpotted` laying their markings over it). A coat names its sprite and a
+  colour for each of its slots, checked by TypeScript. Coat snapshot tests (`test/art/`) check
+  every coat in every frame, pixel for pixel.
 
 ## 0.1.81 - 0.1.118
 
