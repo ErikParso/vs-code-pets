@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.1.119
+
+- Coats in the collection can now be sponsored: each coat links to a donation page.
+- The "White" coat is now called "Snow White".
+
 ## 0.1.81 - 0.1.118
 
 - The 🐈‍⬛ status-bar menu now lets you feed cats, throw balls of yarn, manage their boxes, and open
