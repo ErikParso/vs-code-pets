@@ -82,6 +82,8 @@ const ENTRIES: readonly CoatEntry[] = [
   { id: 'blue-and-white',        name: 'Blue and White',        rarity: 'common',   collar: 'red',    look: look(basic,        colors('blue', 'white chest')) },
   { id: 'tuxedo',                name: 'Tuxedo',                rarity: 'common',   collar: 'red',    look: look(basicStriped, colors('black', 'white chest')), sponsor: 'Erik' },
   { id: 'black',                 name: 'Black',                 rarity: 'common',   collar: 'red',    look: look(basicStriped, colors('black')) },
+  { id: 'spotted-smoke',         name: 'Spotted Smoke',         rarity: 'common',   collar: 'teal',   look: look(basicSpotted, { outline: '#141418', fur: '#5e5e66', spots: '#9a9aa3', chest: '#5e5e66' }) },
+  { id: 'spotted-fawn',          name: 'Spotted Fawn',          rarity: 'common',   collar: 'green',  look: look(basicSpotted, { outline: '#2e241c', fur: '#c4a98c', spots: '#7a5a40', chest: '#c4a98c' }) },
   { id: 'red-and-white',         name: 'Red and White',         rarity: 'uncommon', collar: 'blue',   look: look(basic,        colors('red', 'white chest')) },
   { id: 'red',                   name: 'Red',                   rarity: 'uncommon', collar: 'blue',   look: look(basic,        colors('red')) },
   { id: 'blue',                  name: 'Blue',                  rarity: 'uncommon', collar: 'red',    look: look(basic,        colors('blue')) },
@@ -89,11 +91,14 @@ const ENTRIES: readonly CoatEntry[] = [
   { id: 'cream-and-white',       name: 'Cream and White',       rarity: 'uncommon', collar: 'purple', look: look(basic,        colors('cream', 'white chest')) },
   { id: 'silver-tabby',          name: 'Silver Tabby',          rarity: 'uncommon', collar: 'purple', look: look(basicStriped, colors('silver')) },
   { id: 'snow-white',            name: 'Snow White',            rarity: 'uncommon', collar: 'red',    look: look(basic,        colors('white')), lockedByDonation: 'https://buymeacoffee.com/sealhunter/e/597946' },
+  { id: 'bengal',                name: 'Bengal',                rarity: 'uncommon', collar: 'blue',   look: look(basicSpotted, { outline: '#2a1a0e', fur: '#d9a44e', spots: '#4e2e14', chest: '#f3e2bd' }) },
+  { id: 'snow-bengal',           name: 'Snow Bengal',           rarity: 'uncommon', collar: 'blue',   look: look(basicSpotted, { outline: '#3a2c20', fur: '#ece2cf', spots: '#a8835c', chest: '#f7f1e6' }) },
   { id: 'chocolate-and-white',   name: 'Chocolate and White',   rarity: 'rare',     collar: 'teal',   look: look(basic,        colors('chocolate', 'white chest')) },
   { id: 'chocolate',             name: 'Chocolate',             rarity: 'rare',     collar: 'teal',   look: look(basic,        colors('chocolate')) },
   { id: 'lilac-tabby-and-white', name: 'Lilac Tabby and White', rarity: 'rare',     collar: 'teal',   look: look(basicStriped, colors('lilac', 'white chest')), lockedByDonation: 'https://buymeacoffee.com/sealhunter/e/597950' },
   { id: 'lilac',                 name: 'Lilac',                 rarity: 'rare',     collar: 'teal',   look: look(basic,        colors('lilac')) },
   { id: 'cinnamon-tabby',        name: 'Cinnamon Tabby',        rarity: 'rare',     collar: 'blue',   look: look(basicStriped, colors('cinnamon')) },
+  { id: 'ladybug',               name: 'Ladybug',               rarity: 'rare',     collar: 'green',  look: look(basicSpotted, { outline: '#1a1210', fur: '#c2482c', spots: '#1d1513', chest: '#c2482c' }) },
   // A rusty red with white flecks, like a toadstool's cap.
   { id: 'amanita',               name: 'Amanita',               rarity: 'epic',     collar: 'teal',   look: look(basicSpotted, { outline: '#2a1410', fur: '#b0452e', spots: '#f2ebdf', chest: '#f2ebdf' }) },
   // White with black spots, like the dog.

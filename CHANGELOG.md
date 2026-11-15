@@ -1,5 +1,27 @@
 # Changelog
 
+## 0.1.135
+
+- A new rare coat: **Ladybug**, deep red with black spots.
+
+## 0.1.134
+
+- A new uncommon coat: **Snow Bengal**, ivory with soft tan spots.
+
+## 0.1.133
+
+- Blue Tortie is taken out.
+
+## 0.1.132
+
+- Two new spotted common coats in natural colours, **Spotted Smoke** (charcoal with grey flecks)
+  and **Spotted Fawn** (soft beige with brown spots), in place of Tortoiseshell, which was taken out.
+
+## 0.1.130
+
+- Three new spotted coats: **Tortoiseshell** (common, near black with ginger flecks), **Bengal**
+  (uncommon, golden with dark brown spots) and **Blue Tortie** (rare, blue-grey with cream flecks).
+
 ## 0.1.129
 
 - A new epic coat: **Dalmatian**, white with black spots.
