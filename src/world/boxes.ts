@@ -8,6 +8,7 @@ import { STARVE_AFTER } from './config';
 import { Care, halfHearts } from './care';
 import { collarOf, whyNot, type CatRecord } from './collection';
 import { clamp } from './math';
+import type { Shine } from './shine';
 
 export { HEARTS } from './care';
 export const FISH = 5; // a full meal is all five
@@ -26,6 +27,7 @@ export interface CatBox {
   fish: number; // 0..FISH; 0 only when starving
   packed: boolean; // shut in its box: it does not roam (its hunger and trust go on as ever)
   collar: string | null; // its collar's colour, once it has claimed it
+  shine?: Shine; // missing: none (shine.ts)
   button: BoxButton;
 }
 
@@ -43,6 +45,7 @@ export function catBoxes(cats: readonly CatRecord[], clock: Clock): CatBox[] {
       fish: clamp(Math.ceil(full * FISH - 1e-9), 0, FISH),
       packed: !!cat.care?.packed,
       collar: collarOf(cat),
+      shine: cat.shine,
       button: { kind: cat.step, why: whyNot(cat, care.trust, cats.length) },
     };
   });

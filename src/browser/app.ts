@@ -13,7 +13,7 @@ import { systemClock } from '../world/clock';
 import { Collection } from '../world/collection';
 import { Driver, POLL_MS } from '../world/driver';
 import { Random } from '../world/random';
-import { withCoatsOf } from '../world/seen';
+import { withCatsOf } from '../world/seen';
 import { Renderer } from './renderer';
 import { roam } from './roaming';
 import { Tooltip } from './tooltip';
@@ -60,8 +60,8 @@ export function startPixelCat(): void {
   }
 
   function poll() {
-    // Every coat among your cats is seen, for the collection, for good (seen.ts).
-    const seen = withCoatsOf(localSeenStore.load(), collection.cats());
+    // Every coat among your cats is seen, with its rarest shine, for the collection, for good (seen.ts).
+    const seen = withCatsOf(localSeenStore.load(), collection.cats());
     if (seen) localSeenStore.save(seen);
     const wasShown = driver.shown;
     driver.poll(workbench.statusLabel());
@@ -87,7 +87,7 @@ export function startPixelCat(): void {
     }
     console.info('[pixel-cat] started');
     renderer = new Renderer(SCALE);
-    carePanel = new CarePanel();
+    carePanel = new CarePanel((id, shine) => collection.setShine(id, shine));
     // The cat boxes: every cat in its box, wherever it is roaming. Clicking a box shuts its cat
     // in (or lets it out); the button beside it takes the cat's next step.
     catBoxes = new CatBoxes(collection, systemClock, () => renderer, new Tooltip());

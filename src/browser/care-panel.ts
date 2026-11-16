@@ -1,7 +1,8 @@
-// Debug mode's Cat Care panel: each cat's feeding, playing and trust, each with buttons to change
-// it. It collapses to its title bar.
+// Debug mode's Cat Care panel: each cat's feeding, playing, trust and shine, each with buttons to
+// change it. It collapses to its title bar.
 import type { Cat } from '../world/cat';
 import { HOUR } from '../world/config';
+import type { Shine } from '../world/shine';
 import type { World } from '../world/world';
 
 const COLLAPSED_KEY = 'pixelCat.carePanelCollapsed'; // remembered by this window's browser, a convenience
@@ -10,7 +11,8 @@ export class CarePanel {
   private readonly el: HTMLDivElement;
   private collapsed = readCollapsed();
 
-  constructor() {
+  /** `setShine`: gives a cat (by id) a shine, or none, in the collection. */
+  constructor(private readonly setShine: (id: string, shine: Shine | undefined) => void) {
     this.el = document.createElement('div');
     Object.assign(this.el.style, {
       position: 'fixed', right: '16px', top: '36px', zIndex: '1000', display: 'none',
@@ -77,9 +79,17 @@ export class CarePanel {
           button('+0.1', 'Add 0.1 trust', change(() => care.addTrust(0.1))),
         ])
       );
+      // Saved in the collection; the cat wears it from the next poll on (and its coat's card for good).
+      const shine = c.def.shine;
+      const next = SHINES[(SHINES.indexOf(shine) + 1) % SHINES.length];
+      panel.appendChild(
+        group('Shine', shine ?? 'none', [button('Next', `Change to ${next ?? 'none'}`, () => this.setShine(c.id, next))])
+      );
     }
   }
 }
+
+const SHINES: readonly (Shine | undefined)[] = [undefined, 'silver', 'rainbow'];
 
 /** One row of a cat's care: a label, what it is now, and the buttons that change it. */
 function group(label: string, state: string, buttons: HTMLButtonElement[]): HTMLDivElement {

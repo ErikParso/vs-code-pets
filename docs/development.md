@@ -96,6 +96,14 @@ sheet (debug mode), then record the coat snapshots.
   taken. A friend's coat is rolled from every coat not locked for sponsoring, each weighted
   by its rarity: common 6, uncommon 4, rare 3, epic 2, legendary 1. So a rarer coat is always
   less likely than a commoner one, and a rarity with no coats is never rolled.
+- **Shine** (`world/shine.ts`): a new friend is rainbow 5% of the time, silver 10%, otherwise
+  plain (`SHINE_CHANCE`); the first cats are plain. It is kept with the cat (`shine`, missing for
+  none) and drawn by `browser/shine.ts`: a tint over its fur (not its outline), one colour per
+  sprite pixel, from bands fixed to the screen that drift slowly, so a moving cat shimmers faster.
+  It shows roaming, in its box, and on its coat's card (cat and frame). The collection keeps the
+  rarest shine each coat was ever had in, with the coat in `pixelCat.seen` (`{coatId, shine?}`,
+  topped up on every poll); it never gets commoner. Shines don't count towards the collection's
+  total. (The coat ids saved before shines came in are not read: those collections start again.)
 - **Play:** a ball of yarn lying still on a cat's floor within reach makes `play` one of the
   things it picks from (weight `PLAY_WEIGHT`); fish still come first and starving cats don't play.
   On reaching it, a cat crouches in the sleep pose for 0.7-1.2 seconds. It then bats at the ball
@@ -114,10 +122,11 @@ sheet (debug mode), then record the coat snapshots.
 
 Only while developing: set `DEBUG = true` in `src/extension/extension.ts` (and back to `false`
 before a release). It shows the floors and walls the cats get around on, each cat's hunger and
-trust, and a Cat Care panel with, for each cat, a Feeding, Playing and Trust row: when it last ate,
-when it last played for trust (happy for 20 hours after), and its trust, each with its own
-buttons. Alt+click the 🐈‍⬛ to make the cats hungrier, Shift+click to make them fuller; Ctrl+click
-adds trust, Ctrl+Shift+click takes it away.
+trust, and a Cat Care panel with, for each cat, a Feeding, Playing, Trust and Shine row: when it
+last ate, when it last played for trust (happy for 20 hours after), its trust and its shine, each
+with its own buttons. Shine cycles a cat through none, silver and rainbow; it is saved like a real
+shine, so its coat's card keeps the rarest one for good. Alt+click the 🐈‍⬛ to make the cats
+hungrier, Shift+click to make them fuller; Ctrl+click adds trust, Ctrl+Shift+click takes it away.
 
 The 🐈‍⬛'s menu gets a fifth button, a cat sitting, that opens the coat sheet (`coat-sheet.ts`):
 every coat in every frame, then in its box, drawn by the same code as the game (`cat-art.ts`,

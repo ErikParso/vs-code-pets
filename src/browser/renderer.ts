@@ -10,6 +10,8 @@ import { PALETTE, PROPS, type CatFrame, type Prop } from '../world/sprites';
 import { EMOTION_TIME, World } from '../world/world';
 import { paintCatFrame, paintCollar } from './cat-art';
 import { paintRows, type Paint } from './pixel-art';
+import type { Shine } from '../world/shine';
+import { paintShine } from './shine';
 
 /** How to draw: debug mode adds the floors, walls and meters; `ink` is VS Code's text colour. */
 export interface Look {
@@ -275,8 +277,27 @@ export class Renderer {
     ctx.translate(cx, cy);
     if (!hold && cat.dir < 0) ctx.scale(-1, 1);
     ctx.drawImage(img, -w / 2, -h / 2);
+    const shine = cat.def.shine;
+    if (shine) this.drawShine(cat, frame, shine, cx, cy, !hold && cat.dir < 0);
     if (collar) ctx.drawImage(collar, -w / 2, -h / 2);
     ctx.restore();
+  }
+
+  // A shiny cat's shine (shine.ts), its bands fixed to the screen. Drawn in the cat's own (maybe
+  // flipped) frame; (cx, cy) is its middle on screen.
+  private drawShine(cat: Cat, frame: CatFrame, shine: Shine, cx: number, cy: number, flipped: boolean): void {
+    const { ctx, px } = this;
+    const rows = coatOf(cat.coat).look.sprite.frame(frame);
+    const w = rows[0].length * px;
+    const h = rows.length * px;
+    const flip = flipped ? -1 : 1;
+    const paint: Paint = (x, y, pw, ph, color) => {
+      ctx.fillStyle = color;
+      ctx.fillRect(-w / 2 + x * px, -h / 2 + y * px, pw * px, ph * px);
+    };
+    // Where a sprite pixel's middle is on screen, in sprite px.
+    const onScreen = (x: number, y: number): [number, number] => [(cx + flip * (-w / 2 + (x + 0.5) * px)) / px, (cy - h / 2 + (y + 0.5) * px) / px];
+    paintShine(paint, rows, 0, 0, shine, Date.now() / 1000, onScreen);
   }
 
   // Cat emotions: sleep, affection, and food requests.

@@ -1,7 +1,11 @@
 # Changelog
 
-## 0.1.119 - 0.1.139
+## 0.1.119 - 0.1.153
 
+- Shiny cats: a new friend may come silver (10%) or rainbow (5%), with a glint that sweeps slowly
+  over its fur, faster as it moves. It shines roaming, in its box and on its coat's card, frame and
+  all, and the card keeps the rarest shine you ever had in that coat. The collection of coats found
+  is kept in a new shape, so it starts again from the cats you have.
 - Planned coats can be sponsored: their card in the collection links to a donation page, and a
   sponsored coat's card shows a heart. The "White" coat is now called "Snow White".
 - New spotted coats: **Spotted Smoke** and **Spotted Fawn** (common), **Bengal** and **Snow

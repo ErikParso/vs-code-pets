@@ -14,6 +14,7 @@ import type { CatDef, Step } from './cat';
 import { Care, halfHearts, type CareStore, type SavedCare } from './care';
 import type { Clock } from './clock';
 import { coatOf, rollCoat } from './coats';
+import { rollShine, type Shine } from './shine';
 import type { Random } from './random';
 
 export const BOXES = 15; // the most cats you can have
@@ -117,14 +118,28 @@ export class Collection {
     return first;
   }
 
-  // A new cat: a name none of `cats` has (any, once all are taken), a coat by rarity, some energy.
+  /** Debug: gives `id` a shine, or takes it away (undefined). */
+  setShine(id: string, shine: Shine | undefined): void {
+    this.store.save(
+      this.records().map((c) => {
+        if (c.id !== id) return c;
+        const { shine: _old, ...rest } = c;
+        return shine ? { ...rest, shine } : rest;
+      })
+    );
+  }
+
+  // A new cat: a name none of `cats` has (any, once all are taken), a coat by rarity, some energy,
+  // and maybe a shine.
   private makeUp(cats: readonly CatDef[]): CatDef {
     const taken = new Set(cats.map((c) => c.name));
     const free = NAMES.filter((n) => !taken.has(n));
     const name = this.random.oneOf(free.length ? free : NAMES);
     const id = `${name.toLowerCase()}-${this.clock.now().toString(36)}`;
     const energy = Math.round(this.random.between(ENERGY[0], ENERGY[1]) * 100) / 100;
-    return { id, name, coat: rollCoat(this.random).id, energy, step: 'collar' };
+    const coat = rollCoat(this.random).id;
+    const shine = rollShine(this.random);
+    return { id, name, coat, energy, step: 'collar', ...(shine ? { shine } : {}) };
   }
 }
 

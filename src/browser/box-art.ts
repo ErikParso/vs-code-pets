@@ -7,6 +7,8 @@ import { FISH, HEARTS, type BoxButton, type CatBox } from '../world/boxes';
 import { coatOf } from '../world/coats';
 import { PALETTE, PEEK_W, type Dot } from '../world/sprites';
 import { paintRows, type Paint } from './pixel-art';
+import type { Shine } from '../world/shine';
+import { paintShine, shimmerFrame } from './shine';
 import { eachTextPixel, FONT_5X7, fontText, textWidth } from './pixel-font';
 import { paintFrame, paintShelf, paintSigns, paintWall, ROOM_PAD, ROOM_TOP } from './room-art';
 
@@ -191,7 +193,9 @@ function blinking(name: string, t: number): boolean {
 
 /** Changes whenever the panel would look different: when this is the same, there's no need to redraw. */
 export function lookKey(boxes: readonly CatBox[], cols: number, t: number): string {
-  return `${cols}|${JSON.stringify(boxes)}|${boxes.map((b) => +blinking(b.name, t)).join('')}`;
+  // A shiny cat showing in its open box shimmers: then it looks different every shimmerFrame.
+  const shimmer = boxes.some((b) => !b.packed && b.shine) ? shimmerFrame(t) : '';
+  return `${cols}|${JSON.stringify(boxes)}|${boxes.map((b) => +blinking(b.name, t)).join('')}|${shimmer}`;
 }
 
 /** Which box's tile (with its hearts and fish) is at (x, y) in the panel (sprite px), in `cols` columns; -1 for none. */
@@ -238,10 +242,10 @@ export const OPEN_BOX_H = BOX_TOP + BOX_H;
 
 /**
  * Paints an open box with a cat in coat `coatId` peeking out over its lip, wearing `collar` (null:
- * none), eyes shut if `blink`. (x, y) is the top left of OPEN_BOX_W x OPEN_BOX_H: the cat's ears
- * at the top, the box's flap tips BOX_TOP below.
+ * none), eyes shut if `blink`, with its `shine` (shine.ts) at `t` s if it has one. (x, y) is the top
+ * left of OPEN_BOX_W x OPEN_BOX_H: the cat's ears at the top, the box's flap tips BOX_TOP below.
  */
-export function paintOpenBox(paint: Paint, coatId: string, collar: string | null, blink: boolean, x: number, y: number): void {
+export function paintOpenBox(paint: Paint, coatId: string, collar: string | null, blink: boolean, x: number, y: number, shine?: Shine, t = 0): void {
   const card = (ch: string) => CARD[ch];
   const bx = x;
   const by = y + BOX_TOP;
@@ -254,6 +258,7 @@ export function paintOpenBox(paint: Paint, coatId: string, collar: string | null
   const { sprite, letters: palette } = coatOf(coatId).look;
   const peek = sprite.peek(blink);
   paintRows(paint, peek.slice(0, PEEK_RIM), peekX, by + LIP_Y - PEEK_RIM, (ch) => palette[ch]);
+  if (shine) paintShine(paint, peek.slice(0, PEEK_RIM), peekX, by + LIP_Y - PEEK_RIM, shine, t);
 
   // In front of it: the lip and the front.
   paintRows(paint, BOX.slice(LIP_Y), bx, by + LIP_Y, card);
@@ -263,6 +268,7 @@ export function paintOpenBox(paint: Paint, coatId: string, collar: string | null
 
   // Its paws over the lip.
   paintRows(paint, peek.slice(PEEK_RIM), peekX, by + LIP_Y, (ch) => palette[ch]);
+  if (shine) paintShine(paint, peek.slice(PEEK_RIM), peekX, by + LIP_Y, shine, t);
   if (collar) {
     for (const [cx, cy, ch] of PEEK_COLLAR) {
       paint(peekX + cx, by + LIP_Y - PEEK_RIM + cy, 1, 1, ch === 'C' ? collar : palette[ch]);
@@ -292,7 +298,7 @@ function paintCell(paint: Paint, box: CatBox | null, x: number, y: number, t: nu
     // in the dark (and gone when it blinks).
     if (!blinking(box.name, t)) for (const ex of PEEK_EYES) paint(peekX + ex, by + SLOT_Y, 2, 2, PANEL.eyes);
   } else {
-    paintOpenBox(paint, box.coat, box.collar, blinking(box.name, t), bx, y);
+    paintOpenBox(paint, box.coat, box.collar, blinking(box.name, t), bx, y, box.shine, t);
   }
 
   paintSticker(paint, box.name, bx + FRONT_L, bx + FRONT_R, by + STICKER_TOP, by + STICKER_BOTTOM, fine);

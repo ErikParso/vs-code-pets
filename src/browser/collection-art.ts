@@ -7,6 +7,8 @@ import type { Coat, Rarity } from '../world/coats';
 import { PALETTE } from '../world/sprites';
 import { HEART } from './box-art';
 import { paintRows, type Paint } from './pixel-art';
+import type { Shine } from '../world/shine';
+import { paintShine } from './shine';
 import { eachTextPixel, FONT_5X7, fontText, textWidth } from './pixel-font';
 import { paintFrame, paintSigns, paintWall, ROOM_PAD, ROOM_TOP } from './room-art';
 
@@ -42,9 +44,10 @@ export function collectionSize(count: number): { width: number; height: number }
 
 /**
  * Paints the collection: a card for each of `coats`, found if `found` says so, under a sign that
- * counts them. `px`: device pixels per sprite pixel; names and numbers are in half pixels.
+ * counts them; a found card's frame and cat with its `shine` (shine.ts) at `t` s, if `shine` gives one.
+ * `px`: device pixels per sprite pixel; names and numbers are in half pixels.
  */
-export function paintCollection(paint: Paint, coats: readonly Coat[], found: (coat: Coat) => boolean, px: number): void {
+export function paintCollection(paint: Paint, coats: readonly Coat[], found: (coat: Coat) => boolean, px: number, shine: (coat: Coat) => Shine | undefined = () => undefined, t = 0): void {
   const fine = Math.max(1, Math.floor(px / 2)) / px; // half a sprite pixel, in whole device pixels
   const { width, height } = collectionSize(coats.length);
   paintWall(paint, width, height);
@@ -52,17 +55,19 @@ export function paintCollection(paint: Paint, coats: readonly Coat[], found: (co
   coats.forEach((coat, i) => {
     const x = ROOM_PAD + (i % COLS) * (CARD_W + GAP);
     const y = ROOM_TOP + Math.floor(i / COLS) * (CARD_H + GAP);
-    paintCard(paint, coat, i + 1, found(coat), x, y, fine);
+    paintCard(paint, coat, i + 1, found(coat), x, y, fine, found(coat) ? shine(coat) : undefined, t);
   });
   paintFrame(paint, width, height);
 }
 
-function paintCard(paint: Paint, coat: Coat, number: number, found: boolean, x: number, y: number, fine: number): void {
+function paintCard(paint: Paint, coat: Coat, number: number, found: boolean, x: number, y: number, fine: number, shine: Shine | undefined, t: number): void {
   const r = RARITY[coat.rarity];
   // The card, framed in its rarity's colour, its bottom edge shaded.
   paint(x, y, CARD_W, CARD_H, CARD.edge);
   paint(x + 1, y + 1, CARD_W - 2, CARD_H - 2, found ? r.frame : r.dim);
   paint(x + 2, y + CARD_H - 3, CARD_W - 4, 1, found ? r.shade : UNSEEN.shade);
+  // A shiny card's frame shines too: laid over all of it, and the picture and plate go over the middle.
+  if (shine) paintShine(paint, Array<string>(CARD_H - 2).fill('O'.repeat(CARD_W - 2)), x + 1, y + 1, shine, t);
 
   // The picture: the cat sitting, in its coat or as a shadow, and the coat's number.
   const wx = x + 3;
@@ -73,7 +78,10 @@ function paintCard(paint: Paint, coat: Coat, number: number, found: boolean, x: 
   const sit = coat.look.sprite.frame('sit');
   const palette = coat.look.letters;
   const shadow = (ch: string) => (ch === 'K' ? UNSEEN.shade : UNSEEN.cat);
-  paintRows(paint, sit, wx + Math.floor((ww - sit[0].length) / 2), wy + PICTURE_H - sit.length, (ch) => (found ? palette[ch] : shadow(ch)));
+  const sx = wx + Math.floor((ww - sit[0].length) / 2);
+  const sy = wy + PICTURE_H - sit.length;
+  paintRows(paint, sit, sx, sy, (ch) => (found ? palette[ch] : shadow(ch)));
+  if (shine) paintShine(paint, sit, sx, sy, shine, t);
   const ink = found ? CARD.ink : UNSEEN.ink;
   text(paint, String(number).padStart(2, '0'), wx + 1, wy + 1, fine, ink);
   if (coat.sponsor) paintHeart(paint, x + SPONSOR_HEART.x, y + SPONSOR_HEART.y, SPONSOR_HEART.color);

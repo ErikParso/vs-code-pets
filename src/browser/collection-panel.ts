@@ -1,13 +1,16 @@
 // The collection of coats: a card for every coat a cat can have, found or still to find, floating
 // in the middle of the window. The cards in the 🐈‍⬛'s menu open it; its X, Esc or a click outside
 // closes it. A coat counts as found if it was ever seen (seen.ts), or if a cat you have now is in
-// it: then a cat new this moment shows at once, before the poll has noted its coat.
+// it: then a cat new this moment shows at once, before the poll has noted its coat. A found card
+// shines with the rarest shine a cat in its coat ever had, or has now (seen.ts), the same way.
 import type { CatDef } from '../world/cat';
 import { COATS } from '../world/coats';
-import type { SeenStore } from '../world/seen';
+import { withCatsOf, type SeenStore } from '../world/seen';
+import type { Shine } from '../world/shine';
 import { collectionSize, paintCollection, specialCoatAt } from './collection-art';
 import { centredPopup, paintCanvas, spritePoint } from './popup';
 import { closeAt } from './room-art';
+import { shimmerFrame } from './shine';
 import { Tooltip } from './tooltip';
 
 const REREAD_MS = 1000; // how often it looks again at what has been found while open
@@ -16,6 +19,7 @@ export class CollectionPanel {
   readonly popup = centredPopup('pixel-cat-collection');
   private readonly canvas = document.createElement('canvas');
   private found = new Set<string>(); // the ids of the coats found
+  private shiny = new Map<string, Shine>(); // coat id -> the rarest shine seen in it
   private readAt = -Infinity;
   private drawn = '';
 
@@ -59,15 +63,24 @@ export class CollectionPanel {
   frame(now: number): void {
     if (!this.popup.isOpen) return;
     if (now - this.readAt >= REREAD_MS) {
-      this.found = new Set([...this.seen.load(), ...this.cats().map((c) => c.coat)]);
+      // As saved, with the cats you have now put in: a cat new this moment shows at once.
+      const seen = this.seen.load();
+      const all = withCatsOf(seen, this.cats()) ?? seen;
+      this.found = new Set(all.map((s) => s.coatId));
+      this.shiny = new Map(all.flatMap((s) => (s.shine ? [[s.coatId, s.shine] as const] : [])));
       this.readAt = now;
     }
     const { px, dpr } = this.pixels();
-    const key = `${px}|${dpr}|${[...this.found].sort().join()}`;
+    const shiny = this.shiny;
+    const t = now / 1000;
+    const shimmer = shiny.size ? shimmerFrame(t) : '';
+    const key = `${px}|${dpr}|${[...this.found].sort().join()}|${shimmer}`;
     if (key === this.drawn) return;
     this.drawn = key;
     const { width, height } = collectionSize(COATS.length);
-    paintCanvas(this.canvas, width, height, { px, dpr }, (paint) => paintCollection(paint, COATS, (c) => this.found.has(c.id), px));
+    paintCanvas(this.canvas, width, height, { px, dpr }, (paint) =>
+      paintCollection(paint, COATS, (c) => this.found.has(c.id), px, (c) => shiny.get(c.id), t)
+    );
     const count = COATS.filter((c) => this.found.has(c.id)).length;
     const names = COATS.map((c, i) => (this.found.has(c.id) ? `${i + 1}. ${c.name} (${c.rarity})` : `${i + 1}. not found yet (${c.rarity})`));
     this.canvas.setAttribute('aria-label', `Collection: ${count} of ${COATS.length} coats found. ${names.join('; ')}`);

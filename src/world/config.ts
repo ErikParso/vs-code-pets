@@ -59,3 +59,6 @@ export const TRUST_ON_TIME = 0.05;
 export const TRUST_LATE = 0.05;
 export const TRUST_PLAY = 0.05; // for a play, at most once every PLAY_REWARD_AFTER
 export const PLAY_REWARD_AFTER = 20 * HOUR;
+
+// How likely a new friend is to shine (shine.ts); the rest have none.
+export const SHINE_CHANCE = { rainbow: 0.05, silver: 0.1 };

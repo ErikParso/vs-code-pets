@@ -7,6 +7,7 @@ import type { Fish } from './fish';
 import type { Care } from './care';
 import type { Floor, Wall } from './layout';
 import type { ClimbMove } from './navigator';
+import type { Shine } from './shine';
 import type { AtIt, Thrown } from './thrown';
 import type { Yarn } from './yarn';
 
@@ -21,6 +22,7 @@ export interface CatDef {
   coat: string; // a coat's id (coats.ts)
   energy: number;
   step: Step; // its next step, the one its box's button offers (collection.ts): a new cat's is its collar
+  shine?: Shine; // none if missing (shine.ts)
 }
 
 /** A cat's steps in the collection, in order: claim its collar, bring a friend, say goodbye. */
