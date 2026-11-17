@@ -1,7 +1,11 @@
 # Changelog
 
-## 0.1.119 - 0.1.153
+## 0.1.119 - 0.1.154
 
+- New patched coats, with big patches of two colours: **Black and White Bicolor** and **Red and
+  White Bicolor** (common), **Dilute Calico** and **Calico** (uncommon), **Tortoiseshell** and
+  **Koi** (rare), **Patchwork** and **Camo** (epic), and the first legendary coat, **Milkat**
+  (lilac with white patches).
 - Shiny cats: a new friend may come silver (10%) or rainbow (5%), with a glint that sweeps slowly
   over its fur, faster as it moves. It shines roaming, in its box and on its coat's card, frame and
   all, and the card keeps the rarest shine you ever had in that coat. The collection of coats found

@@ -3,12 +3,12 @@
 // name (as cat fanciers name it), how rare it is for a friend to turn up in it, and a collar
 // colour that stands out on it. And its look: the sprite it is drawn with (sprites/) and a colour
 // for each of that sprite's slots, by name: { outline, fur, chest } for basic, plus stripes for
-// basicStriped, spots for basicSpotted.
+// basicStriped, spots for basicSpotted, patch and patch2 for basicPatched.
 //
 // Every coat must look unlike every other, locked or not. A coat taken out: a cat saved in it wears
 // the first coat (coatOf), and its card leaves the collection. Its id stays taken for good.
 import type { Random } from './random';
-import { basic, basicSpotted, basicStriped, SHARED, type CatSprite } from './sprites';
+import { basic, basicPatched, basicSpotted, basicStriped, SHARED, type CatSprite } from './sprites';
 
 export type Rarity = 'common' | 'uncommon' | 'rare' | 'epic' | 'legendary';
 
@@ -86,6 +86,8 @@ const ENTRIES: readonly CoatEntry[] = [
   { id: 'black',                 name: 'Black',                 rarity: 'common',   collar: 'red',    look: look(basicStriped, colors('black')) },
   { id: 'spotted-smoke',         name: 'Spotted Smoke',         rarity: 'common',   collar: 'teal',   look: look(basicSpotted, { outline: '#141418', fur: '#5e5e66', spots: '#9a9aa3', chest: '#5e5e66' }) },
   { id: 'spotted-fawn',          name: 'Spotted Fawn',          rarity: 'common',   collar: 'green',  look: look(basicSpotted, { outline: '#2e241c', fur: '#c4a98c', spots: '#7a5a40', chest: '#c4a98c' }) },
+  { id: 'black-and-white-bicolor', name: 'Black and White Bicolor', rarity: 'common', collar: 'red', look: look(basicPatched, { outline: '#2a2a2e', fur: '#f4f1ec', patch: '#3a3440', patch2: '#3a3440', chest: '#f4f1ec' }) },
+  { id: 'red-and-white-bicolor', name: 'Red and White Bicolor', rarity: 'common',   collar: 'blue',   look: look(basicPatched, { outline: '#2b1d14', fur: '#f4f1ec', patch: '#e8913a', patch2: '#e8913a', chest: '#f4f1ec' }) },
   { id: 'blue',                  name: 'Blue',                  rarity: 'uncommon', collar: 'red',    look: look(basic,        colors('blue')) },
   { id: 'cream-tabby',           name: 'Cream Tabby',           rarity: 'uncommon', collar: 'purple', look: look(basicStriped, colors('cream')) },
   { id: 'cream-and-white',       name: 'Cream and White',       rarity: 'uncommon', collar: 'purple', look: look(basic,        colors('cream', 'white chest')) },
@@ -93,15 +95,26 @@ const ENTRIES: readonly CoatEntry[] = [
   { id: 'snow-white',            name: 'Snow White',            rarity: 'uncommon', collar: 'red',    look: look(basic,        colors('white')), lockedByDonation: 'https://buymeacoffee.com/sealhunter/e/597946' },
   { id: 'bengal',                name: 'Bengal',                rarity: 'uncommon', collar: 'blue',   look: look(basicSpotted, { outline: '#2a1a0e', fur: '#d9a44e', spots: '#4e2e14', chest: '#f3e2bd' }) },
   { id: 'snow-bengal',           name: 'Snow Bengal',           rarity: 'uncommon', collar: 'blue',   look: look(basicSpotted, { outline: '#3a2c20', fur: '#ece2cf', spots: '#a8835c', chest: '#f7f1e6' }) },
+  { id: 'dilute-calico',         name: 'Dilute Calico',         rarity: 'uncommon', collar: 'purple', look: look(basicPatched, { outline: '#3a3038', fur: '#f4f1ec', patch: '#f0d2a0', patch2: '#858c9a', chest: '#f4f1ec' }) },
+  { id: 'calico',                name: 'Calico',                rarity: 'uncommon', collar: 'green',  look: look(basicPatched, { outline: '#3a2e28', fur: '#f4f1ec', patch: '#e8913a', patch2: '#3a3440', chest: '#f4f1ec' }) },
   { id: 'chocolate-and-white',   name: 'Chocolate and White',   rarity: 'rare',     collar: 'teal',   look: look(basic,        colors('chocolate', 'white chest')) },
   { id: 'chocolate',             name: 'Chocolate',             rarity: 'rare',     collar: 'teal',   look: look(basic,        colors('chocolate')) },
   { id: 'lilac-tabby-and-white', name: 'Lilac Tabby and White', rarity: 'rare',     collar: 'teal',   look: look(basicStriped, colors('lilac', 'white chest')), lockedByDonation: 'https://buymeacoffee.com/sealhunter/e/597950' },
   { id: 'cinnamon-tabby',        name: 'Cinnamon Tabby',        rarity: 'rare',     collar: 'blue',   look: look(basicStriped, colors('cinnamon')) },
   { id: 'ladybug',               name: 'Ladybug',               rarity: 'rare',     collar: 'green',  look: look(basicSpotted, { outline: '#1a1210', fur: '#c2482c', spots: '#1d1513', chest: '#c2482c' }) },
+  { id: 'tortoiseshell',         name: 'Tortoiseshell',         rarity: 'rare',     collar: 'teal',   look: look(basicPatched, { outline: '#120e10', fur: '#3a3440', patch: '#c4622a', patch2: '#e0b070', chest: '#3a3440' }) },
+  // White with red and black, like a Sanke carp.
+  { id: 'koi',                   name: 'Koi',                   rarity: 'rare',     collar: 'blue',   look: look(basicPatched, { outline: '#2a2026', fur: '#f8f5f0', patch: '#e8542a', patch2: '#1e1e24', chest: '#f8f5f0' }) },
   // A rusty red with white flecks, like a toadstool's cap.
   { id: 'amanita',               name: 'Amanita',               rarity: 'epic',     collar: 'teal',   look: look(basicSpotted, { outline: '#2a1410', fur: '#b0452e', spots: '#f2ebdf', chest: '#f2ebdf' }) },
   // White with black spots, like the dog.
   { id: 'dalmatian',             name: 'Dalmatian',             rarity: 'epic',     collar: 'red',    look: look(basicSpotted, { outline: '#2a2a2e', fur: '#f4f2ee', spots: '#26262b', chest: '#f4f2ee' }) },
+  // Linen with bright patches, like a quilt.
+  { id: 'patchwork',             name: 'Patchwork',             rarity: 'epic',     collar: 'green',  look: look(basicPatched, { outline: '#2b1d14', fur: '#e9d8b4', patch: '#d9506e', patch2: '#3f8fbf', chest: '#e9d8b4' }) },
+  // Olive, khaki and brown, like camouflage.
+  { id: 'camo',                  name: 'Camo',                  rarity: 'epic',     collar: 'red',    look: look(basicPatched, { outline: '#23261a', fur: '#6b7a45', patch: '#b5a878', patch2: '#4a3a26', chest: '#b5a878' }) },
+  // Lilac with white patches, like the chocolate cow.
+  { id: 'milkat',                name: 'Milkat',                rarity: 'legendary', collar: 'teal',  look: look(basicPatched, { outline: '#3a2c50', fur: '#9d86cc', patch: '#f7f4fb', patch2: '#f7f4fb', chest: '#f7f4fb' }) },
 ];
 
 export const COATS: readonly Coat[] = ENTRIES.map(({ collar, ...e }) => ({ ...e, collar: COLLAR[collar] }));

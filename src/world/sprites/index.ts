@@ -3,6 +3,7 @@
 //   ├─ BasicStriped (basic/striped.ts)
 //   └─ BasicSpotted (basic/spotted.ts)
 import { Basic } from './basic/basic';
+import { BasicPatched } from './basic/patched';
 import { BasicSpotted } from './basic/spotted';
 import { BasicStriped } from './basic/striped';
 import { checkSprite } from './cat-sprite';
@@ -14,5 +15,6 @@ export { PROPS, type Prop } from './props';
 export const basic = new Basic();
 export const basicStriped = new BasicStriped();
 export const basicSpotted = new BasicSpotted();
+export const basicPatched = new BasicPatched();
 
-for (const [name, sprite] of Object.entries({ basic, basicStriped, basicSpotted })) checkSprite(name, sprite);
+for (const [name, sprite] of Object.entries({ basic, basicStriped, basicSpotted, basicPatched })) checkSprite(name, sprite);
