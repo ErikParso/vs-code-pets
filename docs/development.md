@@ -94,7 +94,7 @@ sheet (debug mode), then record the coat snapshots.
   No progress can be lost: a cat only goes once it has brought its friend, so there are always
   as many cats still to bring theirs as there were at the start, and with every box full all the
   others may go.
-- **Coats** (`coats.ts`): 29, each a sprite in its own colours (see Sprites and coats), with its
+- **Coats** (`coats.ts`): 28, each a sprite in its own colours (see Sprites and coats), with its
   collar colour. Every coat must look unlike every other, locked or not. A coat taken out: a cat
   saved in it wears the first coat (`coatOf`), its card leaves the collection, and its id stays
   taken. A friend's coat is rolled from every coat not locked for sponsoring, each weighted

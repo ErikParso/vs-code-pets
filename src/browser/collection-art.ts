@@ -12,7 +12,7 @@ import { paintShine } from './shine';
 import { eachTextPixel, FONT_5X7, fontText, textWidth } from './pixel-font';
 import { paintFrame, paintSigns, paintWall, ROOM_PAD, ROOM_TOP } from './room-art';
 
-const COLS = 5;
+const COLS = 6;
 const CARD_W = 40;
 const CARD_H = 46;
 const GAP = 6;

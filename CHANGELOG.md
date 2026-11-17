@@ -1,8 +1,8 @@
 # Changelog
 
-## 0.1.119 - 0.1.161
+## 0.1.119 - 0.1.162
 
-- 29 coats, up from 20, in two new rarities as well: epic (purple card, four gems) and legendary
+- 28 coats, up from 20, in two new rarities as well: epic (purple card, four gems) and legendary
   (orange card, five gems).
   - Spotted: **Spotted Smoke** and **Spotted Fawn** (common), **Bengal** and **Snow Bengal**
     (uncommon), **Ladybug** (rare), **Amanita** (rusty red with white flecks) and **Dalmatian**
@@ -14,6 +14,7 @@
   - Coats that looked like twins of others are gone: Red, Red and White, Red Tabby, Brown Tabby,
     Blue, Blue Tabby, Chocolate and Lilac. A cat you have in one now wears Red Tabby and White.
     "White" is now called "Snow White".
+- The collection of coats is 6 cards wide (was 5).
 - A friend's coat is rolled from all coats, each weighted by its rarity (common 6, uncommon 4,
   rare 3, epic 2, legendary 1), so a rarer coat is always less likely than a commoner one.
 - Shiny cats: a new friend may come silver (10%) or rainbow (5%), with a glint that sweeps slowly
