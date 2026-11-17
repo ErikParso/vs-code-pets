@@ -94,7 +94,7 @@ sheet (debug mode), then record the coat snapshots.
   No progress can be lost: a cat only goes once it has brought its friend, so there are always
   as many cats still to bring theirs as there were at the start, and with every box full all the
   others may go.
-- **Coats** (`coats.ts`): 33, each a sprite in its own colours (see Sprites and coats), with its
+- **Coats** (`coats.ts`): 29, each a sprite in its own colours (see Sprites and coats), with its
   collar colour. Every coat must look unlike every other, locked or not. A coat taken out: a cat
   saved in it wears the first coat (`coatOf`), its card leaves the collection, and its id stays
   taken. A friend's coat is rolled from every coat not locked for sponsoring, each weighted
@@ -133,7 +133,8 @@ shine, so its coat's card keeps the rarest one for good. Alt+click the 🐈‍�
 hungrier, Shift+click to make them fuller; Ctrl+click adds trust, Ctrl+Shift+click takes it away.
 
 The 🐈‍⬛'s menu gets a fifth button, a cat sitting, that opens the coat sheet (`coat-sheet.ts`):
-every coat in every frame, then in its box, drawn by the same code as the game (`cat-art.ts`,
+every coat in each animation (walk, jump, sit, play, sleep, climb, eat), looping roughly as in the
+game, then in its box, blinking now and then, drawn by the same code as the game (`cat-art.ts`,
 `paintOpenBox` in `box-art.ts`). Click it to put the collars on or take them off.
 
 ## Simulation tests

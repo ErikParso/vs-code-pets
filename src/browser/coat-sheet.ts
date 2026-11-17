@@ -1,7 +1,7 @@
-// The coat sheet (debug mode): every coat in every frame (coat-sheet-art.ts), in the middle of the
-// window. The sheet button in the 🐈‍⬛'s menu opens it; Esc or a click outside closes it; a click
+// The coat sheet (debug mode): every coat in every animation (coat-sheet-art.ts), in the middle of
+// the window. The sheet button in the 🐈‍⬛'s menu opens it; Esc or a click outside closes it; a click
 // on it puts the collars on or takes them off.
-import { paintSheet, sheetSize } from './coat-sheet-art';
+import { paintSheet, sheetFrames, sheetSize } from './coat-sheet-art';
 import { centredPopup, paintCanvas } from './popup';
 
 export class CoatSheet {
@@ -21,14 +21,16 @@ export class CoatSheet {
     this.drawn = '';
   }
 
-  /** Redraws it if it is open and anything has changed. Called every animation frame. */
+  /** Redraws it if it is open and anything has changed, frames too. Called every animation frame. */
   frame(): void {
     if (!this.popup.isOpen) return;
     const { px, dpr } = this.pixels();
-    const key = `${px}|${dpr}|${this.collars}`;
+    const t = performance.now() / 1000;
+    const { frames, blink } = sheetFrames(t);
+    const key = `${px}|${dpr}|${this.collars}|${frames.join()}|${blink}`;
     if (key === this.drawn) return;
     this.drawn = key;
     const { width, height } = sheetSize();
-    paintCanvas(this.canvas, width, height, { px, dpr }, (paint) => paintSheet(paint, this.collars, px));
+    paintCanvas(this.canvas, width, height, { px, dpr }, (paint) => paintSheet(paint, this.collars, px, t));
   }
 }
