@@ -66,7 +66,7 @@ export class CatBrain {
       ['sit', 22],
       ['walk', 32 * Math.min(1, e * 2)], // only really lazy cats walk less
       ['sleep', starving ? 0 : 8 / e + 5],
-      ['jump', options.length ? 35 * e : 0],
+      ['jump', options.length ? 18 * e : 0],
       ['leave', exits.length ? 1.5 : 0],
       ['play', ball ? PLAY_WEIGHT : 0],
     ]);
