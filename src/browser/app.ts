@@ -27,7 +27,7 @@ declare global {
 }
 
 const WAIT_MS = 500; // how often it looks for the workbench while VS Code is still building it
-const FPS = 30;
+const FPS = 60;
 const FRAME_MS = 1000 / FPS;
 const SCALE = 2; // CSS px per cat pixel
 
