@@ -27,6 +27,8 @@ declare global {
 }
 
 const WAIT_MS = 500; // how often it looks for the workbench while VS Code is still building it
+const FPS = 30;
+const FRAME_MS = 1000 / FPS;
 const SCALE = 2; // CSS px per cat pixel
 
 export function startPixelCat(): void {
@@ -46,6 +48,8 @@ export function startPixelCat(): void {
   let sheet: CoatSheet;
   let menu: FishMenu;
   let ink = '#888';
+  let lastFrame = -Infinity;
+
   const driver = new Driver({
     world,
     cats: () => collection.cats(),
@@ -72,12 +76,14 @@ export function startPixelCat(): void {
   }
 
   function frame(now: number) {
+    requestAnimationFrame(frame);
+    if (now - lastFrame < FRAME_MS) return;
+    lastFrame = now;
     driver.frame(now);
     renderer.draw(world, driver.shown, { debug: driver.debug, ink });
     catBoxes.frame(now);
     cards.frame(now);
     sheet.frame();
-    requestAnimationFrame(frame);
   }
 
   function start() {
