@@ -15,6 +15,12 @@ export class YarnPile extends Pile<Yarn> {
     return new Yarn(id, path, x, y, floor);
   }
 
+  /** Carries a controlled portion of a sideways throw into a natural landing roll. */
+  protected landed(yarn: Yarn, width: number): void {
+    yarn.roll = Math.max(-120, Math.min(120, yarn.vx * 0.5));
+    if (yarn.roll) this.fellOff(yarn, width, yarn.roll, 0);
+  }
+
   /** Swiped `dir` (-1, 1): it rolls about `distance` px before it stops. */
   roll(g: Yarn, dir: number, distance: number): void {
     g.roll = dir * Math.sqrt(2 * ROLL_FRICTION * distance);

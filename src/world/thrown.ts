@@ -63,6 +63,9 @@ export abstract class Pile<T extends Thrown> {
   /** A new one of the kind, on its way along `path`. */
   protected abstract make(id: number, path: Arc, x: number, y: number, floor: Floor): T;
 
+  /** Called once as an airborne item reaches its floor. */
+  protected landed(_g: T, _width: number): void {}
+
   /** Down on its floor, each frame: what this kind does there. */
   protected abstract onFloor(g: T, dt: number, width: number): void;
 
@@ -98,6 +101,7 @@ export abstract class Pile<T extends Thrown> {
         g.y += g.vy * dt;
       } else if (wasFlying) {
         [g.x, g.y] = along(g, Math.min(g.t, g.time));
+        this.landed(g, width);
       } else {
         this.onFloor(g, dt, width);
       }
