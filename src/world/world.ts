@@ -516,12 +516,12 @@ export class World {
     }
   }
 
-  spawnEmotion(kind: EmotionKind, c: Cat): void {
+  spawnEmotion(kind: EmotionKind, c: Cat, x = c.x): void {
     const fish = kind === 'fish';
     const sleep = kind === 'z';
     this.emotionList.push({
       kind,
-      x: c.x + (fish ? c.dir * 7 * (this.px / this.dpr) : 0),
+      x: x + (fish ? c.dir * 7 * (this.px / this.dpr) : 0),
       y: c.y - (sleep ? 9 * (this.px / this.dpr) : this.catH + 4),
       t: 0,
       dir: c.dir,

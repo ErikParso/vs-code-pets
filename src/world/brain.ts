@@ -28,7 +28,7 @@ export interface BrainWorld {
   go(cat: Cat, o: Move): void;
   eat(cat: Cat, g: Fish): void;
   play(cat: Cat, ball: Yarn): void;
-  spawnEmotion(kind: EmotionKind, c: Cat): void;
+  spawnEmotion(kind: EmotionKind, c: Cat, x?: number): void;
 }
 
 export class CatBrain {
@@ -46,7 +46,7 @@ export class CatBrain {
     cat.heading = null;
     // Walked over to the sleeping cat (so it faces it): curl up.
     if (was?.to === 'friend') {
-      if (SWEETHEARTS.includes(cat.id) && SWEETHEARTS.includes(was.cat.id)) this.world.spawnEmotion('heart', cat);
+      if (SWEETHEARTS.includes(cat.id) && SWEETHEARTS.includes(was.cat.id)) this.world.spawnEmotion('heart', cat, (cat.x + was.cat.x) / 2);
       return cat.sleep(this.napTime(cat));
     }
     // Walked over to the wall: up or down it goes.
