@@ -10,6 +10,9 @@ import type { ClimbMove, Move, Navigator } from './navigator';
 import type { Random } from './random';
 import type { Thrown } from './thrown';
 import type { Yarn, YarnPile } from './yarn';
+import type { EmotionKind } from './world';
+
+const SWEETHEARTS = ['erik', 'jexit'];
 
 /** What the brain needs from the world around the cat. */
 export interface BrainWorld {
@@ -25,6 +28,7 @@ export interface BrainWorld {
   go(cat: Cat, o: Move): void;
   eat(cat: Cat, g: Fish): void;
   play(cat: Cat, ball: Yarn): void;
+  spawnEmotion(kind: EmotionKind, c: Cat): void;
 }
 
 export class CatBrain {
@@ -41,7 +45,10 @@ export class CatBrain {
     const was = cat.heading;
     cat.heading = null;
     // Walked over to the sleeping cat (so it faces it): curl up.
-    if (was?.to === 'friend') return cat.sleep(this.napTime(cat));
+    if (was?.to === 'friend') {
+      if (SWEETHEARTS.includes(cat.id) && SWEETHEARTS.includes(was.cat.id)) this.world.spawnEmotion('heart', cat);
+      return cat.sleep(this.napTime(cat));
+    }
     // Walked over to the wall: up or down it goes.
     if (was?.to === 'wall') return this.world.climb(cat, was.move);
     const g = this.fishFor(cat, was?.to === 'fish' ? was.item : null);
@@ -86,7 +93,7 @@ export class CatBrain {
           .filter((c) => c !== cat && c.floor === f && c.activity.kind === 'sleep' && Math.abs(c.x - cat.x) <= MAX_WALK_DISTANCE)
           .sort((a, b) => Math.abs(a.x - cat.x) - Math.abs(b.x - cat.x))[0];
         if (!friend) return cat.sleep(this.napTime(cat));
-        cat.heading = { to: 'friend' };
+        cat.heading = { to: 'friend', cat: friend };
         return cat.walkTo(clamp(friend.x + (cat.x < friend.x ? -1 : 1) * catW * 0.9, lo, hi), WALK_SPEED);
       }
       case 'walk': {

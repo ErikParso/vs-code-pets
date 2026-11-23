@@ -67,7 +67,7 @@ export type WallActivity = Extract<Activity, { kind: 'wallhop' | 'slide' }>;
  */
 export type Heading =
   | { to: 'leave' }
-  | { to: 'friend' }
+  | { to: 'friend'; cat: Cat }
   | { to: 'wall'; move: ClimbMove }
   | { to: 'fish'; item: Fish }
   | { to: 'ball'; item: Yarn };

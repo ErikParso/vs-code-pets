@@ -516,7 +516,7 @@ export class World {
     }
   }
 
-  private spawnEmotion(kind: EmotionKind, c: Cat): void {
+  spawnEmotion(kind: EmotionKind, c: Cat): void {
     const fish = kind === 'fish';
     const sleep = kind === 'z';
     this.emotionList.push({
