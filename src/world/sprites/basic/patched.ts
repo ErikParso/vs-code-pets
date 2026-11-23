@@ -121,6 +121,28 @@ const eat = (headTop: number): Mask => {
 };
 const EAT = eat(10);
 
+// Held up: an ear and eye, a saddle down its back, its rump and hind legs, and its tail.
+const HELD: Mask = [
+  '',
+  '',
+  '.....AAA.AAA',
+  '.....AAA.AA',
+  '.....AAA.A',
+  '.....AAA',
+  '.....AA',
+  '.....A',
+  '', '', '', '', '', '',
+  '.....EEEE',
+  '.....EEEEEE',
+  '.....EEEEEE',
+  '.....EEEEEE',
+  '.....EEEEEE',
+  '.....E..EE',
+  '',
+  '......AAA',
+  '......AAA',
+];
+
 const lower = (mask: Mask): Mask => ['', ...mask];
 
 const PATCHES: Record<CatFrame, Mask> = {
@@ -144,6 +166,7 @@ const PATCHES: Record<CatFrame, Mask> = {
   eatChew: EAT,
   eatTug: eat(9),
   eatTail: EAT,
+  held: HELD,
 };
 
 const PEEK_PATCHES: Mask = ['', '', '..AA', '..AAAA.....EE', '..AAAA....EEE', '..AA', '..AA'];

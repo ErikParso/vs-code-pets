@@ -5,6 +5,7 @@
 // VS Code's timers and animation frames, drawn by the Renderer.
 import { CarePanel } from './care-panel';
 import { CatBoxes } from './cat-boxes';
+import { CatHandles } from './cat-handles';
 import { CoatSheet } from './coat-sheet';
 import { FishMenu } from './fish-menu';
 import { localCatStore, localSeenStore } from './cat-store';
@@ -47,6 +48,7 @@ export function startPixelCat(): void {
   let cards: CollectionPanel;
   let sheet: CoatSheet;
   let menu: FishMenu;
+  let handles: CatHandles;
   let ink = '#888';
   let lastFrame = -Infinity;
 
@@ -81,6 +83,7 @@ export function startPixelCat(): void {
     lastFrame = now;
     driver.frame(now);
     renderer.draw(world, driver.shown, { debug: driver.debug, ink });
+    handles.frame(driver.shown);
     catBoxes.frame(now);
     cards.frame(now);
     sheet.frame();
@@ -142,6 +145,8 @@ export function startPixelCat(): void {
       closeOthers(null);
       menu.toggle(click.x, click.y);
     });
+    // Press on a cat to pick it up, carry it about, let go to drop it.
+    handles = new CatHandles(world);
     setInterval(poll, POLL_MS);
     requestAnimationFrame(frame);
   }

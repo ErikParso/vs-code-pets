@@ -54,7 +54,9 @@ export type Activity =
   // One leap up a wall, from hopFrom to hopTo, then holding on until `dur`.
   | ({ kind: 'wallhop'; t: number; dur: number; hopFrom: number; hopTo: number } & OnWall)
   // Sliding down a wall, at speed vy.
-  | ({ kind: 'slide'; t: number; vy: number } & OnWall);
+  | ({ kind: 'slide'; t: number; vy: number } & OnWall)
+  // Picked up by you, dangling from the mouse pointer (World.grab).
+  | { kind: 'held'; t: number };
 
 export type WallActivity = Extract<Activity, { kind: 'wallhop' | 'slide' }>;
 
@@ -177,5 +179,11 @@ export class Cat implements AtIt {
 
   slide(on: OnWall): void {
     this.activity = { kind: 'slide', t: 0, vy: 0, ...on };
+  }
+
+  /** Picked up: off its floor, dangling. */
+  hold(): void {
+    this.floor = null;
+    this.activity = { kind: 'held', t: 0 };
   }
 }

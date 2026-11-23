@@ -108,6 +108,13 @@ sheet (debug mode), then record the coat snapshots.
   rarest shine each coat was ever had in, with the coat in `pixelCat.seen` (`{coatId, shine?}`,
   topped up on every poll); it never gets commoner. Shines don't count towards the collection's
   total. (The coat ids saved before shines came in are not read: those collections start again.)
+- **Picking up:** pressing on a cat, whatever it is doing, picks it up (`World.grab`): it lets
+  go of any fish or ball and dangles from the pointer by its scruff (`held`,
+  its own frame), and on release falls onto the floor below like after a layout change
+  (`World.drop`). Each cat has an invisible handle over its box (`World.boxOf`,
+  `browser/cat-handles.ts`), above webviews too, so a press on it always reaches the cat script.
+  It captures the pointer for the carry, so VS Code gets none of it, and losing the capture
+  (release, cancel, whatever) drops the cat. The simulations have no mouse.
 - **Play:** a ball of yarn lying still on a cat's floor within reach makes `play` one of the
   things it picks from (weight `PLAY_WEIGHT`); fish still come first and starving cats don't play.
   On reaching it, a cat crouches in the sleep pose for 0.7-1.2 seconds. It then bats at the ball
@@ -133,7 +140,7 @@ shine, so its coat's card keeps the rarest one for good. Alt+click the 🐈‍�
 hungrier, Shift+click to make them fuller; Ctrl+click adds trust, Ctrl+Shift+click takes it away.
 
 The 🐈‍⬛'s menu gets a fifth button, a cat sitting, that opens the coat sheet (`coat-sheet.ts`):
-every coat in each animation (walk, jump, sit, play, sleep, climb, eat), looping roughly as in the
+every coat in each animation (walk, jump, sit, play, sleep, climb, eat, held), looping roughly as in the
 game, then in its box, blinking now and then, drawn by the same code as the game (`cat-art.ts`,
 `paintOpenBox` in `box-art.ts`). Click it to put the collars on or take them off.
 

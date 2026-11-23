@@ -10,6 +10,7 @@ const SIT = spots([17, 2], [20, 3], [14, 9], [16, 11], [12, 12], [13, 12], [15, 
 const SLEEP = spots([19, 8], [21, 9], [11, 9], [7, 11], [13, 11], [10, 13]);
 const CLIMB = spots([6, 6], [9, 7], [7, 10], [9, 12], [6, 13]);
 const EAT = spots([10, 6], [8, 8], [13, 9], [6, 10], [10, 11], [5, 12]); // on its back: its head bobs
+const HELD = spots([10, 2], [13, 3], [6, 9], [7, 12], [5, 15], [8, 17], [7, 19]);
 const lower = (dots: Dot[]): Dot[] => dots.map(([x, y, c]) => [x, y + 1, c]);
 
 const SPOTS: Record<CatFrame, Dot[]> = {
@@ -33,6 +34,7 @@ const SPOTS: Record<CatFrame, Dot[]> = {
   eatChew: EAT,
   eatTug: EAT,
   eatTail: EAT,
+  held: HELD,
 };
 const PEEK_SPOTS = spots([4, 3], [8, 3], [9, 3], [12, 4]);
 

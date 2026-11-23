@@ -14,7 +14,7 @@ import type { Floor, Layout, Wall } from './layout';
 import { clamp } from './math';
 import { ClimbMove, JumpMove, Move, Navigator } from './navigator';
 import type { Random } from './random';
-import { CAT_H, CAT_W, CLIMB_H } from './sprites';
+import { CAT_H, CAT_W, CLIMB_H, CLIMB_W } from './sprites';
 
 export type EmotionKind = 'z' | 'heart' | 'fish';
 
@@ -158,7 +158,7 @@ export class World {
     this.floors = next.floors;
     this.walls = next.walls;
     for (const cat of this.cats) {
-      if (cat.leaving) continue; // on its way out of the window anyway
+      if (cat.leaving || cat.activity.kind === 'held') continue; // on its way out of the window anyway, or in your hand
       const f = cat.floor && this.nav.floorAt(cat.x, cat.y);
       if (cat.heading?.to === 'wall') cat.heading = null; // the wall may have moved
       if (f) {
@@ -225,6 +225,34 @@ export class World {
       z.y -= 12 * dt;
     }
     this.emotionList = this.emotionList.filter((z) => z.t < EMOTION_TIME);
+  }
+
+  /** Where the cat is drawn, CSS px: standing, or tall (on a wall, or held up). */
+  boxOf(cat: Cat): { x: number; y: number; w: number; h: number } {
+    const s = this.px / this.dpr;
+    const hold = cat.onWall;
+    const tall = hold || cat.activity.kind === 'held';
+    const w = (tall ? CLIMB_W : CAT_W) * s;
+    const h = (tall ? CLIMB_H : CAT_H) * s;
+    return { x: (hold ? hold.wall.x : cat.x) - w / 2, y: cat.y - h, w, h };
+  }
+
+  /** Pressed on `cat` at (x, y), whatever it was doing: picks it up. */
+  grab(cat: Cat, x: number, y: number): void {
+    this.interrupt(cat);
+    cat.hold();
+    this.carry(cat, x, y);
+  }
+
+  /** The cat dangles from (x, y) by its scruff, kept in the window. */
+  carry(cat: Cat, x: number, y: number): void {
+    cat.x = clamp(x, this.catW / 2, this.width - this.catW / 2);
+    cat.y = Math.max(0, y) + 21 * (this.px / this.dpr); // its feet: 21 sprite px below its scruff
+  }
+
+  /** Let go: it drops onto the floor below. */
+  drop(cat: Cat): void {
+    this.fall(cat);
   }
 
   // The 🐈‍⬛ was clicked at (x, y): a fish for one of the cats on a floor, or anywhere if none is.

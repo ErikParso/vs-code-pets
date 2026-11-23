@@ -15,6 +15,7 @@ export const CAT_FRAMES = [
   'sleep1', 'sleep2',
   'climbReach', 'climbPush', 'climbTail', 'climbPull',
   'eatDown', 'eatChew', 'eatTug', 'eatTail',
+  'held',
 ] as const;
 export type CatFrame = (typeof CAT_FRAMES)[number];
 
@@ -23,7 +24,7 @@ export const CAT_W = 24;
 export const CAT_H = 16;
 export const CLIMB_W = 16;
 export const CLIMB_H = 24;
-const isClimb = (frame: CatFrame) => frame.startsWith('climb');
+const isTall = (frame: CatFrame) => frame.startsWith('climb') || frame === 'held';
 
 /** The cat peeking out of a box (box-art.ts): its size, sprite px. */
 export const PEEK_W = 16;
@@ -72,6 +73,6 @@ export function checkSprite(name: string, sprite: CatSprite): void {
   const expect = (what: string, rows: readonly string[], w: number, h: number) => {
     if (rows.length !== h || rows.some((r) => r.length !== w)) throw new Error(`sprite ${name}: ${what} is ${size(rows)}, should be ${w}x${h}`);
   };
-  for (const f of CAT_FRAMES) expect(f, sprite.frame(f), isClimb(f) ? CLIMB_W : CAT_W, isClimb(f) ? CLIMB_H : CAT_H);
+  for (const f of CAT_FRAMES) expect(f, sprite.frame(f), isTall(f) ? CLIMB_W : CAT_W, isTall(f) ? CLIMB_H : CAT_H);
   for (const blink of [false, true]) expect(blink ? 'peek (blinking)' : 'peek', sprite.peek(blink), PEEK_W, PEEK_H);
 }

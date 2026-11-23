@@ -157,6 +157,35 @@ const eatDown = [
   '.KKKKKKKKKKKKKKK.KKKKKK.',
 ];
 
+// Held up by the scruff, 16x24, seen from the side: hanging long and limp from the neck, head
+// up, a front paw hanging straight, hind legs a little apart, tail straight down between them.
+const held = [
+  '.........K....K.',
+  '........KPK..KPK',
+  '.....KKKKOOOOOOK',
+  '....KOOOKOOOOOOK',
+  '....KOOOKOKOOKOK',
+  '....KOOOKWOPPOWK',
+  '....KOOOOKWWWWWK',
+  '....KOOOOWKKKKK.',
+  '....KOOOOWWK....',
+  '....KOOOOWWK....',
+  '....KOOOOOKWK...',
+  '....KOOOOOKWK...',
+  '....KOOOOOKWK...',
+  '....KOOOOOKKK...',
+  '....KOOOOOOK....',
+  '....KOOOOOOK....',
+  '....KOOOOOOK....',
+  '....KOOOOOOK....',
+  '....KOKOOKOK....',
+  '....KOKOOKOK....',
+  '....KWKOOKWK....',
+  '....KKKOOKKK....',
+  '......KOOK......',
+  '.......KK.......',
+];
+
 const FRAMES: Record<CatFrame, string[]> = {
   walkA: body.concat(legs.stand),
   walkB: body.concat(legs.strideOut),
@@ -221,6 +250,7 @@ const FRAMES: Record<CatFrame, string[]> = {
     6: '........KKKKKKK..K...K..',
     7: '.......KOOOOOOOKKPK.KPK.',
   }),
+  held,
 };
 
 // Collars, drawn over a frame while the cat trusts you enough to wear one: [x, y, C the band in the cat's own
@@ -232,6 +262,7 @@ const collarSit: Dot[] = [[14, 7, 'C'], [15, 7, 'C'], [16, 8, 'C'], [17, 8, 'C']
 const collarSleep: Dot[] = [[16, 12, 'C'], [17, 13, 'C'], [18, 13, 'C'], [19, 13, 'C'], [20, 13, 'C'], [18, 14, 'G']];
 const collarClimb: Dot[] = [[6, 8, 'C'], [7, 8, 'C'], [8, 8, 'C'], [9, 8, 'C']];
 const collarEat: Dot[] = [[16, 10, 'C'], [16, 11, 'C'], [16, 12, 'C'], [16, 13, 'G']];
+const collarHeld: Dot[] = [[5, 8, 'C'], [6, 8, 'C'], [7, 8, 'C'], [8, 8, 'C'], [9, 8, 'C'], [10, 8, 'C'], [10, 9, 'G']];
 const lower = (dots: Dot[]): Dot[] => dots.map(([x, y, c]) => [x, y + 1, c]);
 
 const COLLARS: Record<CatFrame, Dot[]> = {
@@ -255,6 +286,7 @@ const COLLARS: Record<CatFrame, Dot[]> = {
   eatChew: collarEat,
   eatTail: collarEat,
   eatTug: collarEat.map(([x, y, c]) => [x, y - 1, c]), // its head a pixel up
+  held: collarHeld,
 };
 
 

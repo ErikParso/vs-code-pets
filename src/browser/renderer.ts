@@ -163,6 +163,8 @@ export class Renderer {
         return swiping(a.t) ? 'playSwipe' : 'playUp';
       case 'air':
         return a.flight.vy + GRAVITY * a.t < 0 ? 'leap' : 'walkA';
+      case 'held':
+        return 'held';
       default:
         if (a.t % 4 > 3.85) return 'sitBlink';
         return Math.floor(a.t * 2) % 6 === 0 ? 'sitTail' : 'sit';
@@ -269,10 +271,11 @@ export class Renderer {
     const collar = colour ? this.collarFor(cat.coat, colour, frame) : null;
     const w = img.width;
     const h = img.height;
-    // On a wall: seen from behind, hugging the border, centred on the wall line.
+    // In the middle of its box (World.boxOf). On a wall: seen from behind, never flipped.
     const hold = cat.onWall;
-    const cx = Math.round((hold ? hold.wall.x : cat.x) * dpr);
-    const cy = Math.round((cat.y - (hold ? h / dpr : world.catH) / 2) * dpr);
+    const box = world.boxOf(cat);
+    const cx = Math.round((box.x + box.w / 2) * dpr);
+    const cy = Math.round((box.y + box.h / 2) * dpr);
     ctx.save();
     ctx.translate(cx, cy);
     if (!hold && cat.dir < 0) ctx.scale(-1, 1);

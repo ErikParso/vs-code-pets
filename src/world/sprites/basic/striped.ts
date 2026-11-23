@@ -10,6 +10,7 @@ const SIT = stripes([15, 8], [15, 9], [15, 10], [15, 11], [13, 13]);
 const SLEEP = stripes([11, 8], [10, 9], [9, 10], [9, 11]);
 const CLIMB = stripes([7, 6], [8, 6], [6, 11], [7, 11], [8, 11], [9, 11], [6, 14], [7, 14], [8, 14], [9, 14]);
 const EAT = stripes([9, 7], [13, 7], [8, 8], [12, 8], [8, 9], [12, 9], [8, 10], [12, 10], [8, 11]);
+const HELD = stripes([5, 11], [6, 11], [5, 14], [6, 14], [5, 17], [6, 17]);
 const lower = (dots: Dot[]): Dot[] => dots.map(([x, y, c]) => [x, y + 1, c]);
 
 const STRIPES: Record<CatFrame, Dot[]> = {
@@ -33,6 +34,7 @@ const STRIPES: Record<CatFrame, Dot[]> = {
   eatChew: EAT,
   eatTug: EAT,
   eatTail: EAT,
+  held: HELD,
 };
 const PEEK_STRIPES = stripes([6, 3], [9, 3]);
 

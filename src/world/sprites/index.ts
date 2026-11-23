@@ -8,7 +8,7 @@ import { BasicSpotted } from './basic/spotted';
 import { BasicStriped } from './basic/striped';
 import { checkSprite } from './cat-sprite';
 
-export { CAT_FRAMES, CAT_H, CAT_W, CLIMB_H, PEEK_W, type CatFrame, type CatSprite, type Dot } from './cat-sprite';
+export { CAT_FRAMES, CAT_H, CAT_W, CLIMB_H, CLIMB_W, PEEK_W, type CatFrame, type CatSprite, type Dot } from './cat-sprite';
 export { PALETTE, SHARED } from './palette';
 export { PROPS, type Prop } from './props';
 

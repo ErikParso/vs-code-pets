@@ -1,6 +1,12 @@
 # Changelog
 
-## 0.1.119 - 0.1.162
+## 0.1.119 - 0.1.174
+
+- Pick a cat up, whatever it is doing (walking, climbing, mid-jump), even over a webview: press
+  on it and it hangs from the mouse by its scruff, seen from the side, long and limp, legs and tail hanging; let
+  go and it drops onto whatever is below. Pressing on a cat never clicks VS Code underneath it.
+  Carried over a webview or out of the window, it stays in the window, and it is always dropped
+  when you let go. The cursor is an open hand over a cat, and a closed one while you carry it.
 
 - 28 coats, up from 20, in two new rarities as well: epic (purple card, four gems) and legendary
   (orange card, five gems).

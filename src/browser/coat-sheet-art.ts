@@ -35,6 +35,7 @@ const ANIMATIONS: readonly (readonly [CatFrame, number])[][] = [
   [['sleep1', 0.9], ['sleep2', 0.9]],
   [['climbPull', 0.3], ['climbPush', 0.2], ['climbReach', 0.35], ['climbTail', 0.35], ['climbReach', 0.35], ['climbTail', 0.35]],
   [['eatDown', 0.6], ['eatChew', 0.3], ['eatTug', 0.2], ['eatTail', 0.3], ['eatTug', 0.2], ['eatChew', 0.3], ['eatTug', 0.2]],
+  [['held', 1]],
 ];
 const BLINK_EVERY = 3; // s; the cat in its box blinks for the last BLINK of each
 const BLINK = 0.15;

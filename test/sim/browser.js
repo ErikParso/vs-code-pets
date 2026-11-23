@@ -85,6 +85,7 @@ function createBrowser({ layout, seed, startMs, storage, script }) {
       this.listeners = {};
       this.textContent = '';
     }
+    remove() {}
     getBoundingClientRect() {
       const r = this.rect;
       return { left: r.left, top: r.top, width: r.width, height: r.height, right: r.left + r.width, bottom: r.top + r.height };
